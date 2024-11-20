@@ -28,7 +28,7 @@ export default function ModelsPage() {
   useEffect(() => {
     const fetchModels = async () => {
       try {
-        const response = await fetch("/api/models");
+        const response = await fetch("/api/v1/models");
         if (!response.ok) {
           throw new Error("获取模型失败");
         }
@@ -57,7 +57,7 @@ export default function ModelsPage() {
   ) => {
     try {
       setSaving(id);
-      const response = await fetch("/api/models/price", {
+      const response = await fetch("/api/v1/models/price", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
