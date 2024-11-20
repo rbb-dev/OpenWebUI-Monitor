@@ -8,9 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "db:generate": "drizzle-kit generate:pg",
-    "db:push": "drizzle-kit push:pg",
-    "postinstall": "prisma generate",
-    "vercel-build": "prisma generate && prisma migrate deploy && next build"
+    "db:push": "drizzle-kit push:pg"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
