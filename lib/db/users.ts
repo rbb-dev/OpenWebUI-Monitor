@@ -21,6 +21,20 @@ export async function ensureUserTableExists() {
       ALTER TABLE users 
       ALTER COLUMN balance TYPE DECIMAL(16,6);
     `;
+
+    const columnExists = await sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_name = 'users' AND column_name = 'created_at'
+      );
+    `;
+
+    if (!columnExists.rows[0].exists) {
+      await sql`
+        ALTER TABLE users 
+        ADD COLUMN created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+      `;
+    }
   } else {
     await sql`
       CREATE TABLE users (
@@ -28,7 +42,8 @@ export async function ensureUserTableExists() {
         email TEXT NOT NULL,
         name TEXT NOT NULL,
         role TEXT NOT NULL,
-        balance DECIMAL(16, 6) NOT NULL
+        balance DECIMAL(16, 6) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `;
 

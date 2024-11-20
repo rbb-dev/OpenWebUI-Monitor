@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { Table, message, InputNumber } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import Image from "next/image";
 
 interface ModelResponse {
@@ -55,123 +57,170 @@ export default function ModelsPage() {
     inputPrice: number,
     outputPrice: number
   ) => {
+    if (saving) return;
+
     try {
       setSaving(id);
+
+      if (isNaN(inputPrice) || isNaN(outputPrice)) {
+        throw new Error("价格必须是有效的数字");
+      }
+
       const response = await fetch("/api/v1/models/price", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id, inputPrice, outputPrice }),
+        body: JSON.stringify({
+          id,
+          inputPrice: Number(inputPrice),
+          outputPrice: Number(outputPrice),
+        }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("更新价格失败");
+        throw new Error(data.error || "更新价格失败");
       }
 
       setModels(
         models.map((model) =>
-          model.id === id ? { ...model, inputPrice, outputPrice } : model
+          model.id === id
+            ? {
+                ...model,
+                inputPrice: data.input_price,
+                outputPrice: data.output_price,
+              }
+            : model
         )
       );
+
+      message.success("价格更新成功");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "更新价格失败");
+      const errorMessage = err instanceof Error ? err.message : "更新价格失败";
+      message.error(errorMessage);
     } finally {
       setSaving(null);
     }
   };
 
-  if (loading) {
-    return <div className="p-4">加载中...</div>;
-  }
+  const columns: ColumnsType<Model> = [
+    {
+      title: "模型",
+      key: "model",
+      width: 300,
+      fixed: "left",
+      render: (_, record) => (
+        <div className="flex items-center space-x-3">
+          {record.imageUrl && (
+            <div className="w-10 h-10 relative flex-shrink-0">
+              <Image
+                src={record.imageUrl}
+                alt={record.name}
+                fill
+                className="rounded-full object-cover"
+              />
+            </div>
+          )}
+          <div>
+            <div className="font-semibold">{record.name}</div>
+            <div className="text-xs text-gray-500">{record.id}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "输入价格 (￥/1M tokens)",
+      key: "inputPrice",
+      width: 200,
+      render: (_, record) => (
+        <div className="flex items-center space-x-2">
+          <InputNumber
+            value={record.inputPrice}
+            onChange={(value) => {
+              if (value === null) return;
+              setModels(
+                models.map((m) =>
+                  m.id === record.id ? { ...m, inputPrice: value } : m
+                )
+              );
+            }}
+            onBlur={() =>
+              handlePriceUpdate(
+                record.id,
+                record.inputPrice,
+                record.outputPrice
+              )
+            }
+            min={0}
+            max={1000}
+            step={0.000001}
+            precision={6}
+            style={{ width: "150px" }}
+            prefix="￥"
+            disabled={saving === record.id}
+            controls={false}
+          />
+          {saving === record.id && (
+            <span className="text-sm text-blue-500">保存中...</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: "输出价格 (￥/1M tokens)",
+      key: "outputPrice",
+      width: 200,
+      render: (_, record) => (
+        <div className="flex items-center space-x-2">
+          <InputNumber
+            value={record.outputPrice}
+            onChange={(value) => {
+              if (value === null) return;
+              setModels(
+                models.map((m) =>
+                  m.id === record.id ? { ...m, outputPrice: value } : m
+                )
+              );
+            }}
+            onBlur={() =>
+              handlePriceUpdate(
+                record.id,
+                record.inputPrice,
+                record.outputPrice
+              )
+            }
+            min={0}
+            max={1000}
+            step={0.000001}
+            precision={6}
+            style={{ width: "150px" }}
+            prefix="￥"
+            disabled={saving === record.id}
+            controls={false}
+          />
+        </div>
+      ),
+    },
+  ];
 
   if (error) {
     return <div className="p-4 text-red-500">错误: {error}</div>;
   }
 
   return (
-    <div className="p-4">
+    <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">模型配置</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {models.map((model) => (
-          <div
-            key={model.id}
-            className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-center space-x-4">
-              {model.imageUrl && (
-                <div className="w-12 h-12 relative">
-                  <Image
-                    src={model.imageUrl}
-                    alt={model.name}
-                    fill
-                    className="rounded-full object-cover"
-                  />
-                </div>
-              )}
-              <div className="flex-1">
-                <h2 className="font-semibold">{model.name}</h2>
-                <p className="text-sm text-gray-500">{model.id}</p>
-                <div className="mt-2 space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm">输入价格:</label>
-                    <input
-                      type="number"
-                      value={model.inputPrice}
-                      onChange={(e) => {
-                        const newValue = parseFloat(e.target.value);
-                        setModels(
-                          models.map((m) =>
-                            m.id === model.id
-                              ? { ...m, inputPrice: newValue }
-                              : m
-                          )
-                        );
-                      }}
-                      onBlur={() =>
-                        handlePriceUpdate(
-                          model.id,
-                          model.inputPrice,
-                          model.outputPrice
-                        )
-                      }
-                      className="border rounded px-2 py-1 w-24 text-sm"
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm">输出价格:</label>
-                    <input
-                      type="number"
-                      value={model.outputPrice}
-                      onChange={(e) => {
-                        const newValue = parseFloat(e.target.value);
-                        setModels(
-                          models.map((m) =>
-                            m.id === model.id
-                              ? { ...m, outputPrice: newValue }
-                              : m
-                          )
-                        );
-                      }}
-                      onBlur={() =>
-                        handlePriceUpdate(
-                          model.id,
-                          model.inputPrice,
-                          model.outputPrice
-                        )
-                      }
-                      className="border rounded px-2 py-1 w-24 text-sm"
-                    />
-                  </div>
-                </div>
-                {saving === model.id && (
-                  <p className="text-sm text-blue-500 mt-1">保存中...</p>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+      <Table
+        columns={columns}
+        dataSource={models}
+        rowKey="id"
+        loading={loading}
+        pagination={false}
+        bordered
+        scroll={{ x: 800 }}
+      />
     </div>
   );
 }
