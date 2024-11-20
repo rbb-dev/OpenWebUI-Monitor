@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ensureTablesExist, getOrCreateModelPrice } from "@/lib/db";
 
 interface ModelInfo {
   id: string;
@@ -14,61 +15,100 @@ interface ModelResponse {
   }[];
 }
 
-function normalizeUrl(domain: string): string {
-  // 移除首尾空格
-  let url = domain.trim();
-
-  // 如果没有协议前缀，添加 https://
-  if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    url = "https://" + url;
-  }
-
-  // 移除末尾的斜杠
-  url = url.replace(/\/+$/, "");
-
-  // 确保域名格式正确
+// 规范化域名格式
+function normalizeApiUrl(domain: string): string {
   try {
-    const urlObj = new URL(url);
-    return urlObj.origin;
-  } catch (e) {
-    console.error("Invalid URL format:", e);
-    throw new Error("无效的域名格式");
+    // 移除首尾空格
+    const normalizedDomain = domain.trim();
+
+    // 提取域名的核心部分（移除协议、路径等）
+    const domainMatch = normalizedDomain.match(/(?:https?:\/\/)?([^\/\s]+)/i);
+    if (!domainMatch) {
+      throw new Error("Invalid domain format");
+    }
+
+    const coreDomain = domainMatch[1];
+
+    // 构建完整的 API URL
+    return `https://${coreDomain}/api/models`;
+  } catch (error) {
+    console.error("Domain normalization error:", error);
+    throw new Error("Invalid domain format");
   }
 }
 
 export async function GET() {
   try {
+    // 确保数据库已初始化
+    await ensureTablesExist();
+    console.log("Database initialized, fetching models...");
+
     const domain = process.env.OPENWEBUI_DOMAIN;
     if (!domain) {
       throw new Error("OPENWEBUI_DOMAIN 环境变量未设置");
     }
 
-    const normalizedDomain = normalizeUrl(domain);
-    const apiUrl = `${normalizedDomain}/api/models`;
-
-    console.log("Requesting models from:", apiUrl);
+    // 规范化 API URL
+    const apiUrl = normalizeApiUrl(domain);
+    console.log("Normalized API URL:", apiUrl);
 
     const response = await fetch(apiUrl, {
       headers: {
         Authorization: `Bearer ${process.env.JWT_TOKEN}`,
+        Accept: "application/json",
       },
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Failed to fetch models: ${response.status} ${response.statusText}`
-      );
+      console.error("API response status:", response.status);
+      console.error("API response text:", await response.text());
+      throw new Error(`Failed to fetch models: ${response.status}`);
     }
 
-    const data: ModelResponse = await response.json();
+    // 先获取响应文本以便调试
+    const responseText = await response.text();
+    console.log("API response:", responseText);
 
-    const models = data.data.map((item) => ({
-      id: item.info.id,
-      name: item.info.name,
-      imageUrl: item.info.meta.profile_image_url,
-    }));
+    let data: ModelResponse;
+    try {
+      data = JSON.parse(responseText);
+    } catch (error) {
+      console.error("Failed to parse JSON:", error);
+      throw new Error("Invalid JSON response from API");
+    }
 
-    return NextResponse.json(models);
+    if (!data || !Array.isArray(data.data)) {
+      console.error("Unexpected API response structure:", data);
+      throw new Error("Unexpected API response structure");
+    }
+
+    // 获取所有模型的价格信息
+    const modelsWithPrices = await Promise.all(
+      data.data.map(async (item) => {
+        if (!item.info) {
+          console.warn("Model item missing info:", item);
+          return null;
+        }
+        const priceInfo = await getOrCreateModelPrice(
+          item.info.id,
+          item.info.name
+        );
+        return {
+          id: item.info.id,
+          name: item.info.name,
+          imageUrl: item.info.meta?.profile_image_url || "",
+          input_price: priceInfo.input_price,
+          output_price: priceInfo.output_price,
+        };
+      })
+    );
+
+    // 过滤掉无效的模型
+    const validModels = modelsWithPrices.filter(
+      (model): model is NonNullable<typeof model> => model !== null
+    );
+
+    return NextResponse.json(validModels);
   } catch (error) {
     console.error("Error fetching models:", error);
     return NextResponse.json(
