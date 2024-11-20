@@ -120,3 +120,23 @@ export async function GET() {
     );
   }
 }
+
+// 添加 inlet 端点
+export async function POST(req: Request) {
+  const data = await req.json();
+  console.log("Inlet received:", JSON.stringify(data, null, 2));
+
+  return new Response("Inlet placeholder response", {
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+// 添加 outlet 端点
+export async function PUT(req: Request) {
+  const data = await req.json();
+  console.log("Outlet received:", JSON.stringify(data, null, 2));
+
+  return new Response("Outlet placeholder response", {
+    headers: { "Content-Type": "application/json" },
+  });
+}
