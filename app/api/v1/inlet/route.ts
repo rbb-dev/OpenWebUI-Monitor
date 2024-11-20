@@ -4,7 +4,7 @@ import { getOrCreateUser } from "@/lib/db/users";
 export async function POST(req: Request) {
   try {
     const data = await req.json();
-
+    console.log(`inlet data: ${JSON.stringify(data)}`);
     // 直接处理用户数据，不再每次检查表是否存在
     const user = await getOrCreateUser(data.user);
 
