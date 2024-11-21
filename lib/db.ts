@@ -35,7 +35,7 @@ export async function ensureTablesExist() {
   let client: PoolClient | null = null;
   try {
     client = await pool.connect();
-    console.log("Successfully connected to database");
+    // console.log("Successfully connected to database");
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS model_prices (
@@ -46,7 +46,7 @@ export async function ensureTablesExist() {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    console.log("Table model_prices checked/created successfully");
+    // console.log("Table model_prices checked/created successfully");
   } catch (error) {
     console.error("Database connection/initialization error:", error);
     throw error;
@@ -86,8 +86,8 @@ export async function getOrCreateModelPrice(
 // 更新模型价格
 export async function updateModelPrice(
   id: string,
-  inputPrice: number,
-  outputPrice: number
+  input_price: number,
+  output_price: number
 ): Promise<ModelPrice> {
   let client: PoolClient | null = null;
   try {
@@ -99,7 +99,7 @@ export async function updateModelPrice(
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $1
        RETURNING *`,
-      [id, inputPrice, outputPrice]
+      [id, input_price, output_price]
     );
     return result.rows[0];
   } catch (error) {
@@ -116,7 +116,7 @@ export async function updateModelPrice(
 export async function initDatabase() {
   try {
     await ensureTablesExist();
-    console.log("Database initialized successfully");
+    // console.log("Database initialized successfully");
   } catch (error) {
     console.error("Failed to initialize database:", error);
     throw error;

@@ -41,7 +41,7 @@ export async function GET() {
   try {
     // 确保数据库已初始化
     await ensureTablesExist();
-    console.log("Database initialized, fetching models...");
+    // console.log("Database initialized, fetching models...");
 
     const domain = process.env.OPENWEBUI_DOMAIN;
     if (!domain) {
@@ -50,7 +50,7 @@ export async function GET() {
 
     // 规范化 API URL
     const apiUrl = normalizeApiUrl(domain);
-    console.log("Normalized API URL:", apiUrl);
+    // console.log("Normalized API URL:", apiUrl);
 
     const response = await fetch(apiUrl, {
       headers: {
@@ -67,7 +67,7 @@ export async function GET() {
 
     // 先获取响应文本以便调试
     const responseText = await response.text();
-    console.log("API response:", responseText);
+    // console.log("API response:", responseText);
 
     let data: ModelResponse;
     try {
@@ -124,7 +124,6 @@ export async function GET() {
 // 添加 inlet 端点
 export async function POST(req: Request) {
   const data = await req.json();
-  console.log("Inlet received:", JSON.stringify(data, null, 2));
 
   return new Response("Inlet placeholder response", {
     headers: { "Content-Type": "application/json" },
@@ -134,7 +133,7 @@ export async function POST(req: Request) {
 // 添加 outlet 端点
 export async function PUT(req: Request) {
   const data = await req.json();
-  console.log("Outlet received:", JSON.stringify(data, null, 2));
+  // console.log("Outlet received:", JSON.stringify(data, null, 2));
 
   return new Response("Outlet placeholder response", {
     headers: { "Content-Type": "application/json" },
