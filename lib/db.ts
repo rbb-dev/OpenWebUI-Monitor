@@ -1,16 +1,25 @@
 import { Pool, PoolClient } from "pg";
 
 // 构建数据库连接配置
-const dbConfig = {
-  host: process.env.POSTGRES_HOST || "localhost",
-  user: process.env.POSTGRES_USER || "postgres",
-  password: process.env.POSTGRES_PASSWORD,
-  database: process.env.POSTGRES_DATABASE || "openwebui_monitor",
-  ssl: false, // 本地开发不需要 SSL
-};
+const dbConfig = process.env.POSTGRES_URL
+  ? {
+      // 远程数据库配置
+      connectionString: process.env.POSTGRES_URL,
+      ssl: {
+        rejectUnauthorized: false, // 允许自签名证书
+      },
+    }
+  : {
+      // 本地 Docker 数据库配置
+      host: process.env.POSTGRES_HOST || "localhost",
+      user: process.env.POSTGRES_USER || "postgres",
+      password: process.env.POSTGRES_PASSWORD,
+      database: process.env.POSTGRES_DATABASE || "openwebui_monitor",
+      ssl: false,
+    };
 
 // 创建连接池
-const pool = new Pool(dbConfig);
+export const pool = new Pool(dbConfig);
 
 // 测试连接
 pool.on("error", (err) => {
