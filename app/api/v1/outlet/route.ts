@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     const userId = data.user.id;
     const userName = data.user.name || "Unknown User";
 
-    console.log(`outlet data: ${JSON.stringify(data.body)}`);
+    // console.log(`outlet data: ${JSON.stringify(data.body)}`);
 
     // 获取最后一条消息（输出）的 tokens
     const lastMessage = data.body.messages[data.body.messages.length - 1];
@@ -85,6 +85,16 @@ export async function POST(req: Request) {
       `;
 
       // 记录使用情况
+      console.log("正在记录使用情况:", {
+        userId,
+        userName,
+        modelId,
+        inputTokens,
+        outputTokens,
+        totalCost,
+        newBalance,
+      });
+
       await sql`
         INSERT INTO user_usage_records (
           user_id,
