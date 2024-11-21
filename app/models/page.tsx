@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Table, Input, message, Tooltip } from "antd";
+import { Table, Input, message, Tooltip, Button, Upload } from "antd";
+import { DownloadOutlined, UploadOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import Image from "next/image";
 
@@ -121,8 +122,8 @@ export default function ModelsPage() {
       <Input
         defaultValue={currentValue.toFixed(2)}
         style={{ width: "150px" }}
-        onPressEnter={(e) => {
-          const value = e.target.value;
+        onPressEnter={(e: React.KeyboardEvent<HTMLInputElement>) => {
+          const value = e.currentTarget.value;
           const numValue = Number(value);
           if (!isNaN(numValue) && numValue >= 0) {
             handlePriceUpdate(record.id, field, numValue);
@@ -204,13 +205,98 @@ export default function ModelsPage() {
     },
   ];
 
+  const handleExportPrices = () => {
+    const priceData = models.map((model) => ({
+      id: model.id,
+      input_price: model.input_price,
+      output_price: model.output_price,
+    }));
+
+    const blob = new Blob([JSON.stringify(priceData, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `model_prices_${new Date().toISOString().split("T")[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportPrices = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const importedData = JSON.parse(e.target?.result as string);
+
+        if (!Array.isArray(importedData)) {
+          throw new Error("导入的数据格式不正确");
+        }
+
+        const validUpdates = importedData.filter((item) =>
+          models.some((model) => model.id === item.id)
+        );
+
+        const response = await fetch("/api/v1/models/price", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            updates: validUpdates,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("批量更新价格失败");
+        }
+
+        const data = await response.json();
+
+        setModels(
+          models.map((model) => {
+            const update = validUpdates.find((u) => u.id === model.id);
+            if (update) {
+              return {
+                ...model,
+                input_price: update.input_price,
+                output_price: update.output_price,
+              };
+            }
+            return model;
+          })
+        );
+
+        message.success(`成功更新 ${validUpdates.length} 个模型的价格`);
+      } catch (err) {
+        message.error(err instanceof Error ? err.message : "导入失败");
+      }
+    };
+    reader.readAsText(file);
+    return false;
+  };
+
   if (error) {
     return <div className="p-4 text-red-500">错误: {error}</div>;
   }
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">模型配置</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">模型配置</h1>
+        <div className="space-x-4">
+          <Button icon={<DownloadOutlined />} onClick={handleExportPrices}>
+            导出价格
+          </Button>
+          <Upload
+            accept=".json"
+            showUploadList={false}
+            beforeUpload={handleImportPrices}
+          >
+            <Button icon={<UploadOutlined />}>导入价格</Button>
+          </Upload>
+        </div>
+      </div>
       <Table
         columns={columns}
         dataSource={models}

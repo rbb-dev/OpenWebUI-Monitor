@@ -11,6 +11,7 @@
     "db:push": "drizzle-kit push:pg"
   },
   "dependencies": {
+    "@ant-design/icons": "^5.5.1",
     "@prisma/client": "^5.22.0",
     "@supabase/supabase-js": "^2.46.1",
     "@vercel/blob": "^0.26.0",
