@@ -30,13 +30,25 @@ export interface ModelPrice {
   updated_at: Date;
 }
 
+export interface UserUsageRecord {
+  id: number;
+  userId: number;
+  nickname: string;
+  useTime: Date;
+  modelName: string;
+  inputTokens: number;
+  outputTokens: number;
+  cost: number;
+  balanceAfter: number;
+}
+
 // 确保表存在
 export async function ensureTablesExist() {
   let client: PoolClient | null = null;
   try {
     client = await pool.connect();
-    // console.log("Successfully connected to database");
 
+    // 首先创建 model_prices 表
     await client.query(`
       CREATE TABLE IF NOT EXISTS model_prices (
         id TEXT PRIMARY KEY,
@@ -46,7 +58,23 @@ export async function ensureTablesExist() {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    // console.log("Table model_prices checked/created successfully");
+
+    // 然后创建 user_usage_records 表，注意 user_id 类型改为 TEXT
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS user_usage_records (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        nickname VARCHAR(255) NOT NULL,
+        use_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        model_name VARCHAR(255) NOT NULL,
+        input_tokens INTEGER NOT NULL,
+        output_tokens INTEGER NOT NULL,
+        cost DECIMAL(10, 4) NOT NULL,
+        balance_after DECIMAL(10, 4) NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+    `);
+    console.log("确保用户使用记录表已创建");
   } catch (error) {
     console.error("Database connection/initialization error:", error);
     throw error;

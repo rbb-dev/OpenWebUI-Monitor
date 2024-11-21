@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { encode } from "gpt-tokenizer/model/gpt-4";
 import { sql } from "@vercel/postgres";
 import { updateUserBalance } from "@/lib/db/users";
+import { ensureTablesExist } from "@/lib/db";
 
 interface Message {
   role: string;
@@ -26,9 +27,13 @@ async function getModelPrice(modelId: string): Promise<ModelPrice | null> {
 
 export async function POST(req: Request) {
   try {
+    // 确保所有必要的表都已创建
+    await ensureTablesExist();
+
     const data = await req.json();
     const modelId = data.body.model;
     const userId = data.user.id;
+    const userName = data.user.name || "Unknown User";
 
     console.log(`outlet data: ${JSON.stringify(data.body)}`);
 
@@ -56,28 +61,61 @@ export async function POST(req: Request) {
     const outputCost = (outputTokens / 1_000_000) * modelPrice.output_price;
     const totalCost = inputCost + outputCost;
 
-    // console.log("成本计算:", {
-    //   inputTokens,
-    //   outputTokens,
-    //   inputCost,
-    //   outputCost,
-    //   totalCost,
-    // });
+    // 首先获取用户信息和当前余额
+    const userResult = await sql`
+      SELECT balance FROM users WHERE id = ${userId}
+    `;
 
-    // 使用正确的高精度余额更新函数
-    const newBalance = await updateUserBalance(userId, totalCost);
+    if (userResult.rows.length === 0) {
+      return NextResponse.json({ error: "用户不存在" }, { status: 404 });
+    }
 
-    // console.log("余额更新结果:", {
-    //   oldBalance: null,
-    //   newBalance,
-    //   cost: totalCost,
-    // });
+    const user = userResult.rows[0];
+    const newBalance = Number(user.balance) - Number(totalCost);
 
-    return NextResponse.json({
-      message: `输入 \`${inputTokens} tokens\`，输出 \`${outputTokens} tokens\`，总计花费 \`￥${totalCost.toFixed(
-        6
-      )}\`，当前余额 \`￥${newBalance.toFixed(6)}\`。`,
-    });
+    // 开启事务
+    await sql`BEGIN`;
+
+    try {
+      // 更新用户余额
+      await sql`
+        UPDATE users 
+        SET balance = ${newBalance}
+        WHERE id = ${userId}
+      `;
+
+      // 记录使用情况
+      await sql`
+        INSERT INTO user_usage_records (
+          user_id,
+          nickname,
+          model_name,
+          input_tokens,
+          output_tokens,
+          cost,
+          balance_after
+        ) VALUES (
+          ${userId},
+          ${userName},
+          ${modelId},
+          ${inputTokens},
+          ${outputTokens},
+          ${totalCost},
+          ${newBalance}
+        )
+      `;
+
+      await sql`COMMIT`;
+
+      return NextResponse.json({
+        success: true,
+        newBalance,
+        message: `输入 \`${inputTokens} tokens\`, 输出 \`${outputTokens} tokens\`, 消耗 \`¥${totalCost}\`, 余额 \`¥${newBalance}\``,
+      });
+    } catch (error) {
+      await sql`ROLLBACK`;
+      throw error;
+    }
   } catch (error) {
     console.error("Outlet error:", error);
     return NextResponse.json(

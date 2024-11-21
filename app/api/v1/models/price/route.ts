@@ -62,10 +62,10 @@ export async function POST(request: NextRequest) {
       const results = await Promise.all(
         validUpdates.map(async (update: PriceUpdate) => {
           try {
-            console.log("正在更新模型:", update.id, {
-              input_price: update.input_price,
-              output_price: update.output_price,
-            });
+            // console.log("正在更新模型:", update.id, {
+            //   input_price: update.input_price,
+            //   output_price: update.output_price,
+            // });
 
             const result = await updateModelPrice(
               update.id,
@@ -73,17 +73,17 @@ export async function POST(request: NextRequest) {
               update.output_price
             );
 
-            if (!result) {
-              console.log("更新失败 - 模型不存在:", update.id);
-            } else {
-              console.log("更新成功:", {
-                id: update.id,
-                newPrices: {
-                  input_price: result.input_price,
-                  output_price: result.output_price,
-                },
-              });
-            }
+            // if (!result) {
+            //   console.log("更新失败 - 模型不存在:", update.id);
+            // } else {
+            //   console.log("更新成功:", {
+            //     id: update.id,
+            //     newPrices: {
+            //       input_price: result.input_price,
+            //       output_price: result.output_price,
+            //     },
+            //   });
+            // }
 
             return {
               id: update.id,
@@ -103,12 +103,12 @@ export async function POST(request: NextRequest) {
 
       // 过滤出成功更新的记录
       const successfulUpdates = results.filter((r) => r.success);
-      console.log("成功更新的数量:", successfulUpdates.length);
-      console.log("更新结果汇总:", {
-        total: results.length,
-        successful: successfulUpdates.length,
-        failed: results.length - successfulUpdates.length,
-      });
+      // console.log("成功更新的数量:", successfulUpdates.length);
+      // console.log("更新结果汇总:", {
+      //   total: results.length,
+      //   successful: successfulUpdates.length,
+      //   failed: results.length - successfulUpdates.length,
+      // });
 
       return NextResponse.json({
         success: true,
