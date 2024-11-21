@@ -1,19 +1,15 @@
 import { Pool, PoolClient } from "pg";
 
 // 构建数据库连接配置
-const dbConfig = process.env.POSTGRES_URL
-  ? {
-      connectionString: process.env.POSTGRES_URL,
-      ssl: { rejectUnauthorized: false },
-    }
-  : {
-      host: process.env.POSTGRES_HOST,
-      user: process.env.POSTGRES_USER,
-      password: process.env.POSTGRES_PASSWORD,
-      database: process.env.POSTGRES_DATABASE,
-      ssl: { rejectUnauthorized: false },
-    };
+const dbConfig = {
+  host: process.env.POSTGRES_HOST || "localhost",
+  user: process.env.POSTGRES_USER || "postgres",
+  password: process.env.POSTGRES_PASSWORD,
+  database: process.env.POSTGRES_DATABASE || "openwebui_monitor",
+  ssl: false, // 本地开发不需要 SSL
+};
 
+// 创建连接池
 const pool = new Pool(dbConfig);
 
 // 测试连接
@@ -48,18 +44,30 @@ export async function ensureTablesExist() {
   try {
     client = await pool.connect();
 
-    // 首先创建 model_prices 表
+    // 首先创建 users 表
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        email TEXT NOT NULL,
+        name TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'user',
+        balance DECIMAL(16, 6) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // 然后创建 model_prices 表
     await client.query(`
       CREATE TABLE IF NOT EXISTS model_prices (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
-        input_price DOUBLE PRECISION NOT NULL DEFAULT 60,
-        output_price DOUBLE PRECISION NOT NULL DEFAULT 60,
+        input_price DECIMAL(10, 6) DEFAULT 60,
+        output_price DECIMAL(10, 6) DEFAULT 60,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
-    // 然后创建 user_usage_records 表，注意 user_id 类型改为 TEXT
+    // 最后创建 user_usage_records 表
     await client.query(`
       CREATE TABLE IF NOT EXISTS user_usage_records (
         id SERIAL PRIMARY KEY,
@@ -74,7 +82,7 @@ export async function ensureTablesExist() {
         FOREIGN KEY (user_id) REFERENCES users(id)
       );
     `);
-    console.log("确保用户使用记录表已创建");
+    console.log("确保所有表已创建");
   } catch (error) {
     console.error("Database connection/initialization error:", error);
     throw error;
@@ -94,8 +102,8 @@ export async function getOrCreateModelPrice(
   try {
     client = await pool.connect();
     const result = await client.query<ModelPrice>(
-      `INSERT INTO model_prices (id, name, input_price, output_price)
-       VALUES ($1, $2, 60, 60)
+      `INSERT INTO model_prices (id, name)
+       VALUES ($1, $2)
        ON CONFLICT (id) DO UPDATE SET name = $2
        RETURNING *`,
       [id, name]
@@ -120,18 +128,50 @@ export async function updateModelPrice(
   let client: PoolClient | null = null;
   try {
     client = await pool.connect();
+
+    // 记录更新前的价格
+    const beforeUpdate = await client.query<ModelPrice>(
+      `SELECT * FROM model_prices WHERE id = $1`,
+      [id]
+    );
+    console.log(`更新前模型 ${id} 的价格:`, {
+      input_price: beforeUpdate.rows[0]?.input_price,
+      output_price: beforeUpdate.rows[0]?.output_price,
+    });
+
+    console.log(`尝试更新模型 ${id} 的价格:`, {
+      input_price,
+      output_price,
+    });
+
+    // 使用 CAST 确保数据类型正确，并且允许 0 值
     const result = await client.query<ModelPrice>(
       `UPDATE model_prices 
-       SET input_price = $2, 
-           output_price = $3,
-           updated_at = CURRENT_TIMESTAMP
+       SET 
+         input_price = CAST($2 AS DECIMAL(10,6)),
+         output_price = CAST($3 AS DECIMAL(10,6)),
+         updated_at = CURRENT_TIMESTAMP
        WHERE id = $1
        RETURNING *`,
       [id, input_price, output_price]
     );
-    return result.rows[0] || null; // 如果没有找到记录，返回 null
+
+    // 记录更新后的价格
+    console.log(`更新后模型 ${id} 的价格:`, {
+      input_price: Number(result.rows[0]?.input_price),
+      output_price: Number(result.rows[0]?.output_price),
+    });
+
+    if (result.rows[0]) {
+      return {
+        ...result.rows[0],
+        input_price: Number(result.rows[0].input_price),
+        output_price: Number(result.rows[0].output_price),
+      };
+    }
+    return null;
   } catch (error) {
-    console.error("Error in updateModelPrice:", error);
+    console.error(`更新模型 ${id} 价格失败:`, error);
     throw error;
   } finally {
     if (client) {
@@ -148,5 +188,61 @@ export async function initDatabase() {
   } catch (error) {
     console.error("Failed to initialize database:", error);
     throw error;
+  }
+}
+
+// 获取用户列表
+export async function getUsers(page: number = 1, pageSize: number = 20) {
+  let client: PoolClient | null = null;
+  try {
+    client = await pool.connect();
+    const offset = (page - 1) * pageSize;
+
+    const countResult = await client.query("SELECT COUNT(*) FROM users");
+    const total = parseInt(countResult.rows[0].count);
+
+    const result = await client.query(
+      `SELECT id, email, name, role, balance
+       FROM users
+       ORDER BY id DESC
+       LIMIT $1 OFFSET $2`,
+      [pageSize, offset]
+    );
+
+    return {
+      users: result.rows,
+      total,
+    };
+  } catch (error) {
+    console.error("Error in getUsers:", error);
+    throw error;
+  } finally {
+    if (client) {
+      client.release();
+    }
+  }
+}
+
+// 更新用户余额
+export async function updateUserBalance(userId: string, balance: number) {
+  let client: PoolClient | null = null;
+  try {
+    client = await pool.connect();
+    const result = await client.query(
+      `UPDATE users
+       SET balance = $2
+       WHERE id = $1
+       RETURNING id, email, balance`,
+      [userId, balance]
+    );
+
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error in updateUserBalance:", error);
+    throw error;
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 }

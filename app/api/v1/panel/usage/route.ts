@@ -1,14 +1,18 @@
-import { sql } from "@vercel/postgres";
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
+import { Pool } from "pg";
 
-export const dynamic = "force-dynamic"; // 禁用路由缓存
-export const revalidate = 0; // 禁用数据缓存
+const pool = new Pool({
+  host: process.env.POSTGRES_HOST,
+  user: process.env.POSTGRES_USER,
+  password: process.env.POSTGRES_PASSWORD,
+  database: process.env.POSTGRES_DATABASE,
+  ssl: false,
+});
 
 export async function GET() {
   try {
     const [modelResult, userResult] = await Promise.all([
-      sql`
+      pool.query(`
         SELECT 
           model_name,
           COUNT(*) as total_count,
@@ -16,8 +20,8 @@ export async function GET() {
         FROM user_usage_records
         GROUP BY model_name
         ORDER BY total_cost DESC
-      `,
-      sql`
+      `),
+      pool.query(`
         SELECT 
           nickname,
           COUNT(*) as total_count,
@@ -26,18 +30,8 @@ export async function GET() {
         GROUP BY nickname
         ORDER BY total_cost DESC
         LIMIT 10
-      `,
+      `),
     ]);
-
-    // 设置响应头以禁用缓存
-    const responseHeaders = new Headers();
-    responseHeaders.set(
-      "Cache-Control",
-      "no-store, no-cache, must-revalidate, proxy-revalidate"
-    );
-    responseHeaders.set("Pragma", "no-cache");
-    responseHeaders.set("Expires", "0");
-    responseHeaders.set("Surrogate-Control", "no-store");
 
     const formattedData = {
       models: modelResult.rows.map((row) => ({
@@ -52,9 +46,7 @@ export async function GET() {
       })),
     };
 
-    return new NextResponse(JSON.stringify(formattedData), {
-      headers: responseHeaders,
-    });
+    return NextResponse.json(formattedData);
   } catch (error) {
     console.error("获取使用统计失败:", error);
     return NextResponse.json({ error: "获取使用统计失败" }, { status: 500 });

@@ -9,123 +9,92 @@ interface PriceUpdate {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const data = await request.json();
+    console.log("收到的原始请求数据:", data);
 
-    // 处理单个更新的情况
-    if (body.id) {
-      console.log("单个价格更新请求:", {
-        id: body.id,
-        input_price: body.input_price,
-        output_price: body.output_price,
-      });
-
-      const result = await updateModelPrice(
-        body.id,
-        body.input_price,
-        body.output_price
-      );
-
-      if (!result) {
-        console.log("模型不存在:", body.id);
-        return NextResponse.json({ error: "模型不存在" }, { status: 404 });
-      }
-
-      return NextResponse.json({
-        input_price: result.input_price,
-        output_price: result.output_price,
-      });
+    // 从对象中提取模型数组
+    const updates = data.updates || data;
+    if (!Array.isArray(updates)) {
+      console.error("无效的数据格式 - 期望数组:", updates);
+      return NextResponse.json({ error: "无效的数据格式" }, { status: 400 });
     }
 
-    // 处理批量更新的情况
-    if (body.updates && Array.isArray(body.updates)) {
-      console.log("收到批量更新请求，原始数据:", body.updates);
+    // 验证并转换数据格式
+    const validUpdates = updates
+      .map((update: any) => ({
+        id: update.id,
+        input_price: Number(update.input_price),
+        output_price: Number(update.output_price),
+      }))
+      .filter((update: PriceUpdate) => {
+        if (!update.id) {
+          console.log("跳过 - ID 无效:", update);
+          return false;
+        }
 
-      // 验证并转换每个更新项
-      const validUpdates = body.updates
-        .map((update: any) => ({
-          id: update.id,
-          input_price: Number(update.input_price),
-          output_price: Number(update.output_price),
-        }))
-        .filter(
-          (update: PriceUpdate) =>
-            update.id &&
-            !isNaN(update.input_price) &&
-            !isNaN(update.output_price) &&
-            update.input_price >= 0 &&
-            update.output_price >= 0
-        );
+        if (isNaN(update.input_price) || isNaN(update.output_price)) {
+          console.log("跳过 - 价格无效:", update);
+          return false;
+        }
 
-      console.log("验证后的有效更新数据:", validUpdates);
-
-      // 执行批量更新并收集结果
-      const results = await Promise.all(
-        validUpdates.map(async (update: PriceUpdate) => {
-          try {
-            // console.log("正在更新模型:", update.id, {
-            //   input_price: update.input_price,
-            //   output_price: update.output_price,
-            // });
-
-            const result = await updateModelPrice(
-              update.id,
-              update.input_price,
-              update.output_price
-            );
-
-            // if (!result) {
-            //   console.log("更新失败 - 模型不存在:", update.id);
-            // } else {
-            //   console.log("更新成功:", {
-            //     id: update.id,
-            //     newPrices: {
-            //       input_price: result.input_price,
-            //       output_price: result.output_price,
-            //     },
-            //   });
-            // }
-
-            return {
-              id: update.id,
-              success: !!result,
-              data: result,
-            };
-          } catch (error) {
-            console.error("更新模型时出错:", update.id, error);
-            return {
-              id: update.id,
-              success: false,
-              error: error instanceof Error ? error.message : "未知错误",
-            };
-          }
-        })
-      );
-
-      // 过滤出成功更新的记录
-      const successfulUpdates = results.filter((r) => r.success);
-      // console.log("成功更新的数量:", successfulUpdates.length);
-      // console.log("更新结果汇总:", {
-      //   total: results.length,
-      //   successful: successfulUpdates.length,
-      //   failed: results.length - successfulUpdates.length,
-      // });
-
-      return NextResponse.json({
-        success: true,
-        updatedCount: successfulUpdates.length,
-        results: successfulUpdates.map((r) => ({
-          id: r.id,
-          input_price: r.data?.input_price,
-          output_price: r.data?.output_price,
-        })),
+        return true;
       });
-    }
 
-    console.log("无效的请求格式:", body);
-    return NextResponse.json({ error: "无效的请求格式" }, { status: 400 });
+    console.log("处理后的更新数据:", validUpdates);
+    console.log(`成功验证 ${validUpdates.length} 个模型的价格更新请求`);
+
+    // 执行批量更新并收集结果
+    const results = await Promise.all(
+      validUpdates.map(async (update: PriceUpdate) => {
+        try {
+          console.log("正在处理模型更新:", {
+            id: update.id,
+            input_price: update.input_price,
+            output_price: update.output_price,
+          });
+
+          const result = await updateModelPrice(
+            update.id,
+            update.input_price,
+            update.output_price
+          );
+
+          console.log("更新结果:", {
+            id: update.id,
+            success: !!result,
+            result,
+          });
+
+          return {
+            id: update.id,
+            success: !!result,
+            data: result,
+          };
+        } catch (error) {
+          console.error("更新失败:", {
+            id: update.id,
+            error: error instanceof Error ? error.message : "未知错误",
+          });
+          return {
+            id: update.id,
+            success: false,
+            error: error instanceof Error ? error.message : "未知错误",
+          };
+        }
+      })
+    );
+
+    const successCount = results.filter((r) => r.success).length;
+    console.log(`成功更新 ${successCount} 个模型的价格`);
+
+    return NextResponse.json({
+      success: true,
+      message: `成功更新 ${successCount} 个模型的价格`,
+      results,
+    });
   } catch (error) {
-    console.error("处理请求时发生错误:", error);
-    return NextResponse.json({ error: "更新价格失败" }, { status: 500 });
+    console.error("批量更新失败:", error);
+    return NextResponse.json({ error: "批量更新失败" }, { status: 500 });
   }
 }
 

@@ -90,13 +90,13 @@ export default function ModelsPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "更新价格失败");
 
-      setModels(
-        models.map((model) =>
+      setModels((prevModels) =>
+        prevModels.map((model) =>
           model.id === id
             ? {
                 ...model,
-                input_price: Number(data.input_price),
-                output_price: Number(data.output_price),
+                input_price: Number(data.results[0].data.input_price),
+                output_price: Number(data.results[0].data.output_price),
               }
             : model
         )
@@ -252,16 +252,19 @@ export default function ModelsPage() {
         }
 
         const data = await response.json();
+        console.log("服务器返回的更新结果:", data);
 
         if (data.results) {
           setModels((prevModels) =>
             prevModels.map((model) => {
-              const update = data.results.find((u: any) => u.id === model.id);
+              const update = data.results.find(
+                (r: any) => r.id === model.id && r.success && r.data
+              );
               if (update) {
                 return {
                   ...model,
-                  input_price: update.input_price,
-                  output_price: update.output_price,
+                  input_price: Number(update.data.input_price),
+                  output_price: Number(update.data.output_price),
                 };
               }
               return model;
@@ -269,8 +272,13 @@ export default function ModelsPage() {
           );
         }
 
-        message.success(`成功更新 ${data.updatedCount} 个模型的价格`);
+        message.success(
+          `成功更新 ${
+            data.results.filter((r: any) => r.success).length
+          } 个模型的价格`
+        );
       } catch (err) {
+        console.error("导入失败:", err);
         message.error(err instanceof Error ? err.message : "导入失败");
       }
     };
