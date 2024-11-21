@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button, Table, Input, Modal, message } from "antd";
+import { Table, Input, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
 
 interface User {
@@ -17,9 +17,7 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [newBalance, setNewBalance] = useState("");
+  const [editingKey, setEditingKey] = useState<string>("");
 
   const fetchUsers = async (page: number) => {
     setLoading(true);
@@ -40,21 +38,19 @@ export default function UsersPage() {
     fetchUsers(currentPage);
   }, [currentPage]);
 
-  const handleUpdateBalance = async () => {
-    if (!selectedUser || !newBalance) return;
-
+  const handleUpdateBalance = async (userId: string, newBalance: number) => {
     try {
-      const res = await fetch(`/api/users/${selectedUser.id}/balance`, {
+      const res = await fetch(`/api/users/${userId}/balance`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ balance: parseFloat(newBalance) }),
+        body: JSON.stringify({ balance: newBalance }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
       message.success("余额更新成功");
-      setIsModalVisible(false);
+      setEditingKey("");
       fetchUsers(currentPage);
     } catch (err) {
       message.error(err instanceof Error ? err.message : "更新余额失败");
@@ -89,26 +85,48 @@ export default function UsersPage() {
       title: "余额",
       dataIndex: "balance",
       key: "balance",
-      render: (balance: number | string) => `￥${Number(balance).toFixed(6)}`,
-    },
-    {
-      title: "操作",
-      key: "action",
-      width: 120,
-      render: (_, record) => (
-        <Button
-          onClick={() => {
-            setSelectedUser({
-              ...record,
-              balance: Number(record.balance),
-            });
-            setNewBalance(Number(record.balance).toString());
-            setIsModalVisible(true);
-          }}
-        >
-          编辑余额
-        </Button>
-      ),
+      width: 200,
+      render: (balance: number, record) => {
+        const isEditing = record.id === editingKey;
+        return isEditing ? (
+          <Input
+            defaultValue={Number(balance).toFixed(2)}
+            style={{ width: "150px" }}
+            onPressEnter={(e) => {
+              const value = e.target.value;
+              const numValue = Number(value);
+              if (!isNaN(numValue) && numValue >= 0) {
+                handleUpdateBalance(record.id, numValue);
+              } else {
+                message.error("请输入有效的正数");
+                setEditingKey("");
+              }
+            }}
+            onBlur={(e) => {
+              const value = e.target.value;
+              const numValue = Number(value);
+              if (
+                value &&
+                !isNaN(numValue) &&
+                numValue >= 0 &&
+                numValue !== balance
+              ) {
+                handleUpdateBalance(record.id, numValue);
+              } else {
+                setEditingKey("");
+              }
+            }}
+            autoFocus
+          />
+        ) : (
+          <div
+            style={{ cursor: "pointer" }}
+            onClick={() => setEditingKey(record.id)}
+          >
+            ￥{Number(balance).toFixed(2)}
+          </div>
+        );
+      },
     },
   ];
 
@@ -127,31 +145,13 @@ export default function UsersPage() {
           total,
           pageSize: 20,
           current: currentPage,
-          onChange: setCurrentPage,
+          onChange: (page) => {
+            setCurrentPage(page);
+            setEditingKey("");
+          },
         }}
         scroll={{ x: 1200 }}
       />
-
-      <Modal
-        title="编辑用户余额"
-        open={isModalVisible}
-        onOk={handleUpdateBalance}
-        onCancel={() => setIsModalVisible(false)}
-      >
-        <div className="mb-4">
-          <p>
-            用户: {selectedUser?.name} ({selectedUser?.email})
-          </p>
-          <p>当前余额: ￥{selectedUser?.balance.toFixed(6)}</p>
-        </div>
-        <Input
-          type="number"
-          step="0.000001"
-          value={newBalance}
-          onChange={(e) => setNewBalance(e.target.value)}
-          placeholder="输入新余额"
-        />
-      </Modal>
     </div>
   );
 }

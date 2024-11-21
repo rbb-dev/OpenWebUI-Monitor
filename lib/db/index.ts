@@ -39,14 +39,14 @@ export async function getOrCreateModelPrice(
 
 export async function updateModelPrice(
   modelId: string,
-  inputPrice: number,
-  outputPrice: number
+  input_price: number,
+  output_price: number
 ) {
   const result = await sql`
     UPDATE model_prices 
     SET 
-      input_price = CAST(${inputPrice} AS DECIMAL(10,6)),
-      output_price = CAST(${outputPrice} AS DECIMAL(10,6))
+      input_price = CAST(${input_price} AS DECIMAL(10,6)),
+      output_price = CAST(${output_price} AS DECIMAL(10,6))
     WHERE model_id = ${modelId}
     RETURNING *;
   `;

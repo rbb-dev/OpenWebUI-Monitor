@@ -9,25 +9,25 @@ export async function POST(request: Request) {
     // 检查参数
     if (
       !body.id ||
-      typeof body.inputPrice !== "number" ||
-      typeof body.outputPrice !== "number"
+      typeof body.input_price !== "number" ||
+      typeof body.output_price !== "number"
     ) {
       console.error("Invalid input:", {
         id: body.id,
-        inputPrice: body.inputPrice,
-        outputPrice: body.outputPrice,
+        input_price: body.input_price,
+        output_price: body.output_price,
       });
       return NextResponse.json(
         {
           error: "Invalid input",
           details: {
             id: !body.id ? "Missing model ID" : undefined,
-            inputPrice:
-              typeof body.inputPrice !== "number"
+            input_price:
+              typeof body.input_price !== "number"
                 ? "Input price must be a number"
                 : undefined,
-            outputPrice:
-              typeof body.outputPrice !== "number"
+            output_price:
+              typeof body.output_price !== "number"
                 ? "Output price must be a number"
                 : undefined,
           },
@@ -38,8 +38,8 @@ export async function POST(request: Request) {
 
     const updatedPrice = await updateModelPrice(
       body.id,
-      body.inputPrice,
-      body.outputPrice
+      body.input_price,
+      body.output_price
     );
 
     if (!updatedPrice) {

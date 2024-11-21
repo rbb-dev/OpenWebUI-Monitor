@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Table, message, InputNumber } from "antd";
+import { Table, Input, message, Tooltip } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import Image from "next/image";
 
@@ -17,15 +17,18 @@ interface Model {
   id: string;
   name: string;
   imageUrl: string;
-  inputPrice: number;
-  outputPrice: number;
+  input_price: number;
+  output_price: number;
 }
 
 export default function ModelsPage() {
   const [models, setModels] = useState<Model[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState<string | null>(null);
+  const [editingCell, setEditingCell] = useState<{
+    id: string;
+    field: "input_price" | "output_price";
+  } | null>(null);
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -38,8 +41,8 @@ export default function ModelsPage() {
         setModels(
           data.map((model: ModelResponse) => ({
             ...model,
-            inputPrice: model.input_price || 60,
-            outputPrice: model.output_price || 60,
+            input_price: model.input_price || 60,
+            output_price: model.output_price || 60,
           }))
         );
       } catch (err) {
@@ -54,154 +57,150 @@ export default function ModelsPage() {
 
   const handlePriceUpdate = async (
     id: string,
-    inputPrice: number,
-    outputPrice: number
+    field: "input_price" | "output_price",
+    value: number
   ) => {
-    if (saving) return;
-
     try {
-      setSaving(id);
+      const model = models.find((m) => m.id === id);
+      if (!model) return;
 
-      if (isNaN(inputPrice) || isNaN(outputPrice)) {
-        throw new Error("价格必须是有效的数字");
+      const validValue = Number(parseFloat(value.toFixed(6)));
+      if (isNaN(validValue) || validValue < 0) {
+        throw new Error("请输入有效的正数");
       }
+
+      const input_price = Number(
+        field === "input_price" ? validValue : model.input_price
+      );
+      const output_price = Number(
+        field === "output_price" ? validValue : model.output_price
+      );
 
       const response = await fetch("/api/v1/models/price", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id,
-          inputPrice: Number(inputPrice),
-          outputPrice: Number(outputPrice),
+          input_price: Number(input_price),
+          output_price: Number(output_price),
         }),
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "更新价格失败");
-      }
+      if (!response.ok) throw new Error(data.error || "更新价格失败");
 
       setModels(
         models.map((model) =>
           model.id === id
             ? {
                 ...model,
-                inputPrice: data.input_price,
-                outputPrice: data.output_price,
+                input_price: Number(data.input_price),
+                output_price: Number(data.output_price),
               }
             : model
         )
       );
 
       message.success("价格更新成功");
+      setEditingCell(null);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "更新价格失败";
-      message.error(errorMessage);
-    } finally {
-      setSaving(null);
+      message.error(err instanceof Error ? err.message : "更新价格失败");
+      setEditingCell(null);
     }
+  };
+
+  const renderPriceCell = (
+    field: "input_price" | "output_price",
+    record: Model
+  ) => {
+    const isEditing =
+      editingCell?.id === record.id && editingCell?.field === field;
+    const currentValue = Number(record[field]);
+
+    return isEditing ? (
+      <Input
+        defaultValue={currentValue.toFixed(2)}
+        style={{ width: "150px" }}
+        onPressEnter={(e) => {
+          const value = e.target.value;
+          const numValue = Number(value);
+          if (!isNaN(numValue) && numValue >= 0) {
+            handlePriceUpdate(record.id, field, numValue);
+          } else {
+            message.error("请输入有效的正数");
+            setEditingCell(null);
+          }
+        }}
+        onBlur={(e) => {
+          const value = e.target.value;
+          const numValue = Number(value);
+          if (
+            value &&
+            !isNaN(numValue) &&
+            numValue >= 0 &&
+            numValue !== currentValue
+          ) {
+            handlePriceUpdate(record.id, field, numValue);
+          } else {
+            setEditingCell(null);
+          }
+        }}
+        autoFocus
+      />
+    ) : (
+      <div
+        style={{ cursor: "pointer" }}
+        onClick={() => setEditingCell({ id: record.id, field })}
+      >
+        ￥{currentValue.toFixed(2)}
+      </div>
+    );
   };
 
   const columns: ColumnsType<Model> = [
     {
       title: "模型",
       key: "model",
-      width: 300,
+      width: 200,
       fixed: "left",
       render: (_, record) => (
-        <div className="flex items-center space-x-3">
-          {record.imageUrl && (
-            <div className="w-10 h-10 relative flex-shrink-0">
+        <Tooltip title={record.id}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+              cursor: "pointer",
+              height: "100%",
+            }}
+          >
+            {record.imageUrl && (
               <Image
                 src={record.imageUrl}
                 alt={record.name}
-                fill
-                className="rounded-full object-cover"
+                width={32}
+                height={32}
+                style={{ borderRadius: "50%", objectFit: "cover" }}
               />
+            )}
+            <div style={{ fontWeight: "medium", flexGrow: 1 }}>
+              {record.name}
             </div>
-          )}
-          <div>
-            <div className="font-semibold">{record.name}</div>
-            <div className="text-xs text-gray-500">{record.id}</div>
           </div>
-        </div>
+        </Tooltip>
       ),
     },
     {
       title: "输入价格 (￥/1M tokens)",
-      key: "inputPrice",
+      key: "input_price",
       width: 200,
-      render: (_, record) => (
-        <div className="flex items-center space-x-2">
-          <InputNumber
-            value={record.inputPrice}
-            onChange={(value) => {
-              if (value === null) return;
-              setModels(
-                models.map((m) =>
-                  m.id === record.id ? { ...m, inputPrice: value } : m
-                )
-              );
-            }}
-            onBlur={() =>
-              handlePriceUpdate(
-                record.id,
-                record.inputPrice,
-                record.outputPrice
-              )
-            }
-            min={0}
-            max={1000}
-            step={0.000001}
-            precision={6}
-            style={{ width: "150px" }}
-            prefix="￥"
-            disabled={saving === record.id}
-            controls={false}
-          />
-          {saving === record.id && (
-            <span className="text-sm text-blue-500">保存中...</span>
-          )}
-        </div>
-      ),
+      render: (_, record) => renderPriceCell("input_price", record),
     },
     {
       title: "输出价格 (￥/1M tokens)",
-      key: "outputPrice",
+      key: "output_price",
       width: 200,
-      render: (_, record) => (
-        <div className="flex items-center space-x-2">
-          <InputNumber
-            value={record.outputPrice}
-            onChange={(value) => {
-              if (value === null) return;
-              setModels(
-                models.map((m) =>
-                  m.id === record.id ? { ...m, outputPrice: value } : m
-                )
-              );
-            }}
-            onBlur={() =>
-              handlePriceUpdate(
-                record.id,
-                record.inputPrice,
-                record.outputPrice
-              )
-            }
-            min={0}
-            max={1000}
-            step={0.000001}
-            precision={6}
-            style={{ width: "150px" }}
-            prefix="￥"
-            disabled={saving === record.id}
-            controls={false}
-          />
-        </div>
-      ),
+      render: (_, record) => renderPriceCell("output_price", record),
     },
   ];
 
