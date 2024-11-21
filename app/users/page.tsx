@@ -92,8 +92,8 @@ export default function UsersPage() {
           <Input
             defaultValue={Number(balance).toFixed(2)}
             style={{ width: "150px" }}
-            onPressEnter={(e) => {
-              const value = e.target.value;
+            onPressEnter={(e: React.KeyboardEvent<HTMLInputElement>) => {
+              const value = e.currentTarget.value;
               const numValue = Number(value);
               if (!isNaN(numValue) && numValue >= 0) {
                 handleUpdateBalance(record.id, numValue);
@@ -102,8 +102,8 @@ export default function UsersPage() {
                 setEditingKey("");
               }
             }}
-            onBlur={(e) => {
-              const value = e.target.value;
+            onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+              const value = e.currentTarget.value;
               const numValue = Number(value);
               if (
                 value &&

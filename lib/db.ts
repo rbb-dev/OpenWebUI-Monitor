@@ -88,7 +88,7 @@ export async function updateModelPrice(
   id: string,
   input_price: number,
   output_price: number
-): Promise<ModelPrice> {
+): Promise<ModelPrice | null> {
   let client: PoolClient | null = null;
   try {
     client = await pool.connect();
@@ -101,7 +101,7 @@ export async function updateModelPrice(
        RETURNING *`,
       [id, input_price, output_price]
     );
-    return result.rows[0];
+    return result.rows[0] || null; // 如果没有找到记录，返回 null
   } catch (error) {
     console.error("Error in updateModelPrice:", error);
     throw error;

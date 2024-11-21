@@ -253,21 +253,23 @@ export default function ModelsPage() {
 
         const data = await response.json();
 
-        setModels(
-          models.map((model) => {
-            const update = validUpdates.find((u) => u.id === model.id);
-            if (update) {
-              return {
-                ...model,
-                input_price: update.input_price,
-                output_price: update.output_price,
-              };
-            }
-            return model;
-          })
-        );
+        if (data.results) {
+          setModels((prevModels) =>
+            prevModels.map((model) => {
+              const update = data.results.find((u: any) => u.id === model.id);
+              if (update) {
+                return {
+                  ...model,
+                  input_price: update.input_price,
+                  output_price: update.output_price,
+                };
+              }
+              return model;
+            })
+          );
+        }
 
-        message.success(`成功更新 ${validUpdates.length} 个模型的价格`);
+        message.success(`成功更新 ${data.updatedCount} 个模型的价格`);
       } catch (err) {
         message.error(err instanceof Error ? err.message : "导入失败");
       }
