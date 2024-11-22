@@ -70,8 +70,8 @@ export async function ensureTablesExist() {
       CREATE TABLE IF NOT EXISTS model_prices (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
-        input_price DECIMAL(10, 6) DEFAULT 60,
-        output_price DECIMAL(10, 6) DEFAULT 60,
+        input_price NUMERIC(10, 6) DEFAULT 60,
+        output_price NUMERIC(10, 6) DEFAULT 60,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
@@ -138,38 +138,17 @@ export async function updateModelPrice(
   try {
     client = await pool.connect();
 
-    // 记录更新前的价格
-    const beforeUpdate = await client.query<ModelPrice>(
-      `SELECT * FROM model_prices WHERE id = $1`,
-      [id]
-    );
-    console.log(`更新前模型 ${id} 的价格:`, {
-      input_price: beforeUpdate.rows[0]?.input_price,
-      output_price: beforeUpdate.rows[0]?.output_price,
-    });
-
-    console.log(`尝试更新模型 ${id} 的价格:`, {
-      input_price,
-      output_price,
-    });
-
-    // 使用 CAST 确保数据类型正确，并且允许 0 值
+    // 使用 CAST 确保数据类型正确
     const result = await client.query<ModelPrice>(
       `UPDATE model_prices 
        SET 
-         input_price = CAST($2 AS DECIMAL(10,6)),
-         output_price = CAST($3 AS DECIMAL(10,6)),
+         input_price = CAST($2 AS NUMERIC(10,6)),
+         output_price = CAST($3 AS NUMERIC(10,6)),
          updated_at = CURRENT_TIMESTAMP
        WHERE id = $1
        RETURNING *`,
       [id, input_price, output_price]
     );
-
-    // 记录更新后的价格
-    console.log(`更新后模型 ${id} 的价格:`, {
-      input_price: Number(result.rows[0]?.input_price),
-      output_price: Number(result.rows[0]?.output_price),
-    });
 
     if (result.rows[0]) {
       return {

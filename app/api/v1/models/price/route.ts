@@ -27,16 +27,17 @@ export async function POST(request: NextRequest) {
         output_price: Number(update.output_price),
       }))
       .filter((update: PriceUpdate) => {
-        if (!update.id) {
-          console.log("跳过 - ID 无效:", update);
+        const isValidPrice = (price: number) =>
+          !isNaN(price) && isFinite(price) && price >= 0;
+
+        if (
+          !update.id ||
+          !isValidPrice(update.input_price) ||
+          !isValidPrice(update.output_price)
+        ) {
+          console.log("跳过无效数据:", update);
           return false;
         }
-
-        if (isNaN(update.input_price) || isNaN(update.output_price)) {
-          console.log("跳过 - 价格无效:", update);
-          return false;
-        }
-
         return true;
       });
 

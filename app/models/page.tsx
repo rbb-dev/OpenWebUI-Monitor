@@ -65,17 +65,15 @@ export default function ModelsPage() {
       const model = models.find((m) => m.id === id);
       if (!model) return;
 
-      const validValue = Number(parseFloat(value.toFixed(6)));
-      if (isNaN(validValue) || validValue < 0) {
+      const validValue = Number(value);
+      if (!isFinite(validValue) || validValue < 0) {
         throw new Error("请输入有效的正数");
       }
 
-      const input_price = Number(
-        field === "input_price" ? validValue : model.input_price
-      );
-      const output_price = Number(
-        field === "output_price" ? validValue : model.output_price
-      );
+      const input_price =
+        field === "input_price" ? validValue : model.input_price;
+      const output_price =
+        field === "output_price" ? validValue : model.output_price;
 
       const response = await fetch("/api/v1/models/price", {
         method: "POST",
@@ -128,12 +126,11 @@ export default function ModelsPage() {
 
     return isEditing ? (
       <Input
-        defaultValue={currentValue.toFixed(2)}
+        defaultValue={currentValue.toFixed(6)}
         style={{ width: "150px" }}
         onPressEnter={(e: React.KeyboardEvent<HTMLInputElement>) => {
-          const value = e.currentTarget.value;
-          const numValue = Number(value);
-          if (!isNaN(numValue) && numValue >= 0) {
+          const numValue = Number(e.currentTarget.value);
+          if (isFinite(numValue) && numValue >= 0) {
             handlePriceUpdate(record.id, field, numValue);
           } else {
             message.error("请输入有效的正数");
@@ -161,7 +158,7 @@ export default function ModelsPage() {
         style={{ cursor: "pointer" }}
         onClick={() => setEditingCell({ id: record.id, field })}
       >
-        ￥{currentValue.toFixed(2)}
+        ￥{currentValue.toFixed(6)}
       </div>
     );
   };

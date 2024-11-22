@@ -119,8 +119,10 @@ export async function POST(req: Request) {
 
       return NextResponse.json({
         success: true,
+        inputTokens,
+        outputTokens,
+        totalCost,
         newBalance,
-        message: `输入 \`${inputTokens} tokens\`, 输出 \`${outputTokens} tokens\`, 消耗 \`¥${totalCost}\`, 余额 \`¥${newBalance}\``,
       });
     } catch (error) {
       await sql`ROLLBACK`;
