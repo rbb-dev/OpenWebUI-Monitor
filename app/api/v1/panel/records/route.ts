@@ -6,20 +6,57 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = parseInt(searchParams.get("pageSize") || "10");
+    const users = searchParams.get("users")?.split(",");
+    const models = searchParams.get("models")?.split(",");
+    const sortField = searchParams.get("sortField");
+    const sortOrder = searchParams.get("sortOrder");
     const offset = (page - 1) * pageSize;
 
-    const countResult = await sql`
-      SELECT COUNT(*) FROM user_usage_records
-    `;
-    const total = parseInt(countResult.rows[0].count);
+    let conditions = [];
+    let params: any[] = [];
+    let paramIndex = 1;
 
-    const records = await sql`
-      SELECT *
-      FROM user_usage_records
-      ORDER BY use_time DESC
-      LIMIT ${pageSize}
-      OFFSET ${offset}
-    `;
+    if (users && users.length > 0) {
+      conditions.push(`nickname = ANY($${paramIndex})`);
+      params.push(users);
+      paramIndex += 1;
+    }
+
+    if (models && models.length > 0) {
+      conditions.push(`model_name = ANY($${paramIndex})`);
+      params.push(models);
+      paramIndex += 1;
+    }
+
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    const [countResult, records] = await Promise.all([
+      sql.query(
+        `
+        SELECT COUNT(*) 
+        FROM user_usage_records
+        ${whereClause}
+      `,
+        params
+      ),
+      sql.query(
+        `
+        SELECT *
+        FROM user_usage_records
+        ${whereClause}
+        ${
+          sortField
+            ? `ORDER BY ${sortField} ${sortOrder === "ascend" ? "ASC" : "DESC"}`
+            : "ORDER BY use_time DESC"
+        }
+        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+      `,
+        [...params, pageSize, offset]
+      ),
+    ]);
+
+    const total = parseInt(countResult.rows[0].count);
 
     return NextResponse.json({
       records: records.rows,

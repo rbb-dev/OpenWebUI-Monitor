@@ -1,12 +1,27 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Radio, Button, Spin, Slider, Space, Card } from "antd";
+import {
+  Radio,
+  Button,
+  Spin,
+  Slider,
+  Space,
+  Card,
+  Table,
+  message,
+  DatePicker,
+  Select,
+} from "antd";
 import { useRouter, usePathname } from "next/navigation";
 import ReactECharts from "echarts-for-react";
 import type { ECharts } from "echarts";
 import * as echarts from "echarts";
 import dayjs from "dayjs";
+import { DownloadOutlined } from "@ant-design/icons";
+import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
+import type { SorterResult } from "antd/es/table/interface";
+import type { FilterValue } from "antd/es/table/interface";
 
 interface ModelUsage {
   model_name: string;
@@ -27,6 +42,24 @@ interface UsageData {
     minTime: string;
     maxTime: string;
   };
+}
+
+interface UsageRecord {
+  id: number;
+  nickname: string;
+  use_time: string;
+  model_name: string;
+  input_tokens: number;
+  output_tokens: number;
+  cost: number;
+  balance_after: number;
+}
+
+interface TableParams {
+  pagination: TablePaginationConfig;
+  sortField?: string;
+  sortOrder?: "ascend" | "descend" | undefined;
+  filters?: Record<string, FilterValue | null>;
 }
 
 const formatTime = (date: Date) => {
@@ -82,6 +115,7 @@ const generateTimeMarks = (minTime: Date, maxTime: Date) => {
 
 export default function PanelPage() {
   const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(true);
   const [usageData, setUsageData] = useState<UsageData>({
     models: [],
     users: [],
@@ -102,6 +136,20 @@ export default function PanelPage() {
   }>({
     minTime: new Date(),
     maxTime: new Date(),
+  });
+
+  // 添加表格相关的状态
+  const [records, setRecords] = useState<UsageRecord[]>([]);
+  const [tableParams, setTableParams] = useState<TableParams>({
+    pagination: {
+      current: 1,
+      pageSize: 10,
+      total: 0,
+    },
+    filters: {
+      nickname: null, // null 表示全选
+      model_name: null, // null 表示全选
+    },
   });
 
   const fetchUsageData = async () => {
@@ -160,9 +208,159 @@ export default function PanelPage() {
     }
   };
 
+  // 添加表格相关的函数
+  const fetchRecords = async (params: TableParams) => {
+    setTableLoading(true);
+    try {
+      const searchParams = new URLSearchParams();
+      searchParams.append("page", params.pagination.current?.toString() || "1");
+      searchParams.append(
+        "pageSize",
+        params.pagination.pageSize?.toString() || "10"
+      );
+
+      if (params.sortField) {
+        searchParams.append("sortField", params.sortField);
+        searchParams.append("sortOrder", params.sortOrder || "ascend");
+      }
+
+      if (params.filters?.nickname && params.filters.nickname.length > 0) {
+        searchParams.append("users", params.filters.nickname.join(","));
+      }
+      if (params.filters?.model_name && params.filters.model_name.length > 0) {
+        searchParams.append("models", params.filters.model_name.join(","));
+      }
+
+      const response = await fetch(
+        `/api/v1/panel/records?${searchParams.toString()}`
+      );
+      const data = await response.json();
+
+      setRecords(data.records);
+      setTableParams({
+        ...params,
+        pagination: {
+          ...params.pagination,
+          total: data.total,
+        },
+      });
+    } catch (error) {
+      message.error("获取记录失败");
+    } finally {
+      setTableLoading(false);
+    }
+  };
+
+  const handleTableChange = (
+    pagination: TablePaginationConfig,
+    filters: Record<string, FilterValue | null>,
+    sorter: SorterResult<UsageRecord> | SorterResult<UsageRecord>[]
+  ) => {
+    const processedFilters = Object.fromEntries(
+      Object.entries(filters).map(([key, value]) => [
+        key,
+        Array.isArray(value) && value.length === 0 ? null : value,
+      ])
+    );
+
+    const newParams: TableParams = {
+      pagination,
+      filters: processedFilters,
+      sortField: Array.isArray(sorter) ? undefined : sorter.field?.toString(),
+      sortOrder: Array.isArray(sorter) ? undefined : sorter.order,
+    };
+    setTableParams(newParams);
+    fetchRecords(newParams);
+  };
+
+  const handleExport = async () => {
+    try {
+      const response = await fetch("/api/v1/panel/records/export");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `usage_records_${
+        new Date().toISOString().split("T")[0]
+      }.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      message.error("导出失败");
+    }
+  };
+
+  const columns: ColumnsType<UsageRecord> = [
+    {
+      title: "用户",
+      dataIndex: "nickname",
+      key: "nickname",
+      filters: usageData.users.map((user) => ({
+        text: user.nickname,
+        value: user.nickname,
+      })),
+      filterMode: "tree",
+      filterSearch: true,
+      filteredValue: tableParams.filters?.nickname || null,
+    },
+    {
+      title: "使用时间",
+      dataIndex: "use_time",
+      key: "use_time",
+      render: (text) => new Date(text).toLocaleString(),
+      sorter: true,
+    },
+    {
+      title: "模型",
+      dataIndex: "model_name",
+      key: "model_name",
+      filters: usageData.models.map((model) => ({
+        text: model.model_name,
+        value: model.model_name,
+      })),
+      filterMode: "tree",
+      filterSearch: true,
+      filteredValue: tableParams.filters?.model_name || null,
+    },
+    {
+      title: "输入tokens",
+      dataIndex: "input_tokens",
+      key: "input_tokens",
+      align: "right",
+      sorter: true,
+    },
+    {
+      title: "输出tokens",
+      dataIndex: "output_tokens",
+      key: "output_tokens",
+      align: "right",
+      sorter: true,
+    },
+    {
+      title: "消耗金额",
+      dataIndex: "cost",
+      key: "cost",
+      align: "right",
+      render: (value) => `¥${Number(value).toFixed(4)}`,
+      sorter: true,
+    },
+    {
+      title: "剩余余额",
+      dataIndex: "balance_after",
+      key: "balance_after",
+      align: "right",
+      render: (value) => `¥${Number(value).toFixed(4)}`,
+      sorter: true,
+    },
+  ];
+
+  // 在现有的 useEffect 中添加表格数据的初始加载
   useEffect(() => {
     fetchUsageData();
-  }, [pathname]);
+    fetchRecords(tableParams);
+  }, []);
 
   const pieData = usageData.models
     .map((item) => ({
@@ -424,16 +622,7 @@ export default function PanelPage() {
     <div className="max-w-7xl mx-auto p-6">
       <div className="flex flex-col gap-6 mb-8">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold text-gray-800">使用统计看板</h1>
-            <Button
-              type="primary"
-              onClick={() => router.push("/records")}
-              className="px-6 h-9 shadow-sm hover:shadow-md transition-all duration-300 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
-            >
-              查看详细记录
-            </Button>
-          </div>
+          <h1 className="text-2xl font-bold text-gray-800">使用统计看板</h1>
         </div>
 
         <div className="flex flex-col gap-2">
@@ -513,7 +702,7 @@ export default function PanelPage() {
       </div>
 
       <div className="mb-8">
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-gray-700">模型使用分布</h2>
           <Radio.Group
             value={pieMetric}
@@ -565,7 +754,7 @@ export default function PanelPage() {
       </div>
 
       <div className="mb-8">
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-gray-700">用户使用排行</h2>
           <Radio.Group
             value={barMetric}
@@ -614,6 +803,36 @@ export default function PanelPage() {
             />
           </div>
         )}
+      </div>
+
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-700">详细记录</h2>
+          <Radio.Group size="small" className="ml-2 flex items-center">
+            <Radio.Button
+              onClick={handleExport}
+              className="!flex !items-center !px-4 !py-1 text-sm border-blue-200 hover:border-blue-300 
+                !bg-gradient-to-r !from-blue-500 !to-blue-600
+                !text-white !border-blue-500 !shadow-sm
+                !leading-none !h-7"
+            >
+              <Space>
+                <DownloadOutlined />
+                导出记录
+              </Space>
+            </Radio.Button>
+          </Radio.Group>
+        </div>
+        <Table
+          columns={columns}
+          dataSource={records}
+          rowKey="id"
+          pagination={tableParams.pagination}
+          onChange={handleTableChange}
+          loading={tableLoading}
+          size="middle"
+          className="bg-white rounded-lg shadow-sm"
+        />
       </div>
     </div>
   );
