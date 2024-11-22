@@ -95,22 +95,17 @@ export default function UsersPage() {
             onPressEnter={(e: React.KeyboardEvent<HTMLInputElement>) => {
               const value = e.currentTarget.value;
               const numValue = Number(value);
-              if (!isNaN(numValue) && numValue >= 0) {
+              if (!isNaN(numValue)) {
                 handleUpdateBalance(record.id, numValue);
               } else {
-                message.error("请输入有效的正数");
+                message.error("请输入有效的数字");
                 setEditingKey("");
               }
             }}
-            onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+            onBlur={(e) => {
               const value = e.currentTarget.value;
               const numValue = Number(value);
-              if (
-                value &&
-                !isNaN(numValue) &&
-                numValue >= 0 &&
-                numValue !== balance
-              ) {
+              if (value && !isNaN(numValue) && numValue !== balance) {
                 handleUpdateBalance(record.id, numValue);
               } else {
                 setEditingKey("");
