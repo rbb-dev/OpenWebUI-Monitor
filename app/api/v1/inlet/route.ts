@@ -9,6 +9,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       balance: Number(user.balance),
+      message: "请求成功",
     });
   } catch (error) {
     console.error("Inlet error:", error);
@@ -16,6 +17,7 @@ export async function POST(req: Request) {
       {
         success: false,
         error: error instanceof Error ? error.message : "处理请求时发生错误",
+        error_type: error.name || "UNKNOWN_ERROR",
       },
       { status: 500 }
     );

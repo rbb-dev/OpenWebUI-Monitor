@@ -28,7 +28,9 @@ sudo docker run -d --name openwebui-monitor -p 3000:3000 ghcr.io/variantconst/op
 
 ## 环境变量
 
-- `OPENAI_API_KEY`：OpenAI API Key
-- `CODE`：OpenWebUI 的 Code
+- `API_KEY`: API 密钥,用于验证 API 请求
+- `NEXT_PUBLIC_API_KEY`: 客户端 API 密钥(与 API_KEY 相同)
+- `OPENAI_API_KEY`: OpenAI API Key
+- `CODE`: OpenWebUI 的 Code
 
 ## 画廊

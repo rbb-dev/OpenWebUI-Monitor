@@ -54,7 +54,7 @@ export async function GET() {
 
     const response = await fetch(apiUrl, {
       headers: {
-        Authorization: `Bearer ${process.env.API_KEY}`,
+        Authorization: `Bearer ${process.env.OPENWEBUI_API_KEY}`,
         Accept: "application/json",
       },
     });
