@@ -81,28 +81,36 @@ export default function ModelsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id,
-          input_price: Number(input_price),
-          output_price: Number(output_price),
+          updates: [
+            {
+              id,
+              input_price: Number(input_price),
+              output_price: Number(output_price),
+            },
+          ],
         }),
       });
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "更新价格失败");
 
-      setModels((prevModels) =>
-        prevModels.map((model) =>
-          model.id === id
-            ? {
-                ...model,
-                input_price: Number(data.results[0].data.input_price),
-                output_price: Number(data.results[0].data.output_price),
-              }
-            : model
-        )
-      );
+      if (data.results && data.results[0]?.success) {
+        setModels((prevModels) =>
+          prevModels.map((model) =>
+            model.id === id
+              ? {
+                  ...model,
+                  input_price: Number(data.results[0].data.input_price),
+                  output_price: Number(data.results[0].data.output_price),
+                }
+              : model
+          )
+        );
+        message.success("价格更新成功");
+      } else {
+        throw new Error(data.results[0]?.error || "更新价格失败");
+      }
 
-      message.success("价格更新成功");
       setEditingCell(null);
     } catch (err) {
       message.error(err instanceof Error ? err.message : "更新价格失败");
