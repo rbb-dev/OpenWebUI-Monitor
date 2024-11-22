@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Radio, Button, Spin } from "antd";
+import { Radio, Button, Spin, Slider, Space, Card } from "antd";
 import { useRouter, usePathname } from "next/navigation";
 import ReactECharts from "echarts-for-react";
 import type { ECharts } from "echarts";
 import * as echarts from "echarts";
+import dayjs from "dayjs";
 
 interface ModelUsage {
   model_name: string;
@@ -22,28 +23,136 @@ interface UserUsage {
 interface UsageData {
   models: ModelUsage[];
   users: UserUsage[];
+  timeRange: {
+    minTime: string;
+    maxTime: string;
+  };
 }
+
+const formatTime = (date: Date) => {
+  return dayjs(date).format("MM-DD HH:00");
+};
+
+const generateTimeMarks = (minTime: Date, maxTime: Date) => {
+  const diff = dayjs(maxTime).diff(minTime, "hour");
+  const marks: Record<
+    number,
+    { label: React.ReactNode; style: React.CSSProperties }
+  > = {
+    0: {
+      label: (
+        <div className="flex flex-col items-center text-gray-500">
+          <span className="text-xs font-medium">
+            {dayjs(minTime).format("MM-DD")}
+          </span>
+          <span className="text-[10px]">{dayjs(minTime).format("HH:00")}</span>
+        </div>
+      ),
+      style: { transform: "translateX(0%)" },
+    },
+    100: {
+      label: (
+        <div className="flex flex-col items-center text-gray-500">
+          <span className="text-xs font-medium">
+            {dayjs(maxTime).format("MM-DD")}
+          </span>
+          <span className="text-[10px]">{dayjs(maxTime).format("HH:00")}</span>
+        </div>
+      ),
+      style: { transform: "translateX(-100%)" },
+    },
+  };
+
+  // 添加4个中间点
+  [20, 40, 60, 80].forEach((percent) => {
+    const time = dayjs(minTime).add((diff * percent) / 100, "hour");
+    marks[percent] = {
+      label: (
+        <div className="flex flex-col items-center text-gray-500">
+          <span className="text-xs font-medium">{time.format("MM-DD")}</span>
+          <span className="text-[10px]">{time.format("HH:00")}</span>
+        </div>
+      ),
+      style: { transform: "translateX(-50%)" },
+    };
+  });
+
+  return marks;
+};
 
 export default function PanelPage() {
   const [loading, setLoading] = useState(true);
   const [usageData, setUsageData] = useState<UsageData>({
     models: [],
     users: [],
+    timeRange: {
+      minTime: "",
+      maxTime: "",
+    },
   });
-  const [metric, setMetric] = useState<"cost" | "count">("cost");
+  const [pieMetric, setPieMetric] = useState<"cost" | "count">("cost");
+  const [barMetric, setBarMetric] = useState<"cost" | "count">("cost");
   const chartRef = useRef<ECharts>();
   const router = useRouter();
   const pathname = usePathname();
+  const [timeRange, setTimeRange] = useState<[number, number]>([0, 100]);
+  const [availableTimeRange, setAvailableTimeRange] = useState<{
+    minTime: Date;
+    maxTime: Date;
+  }>({
+    minTime: new Date(),
+    maxTime: new Date(),
+  });
 
   const fetchUsageData = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/v1/panel/usage?t=${Date.now()}`);
+      const isFullRange = timeRange[0] === 0 && timeRange[1] === 100;
+
+      let url = `/api/v1/panel/usage?t=${Date.now()}`;
+
+      if (!isFullRange) {
+        const startTime = dayjs(availableTimeRange.minTime)
+          .add(
+            timeRange[0] *
+              (dayjs(availableTimeRange.maxTime).diff(
+                availableTimeRange.minTime,
+                "hour"
+              ) /
+                100),
+            "hour"
+          )
+          .startOf("hour")
+          .toISOString();
+        const endTime = dayjs(availableTimeRange.minTime)
+          .add(
+            timeRange[1] *
+              (dayjs(availableTimeRange.maxTime).diff(
+                availableTimeRange.minTime,
+                "hour"
+              ) /
+                100),
+            "hour"
+          )
+          .endOf("hour")
+          .toISOString();
+
+        url += `&startTime=${startTime}&endTime=${endTime}`;
+      }
+
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Failed to fetch data");
       }
       const data = await response.json();
       setUsageData(data);
+
+      if (isFullRange) {
+        setAvailableTimeRange({
+          minTime: new Date(data.timeRange.minTime),
+          maxTime: new Date(data.timeRange.maxTime),
+        });
+      }
     } catch (error) {
       console.error("获取使用数据失败:", error);
     } finally {
@@ -58,18 +167,18 @@ export default function PanelPage() {
   const pieData = usageData.models
     .map((item) => ({
       type: item.model_name,
-      value: metric === "cost" ? Number(item.total_cost) : item.total_count,
+      value: pieMetric === "cost" ? Number(item.total_cost) : item.total_count,
     }))
     .filter((item) => item.value > 0);
 
   const columnData = usageData.users
     .map((item) => ({
       nickname: item.nickname,
-      value: metric === "cost" ? Number(item.total_cost) : item.total_count,
+      value: barMetric === "cost" ? Number(item.total_cost) : item.total_count,
     }))
     .sort((a, b) => b.value - a.value);
 
-  const getPieOption = () => {
+  const getPieOption = (metric: "cost" | "count") => {
     const total = pieData.reduce((sum, item) => sum + item.value, 0);
 
     // 按值排序并处理小比例数据
@@ -104,7 +213,7 @@ export default function PanelPage() {
         {
           name: metric === "cost" ? "消耗金额" : "使用次数",
           type: "pie",
-          radius: ["30%", "85%"],
+          radius: ["50%", "85%"],
           center: ["50%", "50%"],
           avoidLabelOverlap: true,
           itemStyle: {
@@ -159,7 +268,7 @@ export default function PanelPage() {
           },
           data: sortedData,
           zlevel: 0,
-          padAngle: 0.02,
+          padAngle: 0.05,
         },
       ],
       graphic: [
@@ -189,7 +298,7 @@ export default function PanelPage() {
     };
   };
 
-  const getBarOption = () => {
+  const getBarOption = (metric: "cost" | "count") => {
     return {
       tooltip: {
         trigger: "axis",
@@ -313,29 +422,141 @@ export default function PanelPage() {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <div className="mb-8 flex justify-between items-center bg-white rounded-lg p-4 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-800">使用统计看板</h1>
-        <Radio.Group
-          value={metric}
-          onChange={(e) => setMetric(e.target.value)}
-          buttonStyle="solid"
-          className="shadow-sm"
-        >
-          <Radio.Button value="cost">按金额</Radio.Button>
-          <Radio.Button value="count">按次数</Radio.Button>
-        </Radio.Group>
+      <div className="flex flex-col gap-6 mb-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold text-gray-800">使用统计看板</h1>
+            <Button
+              type="primary"
+              onClick={() => router.push("/records")}
+              className="px-6 h-9 shadow-sm hover:shadow-md transition-all duration-300 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+            >
+              查看详细记录
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500">时间范围</span>
+              <span className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded-full font-medium">
+                {timeRange[0] === 0 && timeRange[1] === 100
+                  ? "全部时间"
+                  : "自定义"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-sm font-mono">
+              <span className="text-gray-900 font-medium">
+                {dayjs(availableTimeRange.minTime)
+                  .add(
+                    timeRange[0] *
+                      (dayjs(availableTimeRange.maxTime).diff(
+                        availableTimeRange.minTime,
+                        "hour"
+                      ) /
+                        100),
+                    "hour"
+                  )
+                  .format("YYYY-MM-DD HH:00")}
+              </span>
+              <span className="text-gray-400 mx-1">至</span>
+              <span className="text-gray-900 font-medium">
+                {dayjs(availableTimeRange.minTime)
+                  .add(
+                    timeRange[1] *
+                      (dayjs(availableTimeRange.maxTime).diff(
+                        availableTimeRange.minTime,
+                        "hour"
+                      ) /
+                        100),
+                    "hour"
+                  )
+                  .format("YYYY-MM-DD HH:00")}
+              </span>
+            </div>
+          </div>
+          <Slider
+            range
+            value={timeRange}
+            marks={generateTimeMarks(
+              availableTimeRange.minTime,
+              availableTimeRange.maxTime
+            )}
+            tooltip={{
+              formatter: (value?: number) => {
+                if (value === undefined) return "";
+                const time = dayjs(availableTimeRange.minTime).add(
+                  value *
+                    (dayjs(availableTimeRange.maxTime).diff(
+                      availableTimeRange.minTime,
+                      "hour"
+                    ) /
+                      100),
+                  "hour"
+                );
+                return (
+                  <div className="flex flex-col items-center">
+                    <span className="font-medium">{time.format("MM-DD")}</span>
+                    <span className="text-xs">{time.format("HH:00")}</span>
+                  </div>
+                );
+              },
+            }}
+            onChange={(value) => {
+              setTimeRange(value as [number, number]);
+              fetchUsageData();
+            }}
+            className="mt-6 mb-2 [&_.ant-slider-mark-text]:!whitespace-nowrap"
+          />
+        </div>
       </div>
 
       <div className="mb-8">
-        <h2 className="text-xl font-bold mb-4 text-gray-700">模型使用分布</h2>
+        <div className="flex items-center gap-4 mb-4">
+          <h2 className="text-xl font-bold text-gray-700">模型使用分布</h2>
+          <Radio.Group
+            value={pieMetric}
+            onChange={(e) => setPieMetric(e.target.value)}
+            size="small"
+            className="ml-2 flex items-center"
+          >
+            <Radio.Button
+              value="cost"
+              className="!flex !items-center !px-4 !py-1 text-sm border-blue-200 hover:border-blue-300 
+                [&.ant-radio-button-wrapper-checked]:!bg-gradient-to-r 
+                [&.ant-radio-button-wrapper-checked]:!from-blue-500 
+                [&.ant-radio-button-wrapper-checked]:!to-blue-600
+                [&.ant-radio-button-wrapper-checked]:!text-white 
+                [&.ant-radio-button-wrapper-checked]:!border-blue-500
+                [&.ant-radio-button-wrapper-checked]:!shadow-sm
+                !leading-none !h-7"
+            >
+              按金额
+            </Radio.Button>
+            <Radio.Button
+              value="count"
+              className="!flex !items-center !px-4 !py-1 text-sm border-blue-200 hover:border-blue-300
+                [&.ant-radio-button-wrapper-checked]:!bg-gradient-to-r 
+                [&.ant-radio-button-wrapper-checked]:!from-blue-500 
+                [&.ant-radio-button-wrapper-checked]:!to-blue-600
+                [&.ant-radio-button-wrapper-checked]:!text-white 
+                [&.ant-radio-button-wrapper-checked]:!border-blue-500
+                [&.ant-radio-button-wrapper-checked]:!shadow-sm
+                !leading-none !h-7"
+            >
+              按次数
+            </Radio.Button>
+          </Radio.Group>
+        </div>
         {loading ? (
-          <div className="flex justify-center items-center h-[450px] bg-gray-50 rounded-lg">
+          <div className="flex justify-center items-center h-[450px]">
             <Spin size="large" />
           </div>
         ) : (
           <div className="h-[450px]">
             <ReactECharts
-              option={getPieOption()}
+              option={getPieOption(pieMetric)}
               style={{ height: "100%", width: "100%" }}
               onChartReady={onChartReady}
             />
@@ -344,31 +565,55 @@ export default function PanelPage() {
       </div>
 
       <div className="mb-8">
-        <h2 className="text-xl font-bold mb-4 text-gray-700">用户使用排行</h2>
+        <div className="flex items-center gap-4 mb-4">
+          <h2 className="text-xl font-bold text-gray-700">用户使用排行</h2>
+          <Radio.Group
+            value={barMetric}
+            onChange={(e) => setBarMetric(e.target.value)}
+            size="small"
+            className="ml-2 flex items-center"
+          >
+            <Radio.Button
+              value="cost"
+              className="!flex !items-center !px-4 !py-1 text-sm border-blue-200 hover:border-blue-300 
+                [&.ant-radio-button-wrapper-checked]:!bg-gradient-to-r 
+                [&.ant-radio-button-wrapper-checked]:!from-blue-500 
+                [&.ant-radio-button-wrapper-checked]:!to-blue-600
+                [&.ant-radio-button-wrapper-checked]:!text-white 
+                [&.ant-radio-button-wrapper-checked]:!border-blue-500
+                [&.ant-radio-button-wrapper-checked]:!shadow-sm
+                !leading-none !h-7"
+            >
+              按金额
+            </Radio.Button>
+            <Radio.Button
+              value="count"
+              className="!flex !items-center !px-4 !py-1 text-sm border-blue-200 hover:border-blue-300
+                [&.ant-radio-button-wrapper-checked]:!bg-gradient-to-r 
+                [&.ant-radio-button-wrapper-checked]:!from-blue-500 
+                [&.ant-radio-button-wrapper-checked]:!to-blue-600
+                [&.ant-radio-button-wrapper-checked]:!text-white 
+                [&.ant-radio-button-wrapper-checked]:!border-blue-500
+                [&.ant-radio-button-wrapper-checked]:!shadow-sm
+                !leading-none !h-7"
+            >
+              按次数
+            </Radio.Button>
+          </Radio.Group>
+        </div>
         {loading ? (
-          <div className="flex justify-center items-center h-[600px] bg-gray-50 rounded-lg">
+          <div className="flex justify-center items-center h-[600px]">
             <Spin size="large" />
           </div>
         ) : (
           <div className="h-[600px]">
             <ReactECharts
-              option={getBarOption()}
+              option={getBarOption(barMetric)}
               style={{ height: "100%", width: "100%" }}
               onChartReady={onBarChartReady}
             />
           </div>
         )}
-      </div>
-
-      <div className="flex justify-center">
-        <Button
-          type="primary"
-          size="large"
-          onClick={() => router.push("/records")}
-          className="px-8 h-12 text-base shadow-md hover:shadow-lg transition-all duration-300"
-        >
-          查看详细记录
-        </Button>
       </div>
     </div>
   );
