@@ -2,9 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { Table, Input, message, Tooltip, Button, Upload } from "antd";
-import { DownloadOutlined, UploadOutlined } from "@ant-design/icons";
+import {
+  DownloadOutlined,
+  UploadOutlined,
+  ArrowLeftOutlined,
+} from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import Image from "next/image";
+import Link from "next/link";
 
 interface ModelResponse {
   id: string;
@@ -126,8 +131,8 @@ export default function ModelsPage() {
 
     return isEditing ? (
       <Input
-        defaultValue={currentValue.toFixed(6)}
-        style={{ width: "150px" }}
+        defaultValue={currentValue.toFixed(2)}
+        className="w-28 sm:w-36"
         onPressEnter={(e: React.KeyboardEvent<HTMLInputElement>) => {
           const numValue = Number(e.currentTarget.value);
           if (isFinite(numValue) && numValue >= 0) {
@@ -155,10 +160,10 @@ export default function ModelsPage() {
       />
     ) : (
       <div
-        style={{ cursor: "pointer" }}
+        className="cursor-pointer font-medium text-blue-600"
         onClick={() => setEditingCell({ id: record.id, field })}
       >
-        ￥{currentValue.toFixed(6)}
+        {currentValue.toFixed(2)}
       </div>
     );
   };
@@ -168,44 +173,42 @@ export default function ModelsPage() {
       title: "模型",
       key: "model",
       width: 200,
-      fixed: "left",
       render: (_, record) => (
         <Tooltip title={record.id}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.75rem",
-              cursor: "pointer",
-              height: "100%",
-            }}
-          >
+          <div className="flex items-center gap-3">
             {record.imageUrl && (
               <Image
                 src={record.imageUrl}
                 alt={record.name}
                 width={32}
                 height={32}
-                style={{ borderRadius: "50%", objectFit: "cover" }}
+                className="rounded-full object-cover"
               />
             )}
-            <div style={{ fontWeight: "medium", flexGrow: 1 }}>
-              {record.name}
+            <div className="font-medium min-w-0 flex-1">
+              <div className="truncate">{record.name}</div>
+              <div className="text-xs text-gray-500 truncate">{record.id}</div>
             </div>
           </div>
         </Tooltip>
       ),
     },
     {
-      title: "输入价格 (￥/1M tokens)",
+      title: "输入价格 ¥ / M tokens",
       key: "input_price",
-      width: 200,
+      width: 150,
+      dataIndex: "input_price",
+      sorter: (a, b) => a.input_price - b.input_price,
+      sortDirections: ["descend", "ascend", "descend"],
       render: (_, record) => renderPriceCell("input_price", record),
     },
     {
-      title: "输出价格 (￥/1M tokens)",
+      title: "输出价格 ¥ / M tokens",
       key: "output_price",
-      width: 200,
+      width: 150,
+      dataIndex: "output_price",
+      sorter: (a, b) => a.output_price - b.output_price,
+      sortDirections: ["descend", "ascend", "descend"],
       render: (_, record) => renderPriceCell("output_price", record),
     },
   ];
@@ -296,11 +299,31 @@ export default function ModelsPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">模型配置</h1>
-        <div className="space-x-4">
-          <Button icon={<DownloadOutlined />} onClick={handleExportPrices}>
+    <div className="p-4 sm:p-6">
+      <div className="flex flex-col gap-6 mb-6 sm:mb-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Link
+              href="/"
+              className="mr-2 p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <ArrowLeftOutlined className="text-gray-600" />
+            </Link>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
+              模型配置
+            </h1>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end mb-4 flex-wrap gap-2">
+        <div className="space-x-2 sm:space-x-4">
+          <Button
+            icon={<DownloadOutlined />}
+            onClick={handleExportPrices}
+            size="middle"
+            className="bg-white hover:bg-gray-50 border-gray-200 shadow-sm"
+          >
             导出价格
           </Button>
           <Upload
@@ -308,18 +331,38 @@ export default function ModelsPage() {
             showUploadList={false}
             beforeUpload={handleImportPrices}
           >
-            <Button icon={<UploadOutlined />}>导入价格</Button>
+            <Button
+              icon={<UploadOutlined />}
+              size="middle"
+              className="bg-white hover:bg-gray-50 border-gray-200 shadow-sm"
+            >
+              导入价格
+            </Button>
           </Upload>
         </div>
       </div>
+
       <Table
         columns={columns}
         dataSource={models}
         rowKey="id"
         loading={loading}
         pagination={false}
-        bordered
-        scroll={{ x: 800 }}
+        size="middle"
+        className="bg-white rounded-lg shadow-sm [&_.ant-table]:!border-b-0 
+          [&_.ant-table-container]:!rounded-lg [&_.ant-table-container]:!border-hidden
+          [&_.ant-table-cell]:!border-gray-100 
+          [&_.ant-table-thead_.ant-table-cell]:!bg-gray-50/80
+          [&_.ant-table-thead_.ant-table-cell]:!text-gray-600
+          [&_.ant-table-row:hover>*]:!bg-blue-50/50
+          [&_.ant-table-tbody_.ant-table-row]:!cursor-pointer
+          [&_.ant-table-column-sorter-up.active_.anticon]:!text-blue-500
+          [&_.ant-table-column-sorter-down.active_.anticon]:!text-blue-500
+          [&_.ant-table-filter-trigger.active]:!text-blue-500
+          [&_.ant-table-filter-dropdown]:!rounded-lg
+          [&_.ant-table-filter-dropdown]:!shadow-lg
+          [&_.ant-table-filter-dropdown]:!border-gray-100"
+        scroll={{ x: 500 }}
       />
     </div>
   );
