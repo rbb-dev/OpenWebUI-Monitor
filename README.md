@@ -1,36 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
 
-## Getting Started
+# OpenWebUI Monitor
 
-First, run the development server:
+</div>
+
+---
+
+专为 OpenWebUI 设计的用量监控和用户余额管理平台。只需要向 OpenWebUI 添加一个简单的[函数插件](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/functions/openwebui_monitor.py)，就能在一个面板统一查看用户使用情况和余额。
+
+## 特性
+
+- 管理 OpenWebUI 提供的模型价格
+- 管理用户信息和余额
+- 查看使用统计数据和可视化
+
+## 部署
+
+### Vercel 部署
+
+[![Deploy on Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FVariantConst%2FOpenWebUI-Monitor&project-name=openwebui-monitor&repository-name=OpenWebUI-Monitor)
+
+### Docker 部署
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+sudo docker run -d --name openwebui-monitor -p 3000:3000 ghcr.io/variantconst/openwebui-monitor:latest
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 环境变量
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `OPENAI_API_KEY`：OpenAI API Key
+- `CODE`：OpenWebUI 的 Code
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 画廊
