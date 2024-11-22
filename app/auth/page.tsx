@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -17,7 +17,7 @@ export async function POST(req: Request) {
       {
         success: false,
         error: error instanceof Error ? error.message : "处理请求时发生错误",
-        error_type: error.name || "UNKNOWN_ERROR",
+        error_type: error instanceof Error ? error.name : "UNKNOWN_ERROR",
       },
       { status: 500 }
     );

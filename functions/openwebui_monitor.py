@@ -1,8 +1,8 @@
 from typing import Optional
-from pydantic import Field, BaseModel # type: ignore
-import requests # type: ignore
+from pydantic import Field, BaseModel  # type: ignore
+import requests  # type: ignore
 import json
-from open_webui.utils.misc import get_last_assistant_message # type: ignore
+from open_webui.utils.misc import get_last_assistant_message  # type: ignore
 
 
 class Filter:
@@ -10,9 +10,7 @@ class Filter:
         API_ENDPOINT: str = Field(
             default="", description="The base URL for the API endpoint."
         )
-        API_KEY: str = Field(
-            default="", description="API key for authentication."
-        )
+        API_KEY: str = Field(default="", description="API key for authentication.")
 
     def __init__(self):
         self.type = "filter"
@@ -22,11 +20,11 @@ class Filter:
 
     def clean_content(self, content: str) -> str:
         """
-        从末尾开始找到最后一个"输入"及其后内容并截掉。
+        从末尾开始找到最后一个“输入”及其后内容并截掉。
         """
-        last_index = content.rfind("\u200B输入")
+        last_index = content.rfind("输入")
         if last_index != -1:
-            # 从最后一个"输入"之前截断
+            # 从最后一个“输入”之前截断
             return content[:last_index].strip()
         return content
 
@@ -43,18 +41,16 @@ class Filter:
             post_url = f"{self.valves.API_ENDPOINT}/api/v1/inlet"
             headers = {"Authorization": f"Bearer {self.valves.API_KEY}"}
             response = requests.post(
-                post_url, 
-                headers=headers,
-                json={"user": __user__, "body": body}
+                post_url, headers=headers, json={"user": __user__, "body": body}
             )
-            
+
             # 如果是 401 错误(API_KEY 验证失败)，直接返回 body
             if response.status_code == 401:
                 return body
-                
+
             response.raise_for_status()
             response_data = response.json()
-            
+
             if not response_data.get("success"):
                 error_msg = response_data.get("error", "未知错误")
                 error_type = response_data.get("error_type", "UNKNOWN_ERROR")
@@ -67,7 +63,10 @@ class Filter:
             return body
 
         except requests.exceptions.RequestException as e:
-            if isinstance(e, requests.exceptions.HTTPError) and e.response.status_code == 401:
+            if (
+                isinstance(e, requests.exceptions.HTTPError)
+                and e.response.status_code == 401
+            ):
                 return body
             raise Exception(f"网络请求失败: {str(e)}")
         except Exception as e:
@@ -89,18 +88,20 @@ class Filter:
             post_url = f"{self.valves.API_ENDPOINT}/api/v1/outlet"
             headers = {"Authorization": f"Bearer {self.valves.API_KEY}"}
             request_data = {"user": __user__, "body": body}
-            
+
             response = requests.post(post_url, headers=headers, json=request_data)
-            
+
             # 如果是 401 错误(API_KEY 验证失败)
             if response.status_code == 401:
                 # 在消息中附加提示信息
                 for message in reversed(body["messages"]):
                     if message["role"] == "assistant":
-                        message["content"] += "\n\n`注意: 用量统计请求的API密钥验证失败`"
+                        message[
+                            "content"
+                        ] += "\n\n`注意: 用量统计请求的API密钥验证失败`"
                         break
                 return body
-                
+
             response.raise_for_status()
             result = response.json()
 
@@ -115,7 +116,7 @@ class Filter:
             new_balance = result["newBalance"]
 
             message_content = (
-                f"\u200B输入`{input_tokens} tokens`, 输出`{output_tokens} tokens`, "
+                f"输入`{input_tokens} tokens`, 输出`{output_tokens} tokens`, "
                 f"消耗`¥{total_cost:.4f}`, 余额`¥{new_balance:.4f}`"
             )
 
@@ -127,11 +128,16 @@ class Filter:
             return body
 
         except requests.exceptions.RequestException as e:
-            if isinstance(e, requests.exceptions.HTTPError) and e.response.status_code == 401:
+            if (
+                isinstance(e, requests.exceptions.HTTPError)
+                and e.response.status_code == 401
+            ):
                 # 在消息中附加提示信息
                 for message in reversed(body["messages"]):
                     if message["role"] == "assistant":
-                        message["content"] += "\n\n`注意: 用量统计请求的API密钥验证失败`"
+                        message[
+                            "content"
+                        ] += "\n\n`注意: 用量统计请求的API密钥验证失败`"
                         break
                 return body
             raise Exception(f"网络请求失败: {str(e)}")
