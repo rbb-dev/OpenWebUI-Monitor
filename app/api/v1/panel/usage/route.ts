@@ -21,7 +21,6 @@ export async function GET() {
         FROM user_usage_records
         GROUP BY nickname
         ORDER BY total_cost DESC
-        LIMIT 10
       `),
     ]);
 

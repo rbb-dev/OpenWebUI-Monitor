@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card, Radio, Button, Spin } from "antd";
+import { useState, useEffect, useRef } from "react";
+import { Radio, Button, Spin } from "antd";
 import { useRouter, usePathname } from "next/navigation";
-import { Pie, Column } from "@ant-design/plots";
+import ReactECharts from "echarts-for-react";
+import type { ECharts } from "echarts";
+import * as echarts from "echarts";
 
 interface ModelUsage {
   model_name: string;
@@ -29,6 +31,7 @@ export default function PanelPage() {
     users: [],
   });
   const [metric, setMetric] = useState<"cost" | "count">("cost");
+  const chartRef = useRef<ECharts>();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -66,106 +69,246 @@ export default function PanelPage() {
     }))
     .sort((a, b) => b.value - a.value);
 
-  const config = {
-    data: pieData,
-    angleField: "value",
-    colorField: "type",
-    radius: 0.8,
-    label: {
-      text: (d: any) => {
-        return `${d.type}\n${
-          metric === "cost" ? `¥${d.value.toFixed(4)}` : d.value
-        }`;
+  const getPieOption = () => {
+    const total = pieData.reduce((sum, item) => sum + item.value, 0);
+
+    // 按值排序并处理小比例数据
+    const sortedData = [...pieData]
+      .sort((a, b) => b.value - a.value)
+      .reduce((acc, curr) => {
+        const percentage = (curr.value / total) * 100;
+        if (percentage < 5) {
+          const otherIndex = acc.findIndex((item) => item.name === "其他");
+          if (otherIndex >= 0) {
+            acc[otherIndex].value += curr.value;
+          } else {
+            acc.push({
+              name: "其他",
+              value: curr.value,
+            });
+          }
+        } else {
+          acc.push({
+            name: curr.type,
+            value: curr.value,
+          });
+        }
+        return acc;
+      }, [] as { name: string; value: number }[]);
+
+    return {
+      tooltip: {
+        show: false,
       },
-      position: "outside",
-      style: {
-        fontSize: 12,
-        textAlign: "center",
-      },
-      line: {
-        style: {
-          stroke: "#595959",
+      series: [
+        {
+          name: metric === "cost" ? "消耗金额" : "使用次数",
+          type: "pie",
+          radius: ["30%", "85%"],
+          center: ["50%", "50%"],
+          avoidLabelOverlap: true,
+          itemStyle: {
+            borderRadius: 10,
+            borderWidth: 2,
+            borderColor: "#fff",
+          },
+          label: {
+            show: true,
+            position: "outside",
+            alignTo: "none",
+            margin: 8,
+            formatter: (params: any) => {
+              const percentage = ((params.value / total) * 100).toFixed(1);
+              return [
+                `{name|${params.name}}`,
+                `{value|${
+                  metric === "cost"
+                    ? `¥${params.value.toFixed(4)}`
+                    : `${params.value}次`
+                }}`,
+                `{per|${percentage}%}`,
+              ].join("\n");
+            },
+            rich: {
+              name: {
+                fontSize: 12,
+                color: "#666",
+                padding: [0, 0, 2, 0],
+                fontWeight: 500,
+              },
+              value: {
+                fontSize: 11,
+                color: "#333",
+                padding: [2, 0],
+              },
+              per: {
+                fontSize: 11,
+                color: "#999",
+              },
+            },
+            lineHeight: 14,
+          },
+          labelLayout: {
+            hideOverlap: true,
+          },
+          labelLine: {
+            show: true,
+            length: 30,
+            length2: 20,
+            smooth: true,
+          },
+          data: sortedData,
+          zlevel: 0,
+          padAngle: 0.02,
         },
-      },
-    },
-    style: {
-      stroke: "#fff",
-      lineWidth: 1,
-    },
-    legend: {
-      color: {
-        title: false,
-        position: "right",
-        rowPadding: 5,
-      },
-    },
-    state: {
-      active: {
-        style: {
-          lineWidth: 2,
-          stroke: "#000",
-          offset: 2,
-          scale: 1.1,
+      ],
+      graphic: [
+        {
+          type: "text",
+          left: "center",
+          top: "middle",
+          style: {
+            text:
+              metric === "cost"
+                ? `总计\n¥${total.toFixed(2)}`
+                : `总计\n${total}次`,
+            textAlign: "center",
+            fontSize: 14,
+            fontWeight: "bold",
+          },
+          zlevel: 1,
         },
+      ],
+      animation: true,
+      animationDuration: 500,
+      universalTransition: true,
+      emphasis: {
+        scale: false,
+        focus: "none",
       },
-    },
-    interactions: [
-      {
-        type: "element-active",
-      },
-    ],
-    animation: {
-      appear: {
-        duration: 1000,
-      },
-    },
-    statistic: {
-      title: {
-        content: metric === "cost" ? "总消耗" : "总次数",
-        style: {
-          fontSize: "14px",
-          lineHeight: "20px",
-          color: "#4B5563",
-        },
-      },
-      content: {
-        style: {
-          fontSize: "24px",
-          lineHeight: "32px",
-          color: "#1F2937",
-        },
-        formatter: () => {
-          const total = pieData.reduce((sum, item) => sum + item.value, 0);
-          return metric === "cost" ? `¥${total.toFixed(4)}` : total.toString();
-        },
-      },
-    },
+    };
   };
 
-  const columnConfig = {
-    data: columnData,
-    xField: "nickname",
-    yField: "value",
-    label: {
-      position: "top",
-      formatter: (v: any) =>
-        metric === "cost" ? `¥${v.toFixed(4)}` : v.toString(),
-    },
-    xAxis: {
-      label: {
-        autoRotate: true,
-        autoHide: false,
-        autoEllipsis: true,
+  const getBarOption = () => {
+    return {
+      tooltip: {
+        trigger: "axis",
+        axisPointer: {
+          type: "shadow",
+        },
+        formatter: (params: any) => {
+          const value = params[0].value;
+          return `${params[0].name}: ${
+            metric === "cost" ? `¥${value.toFixed(4)}` : `${value}次`
+          }`;
+        },
       },
-    },
-    meta: {
-      nickname: {
-        alias: "用户",
+      grid: {
+        top: "8%",
+        bottom: "12%",
+        left: "3%",
+        right: "3%",
+        containLabel: true,
       },
-      value: {
-        alias: metric === "cost" ? "消耗金额" : "使用次数",
+      xAxis: {
+        type: "category",
+        data: columnData.map((item) => item.nickname),
+        axisLabel: {
+          inside: false,
+          color: "#666",
+          fontSize: 12,
+          rotate: 45,
+          interval: "auto",
+          overflow: "truncate",
+          ellipsis: "...",
+          hideOverlap: true,
+        },
+        axisTick: {
+          show: false,
+        },
+        axisLine: {
+          show: true,
+          lineStyle: {
+            color: "#ddd",
+          },
+        },
+        z: 10,
       },
-    },
+      yAxis: {
+        type: "value",
+        name: metric === "cost" ? "消耗金额" : "使用次数",
+        axisLine: {
+          show: false,
+        },
+        axisTick: {
+          show: false,
+        },
+        axisLabel: {
+          color: "#999",
+        },
+      },
+      dataZoom: [
+        {
+          type: "inside",
+          start: 0,
+          end: Math.min(100, Math.max(100 * (15 / columnData.length), 30)),
+        },
+      ],
+      series: [
+        {
+          type: "bar",
+          itemStyle: {
+            color: "#5B9BD5",
+            borderRadius: [5, 5, 0, 0],
+          },
+          emphasis: {
+            itemStyle: {
+              color: "#3A75B0",
+            },
+          },
+          data: columnData.map((item) => item.value),
+          showBackground: true,
+          backgroundStyle: {
+            color: "rgba(180, 180, 180, 0.1)",
+          },
+          label: {
+            show: true,
+            position: "top",
+            formatter: (params: any) => {
+              return metric === "cost"
+                ? `¥${params.value.toFixed(2)}`
+                : `${params.value}`;
+            },
+            fontSize: 12,
+            color: "#666",
+          },
+        },
+      ],
+      animation: true,
+      animationDuration: 1000,
+      animationEasing: "cubicInOut",
+    };
+  };
+
+  // 处理图表实例
+  const onChartReady = (instance: ECharts) => {
+    chartRef.current = instance;
+  };
+
+  // 在组件中添加点击缩放功能
+  const onBarChartReady = (instance: ECharts) => {
+    const zoomSize = 6;
+    instance.on("click", (params) => {
+      const dataLength = columnData.length;
+      instance.dispatchAction({
+        type: "dataZoom",
+        startValue:
+          columnData[Math.max(params.dataIndex - zoomSize / 2, 0)].nickname,
+        endValue:
+          columnData[Math.min(params.dataIndex + zoomSize / 2, dataLength - 1)]
+            .nickname,
+      });
+    });
   };
 
   return (
@@ -183,33 +326,39 @@ export default function PanelPage() {
         </Radio.Group>
       </div>
 
-      <Card className="mb-8 shadow-md hover:shadow-lg transition-shadow duration-300">
+      <div className="mb-8">
         <h2 className="text-xl font-bold mb-4 text-gray-700">模型使用分布</h2>
         {loading ? (
-          <div className="flex justify-center items-center h-[400px] bg-gray-50 rounded-lg">
+          <div className="flex justify-center items-center h-[450px] bg-gray-50 rounded-lg">
             <Spin size="large" />
           </div>
         ) : (
-          <div className="h-[400px]">
-            <Pie {...config} />
+          <div className="h-[450px]">
+            <ReactECharts
+              option={getPieOption()}
+              style={{ height: "100%", width: "100%" }}
+              onChartReady={onChartReady}
+            />
           </div>
         )}
-      </Card>
+      </div>
 
-      <Card className="mb-8 shadow-md hover:shadow-lg transition-shadow duration-300">
-        <h2 className="text-xl font-bold mb-4 text-gray-700">
-          用户使用排行（Top 10）
-        </h2>
+      <div className="mb-8">
+        <h2 className="text-xl font-bold mb-4 text-gray-700">用户使用排行</h2>
         {loading ? (
-          <div className="flex justify-center items-center h-[400px] bg-gray-50 rounded-lg">
+          <div className="flex justify-center items-center h-[600px] bg-gray-50 rounded-lg">
             <Spin size="large" />
           </div>
         ) : (
-          <div className="h-[400px]">
-            <Column {...columnConfig} />
+          <div className="h-[600px]">
+            <ReactECharts
+              option={getBarOption()}
+              style={{ height: "100%", width: "100%" }}
+              onChartReady={onBarChartReady}
+            />
           </div>
         )}
-      </Card>
+      </div>
 
       <div className="flex justify-center">
         <Button

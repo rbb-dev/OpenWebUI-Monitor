@@ -1,8 +1,8 @@
 from typing import Optional
-from pydantic import Field, BaseModel
-import requests
+from pydantic import Field, BaseModel # type: ignore
+import requests # type: ignore
 import json
-from open_webui.utils.misc import get_last_assistant_message
+from open_webui.utils.misc import get_last_assistant_message # type: ignore
 
 
 class Filter:
