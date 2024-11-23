@@ -21,13 +21,26 @@ function getClient(): DbClient | Pool {
     return vercelClient;
   } else {
     if (!pgPool) {
-      pgPool = new Pool({
+      const config = {
         host: process.env.POSTGRES_HOST || "db",
         user: process.env.POSTGRES_USER || "postgres",
         password: process.env.POSTGRES_PASSWORD,
         database: process.env.POSTGRES_DATABASE || "openwebui_monitor",
         port: parseInt(process.env.POSTGRES_PORT || "5432"),
-      });
+      };
+
+      // 如果是远程数据库（通过 URL 连接），添加 SSL 配置
+      if (process.env.POSTGRES_URL) {
+        pgPool = new Pool({
+          connectionString: process.env.POSTGRES_URL,
+          ssl: {
+            rejectUnauthorized: false,
+          },
+        });
+      } else {
+        // 本地数据库不需要 SSL
+        pgPool = new Pool(config);
+      }
     }
     return pgPool;
   }
