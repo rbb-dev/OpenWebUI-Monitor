@@ -194,8 +194,8 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* 底部操作栏 */}
-          <div className="w-full flex justify-center">
+          {/* 数据库备份和退出按钮 */}
+          <div className="w-full flex justify-center mb-8">
             <div
               className="flex items-center gap-2 sm:gap-4 p-2 sm:p-3 
                             bg-white/80 backdrop-blur-md 
@@ -205,22 +205,6 @@ export default function HomePage() {
                             hover:bg-white/90"
             >
               <DatabaseBackup />
-
-              <div className="w-px h-4 sm:h-5 bg-gray-200"></div>
-
-              <a
-                href="https://github.com/VariantConst/OpenWebUI-Monitor"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5
-                        text-gray-600 hover:text-gray-800
-                        rounded-full
-                        transition-all duration-300
-                        hover:bg-gray-100"
-              >
-                <FiGithub className="text-base sm:text-lg" />
-                <span className="hidden md:inline text-sm">GitHub</span>
-              </a>
 
               <div className="w-px h-4 sm:h-5 bg-gray-200"></div>
 
@@ -236,6 +220,18 @@ export default function HomePage() {
                 <span className="hidden md:inline text-sm">退出</span>
               </button>
             </div>
+          </div>
+
+          {/* GitHub 页脚 */}
+          <div className="w-full flex justify-center">
+            <a
+              href="https://github.com/VariantConst/OpenWebUI-Monitor"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-gray-400 hover:text-gray-600 transition-all duration-300"
+            >
+              <FiGithub className="text-lg" />
+            </a>
           </div>
         </div>
       </div>
