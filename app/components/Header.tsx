@@ -9,13 +9,16 @@ import {
   LogoutOutlined,
   SettingOutlined,
   DatabaseOutlined,
+  GithubOutlined,
 } from "@ant-design/icons";
 import { message } from "antd";
 import DatabaseBackup from "./DatabaseBackup";
+import { APP_VERSION } from "@/lib/version";
 
 export default function Header() {
   const [apiKey, setApiKey] = useState("加载中...");
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
 
   useEffect(() => {
     const token = document.cookie
@@ -51,6 +54,75 @@ export default function Header() {
     window.location.href = "/token";
   };
 
+  const checkUpdate = async () => {
+    setIsCheckingUpdate(true);
+    try {
+      const response = await fetch(
+        "https://api.github.com/repos/variantconst/openwebui-monitor/releases/latest"
+      );
+      const data = await response.json();
+      const latestVersion = data.tag_name;
+
+      if (!latestVersion) {
+        throw new Error("获取版本号失败");
+      }
+
+      const currentVer = APP_VERSION.replace(/^v/, "");
+      const latestVer = latestVersion.replace(/^v/, "");
+
+      if (currentVer === latestVer) {
+        message.success(`当前已是最新版本 v${APP_VERSION}`);
+      } else {
+        Modal.confirm({
+          icon: null,
+          title: (
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-50">
+                <GithubOutlined className="text-lg text-blue-500" />
+              </div>
+              <div className="flex flex-col">
+                <div className="text-lg font-medium text-gray-800">
+                  发现新版本
+                </div>
+              </div>
+            </div>
+          ),
+          content: (
+            <div className="flex flex-col gap-4 py-2">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">当前版本</span>
+                <span className="font-mono text-gray-800">v{APP_VERSION}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">最新版本</span>
+                <span className="font-mono text-blue-600">{latestVersion}</span>
+              </div>
+            </div>
+          ),
+          centered: true,
+          width: 400,
+          okText: "前往更新",
+          cancelText: "暂不更新",
+          className: "update-modal",
+          okButtonProps: {
+            className: "bg-blue-500 hover:bg-blue-600",
+          },
+          onOk: () => {
+            window.open(
+              "https://github.com/VariantConst/OpenWebUI-Monitor/releases/latest",
+              "_blank"
+            );
+          },
+        });
+      }
+    } catch (error) {
+      message.error("检查更新失败");
+      console.error("检查更新失败:", error);
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
+
   const items: MenuProps["items"] = [
     {
       key: "1",
@@ -78,6 +150,18 @@ export default function Header() {
     },
     {
       key: "3",
+      label: (
+        <div
+          className="flex items-center gap-2 px-2 py-1.5 text-gray-600 hover:text-gray-900"
+          onClick={checkUpdate}
+        >
+          <GithubOutlined className="text-base" spin={isCheckingUpdate} />
+          <span>检查更新</span>
+        </div>
+      ),
+    },
+    {
+      key: "4",
       label: (
         <div
           className="flex items-center gap-2 px-2 py-1.5 text-gray-600 hover:text-red-500"

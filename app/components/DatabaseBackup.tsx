@@ -1,63 +1,12 @@
 "use client";
 
 import { message, Upload, Modal } from "antd";
-import { ImportOutlined, ExportOutlined } from "@ant-design/icons";
 import type { UploadProps } from "antd";
 
 interface DatabaseBackupProps {
   open: boolean;
   onClose: () => void;
 }
-
-interface MigrationCardProps {
-  type: "export" | "import";
-  onClick?: () => void;
-  uploadProps?: UploadProps;
-}
-
-const MigrationCard: React.FC<MigrationCardProps> = ({
-  type,
-  onClick,
-  uploadProps,
-}) => {
-  const config = {
-    export: {
-      icon: <ExportOutlined className="text-base text-blue-600" />,
-      title: "导出",
-      color: "border-blue-100 hover:border-blue-200 bg-blue-50/40",
-      iconBg: "bg-blue-50",
-    },
-    import: {
-      icon: <ImportOutlined className="text-base text-purple-600" />,
-      title: "导入",
-      color: "border-purple-100 hover:border-purple-200 bg-purple-50/40",
-      iconBg: "bg-purple-50",
-    },
-  }[type];
-
-  const card = (
-    <div
-      className={`w-full flex items-center gap-2 p-2 rounded-lg border transition-all duration-300 ${config.color}`}
-    >
-      <div className={`p-2 rounded ${config.iconBg}`}>{config.icon}</div>
-      <span className="text-sm font-medium text-gray-900">{config.title}</span>
-    </div>
-  );
-
-  if (type === "import" && uploadProps) {
-    return (
-      <Upload {...uploadProps} className="w-full">
-        <div className="w-full cursor-pointer">{card}</div>
-      </Upload>
-    );
-  }
-
-  return (
-    <div className="w-full cursor-pointer" onClick={onClick}>
-      {card}
-    </div>
-  );
-};
 
 const DatabaseBackup: React.FC<DatabaseBackupProps> = ({ open, onClose }) => {
   const handleExport = async () => {
@@ -133,16 +82,48 @@ const DatabaseBackup: React.FC<DatabaseBackupProps> = ({ open, onClose }) => {
       footer={null}
       width={360}
       centered
-      className="rounded-xl"
     >
-      <div className="py-4">
-        <p className="text-xs text-gray-500 text-center mb-4">
-          导出或导入系统数据
-        </p>
-        <div className="flex flex-col gap-2">
-          <MigrationCard type="export" onClick={handleExport} />
-          <MigrationCard type="import" uploadProps={uploadProps} />
-        </div>
+      <div className="flex flex-row justify-between gap-3 py-4">
+        <button
+          onClick={handleExport}
+          className="flex items-center justify-center gap-2 w-[150px] px-4 py-3 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
+          </svg>
+          导出数据
+        </button>
+
+        <Upload {...uploadProps}>
+          <button className="flex items-center justify-center gap-2 w-[150px] px-4 py-3 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200">
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+              />
+            </svg>
+            导入数据
+          </button>
+        </Upload>
       </div>
     </Modal>
   );

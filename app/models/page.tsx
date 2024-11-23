@@ -482,7 +482,7 @@ export default function ModelsPage() {
         </p>
       </div>
 
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="mb-6 flex items-center gap-6">
         <div className="flex items-center gap-2">
           <Tooltip title="批量测试所有模型的可用性">
             <Button
@@ -540,33 +540,20 @@ export default function ModelsPage() {
           </Tooltip>
         </div>
 
-        <div className="flex items-center space-x-3">
-          <Tooltip title="导出当前模型价格配置">
-            <Button
-              icon={<DownloadOutlined />}
-              onClick={handleExportPrices}
-              size="middle"
-              className="bg-white hover:bg-gray-50 border-gray-200 shadow-sm flex items-center"
-            >
-              <span className="hidden sm:inline ml-1">导出价格</span>
-            </Button>
-          </Tooltip>
-
-          <Tooltip title="导入模型价格配置">
-            <Upload
-              accept=".json"
-              showUploadList={false}
-              beforeUpload={handleImportPrices}
-            >
-              <Button
-                icon={<UploadOutlined />}
-                size="middle"
-                className="bg-white hover:bg-gray-50 border-gray-200 shadow-sm flex items-center"
-              >
-                <span className="hidden sm:inline ml-1">导入价格</span>
-              </Button>
-            </Upload>
-          </Tooltip>
+        <div className="flex items-center gap-4 text-sm text-gray-500">
+          <span
+            className="cursor-pointer hover:text-gray-700"
+            onClick={handleExportPrices}
+          >
+            导出
+          </span>
+          <Upload
+            accept=".json"
+            showUploadList={false}
+            beforeUpload={handleImportPrices}
+          >
+            <span className="cursor-pointer hover:text-gray-700">导入</span>
+          </Upload>
         </div>
       </div>
 
