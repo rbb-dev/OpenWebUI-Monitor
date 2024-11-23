@@ -51,7 +51,6 @@ export async function middleware(request: NextRequest) {
 
   // JWT token 验证逻辑
   const authToken = request.cookies.get("auth_token")?.value;
-  console.log("当前auth_token:", authToken ? "存在" : "不存在");
 
   // 不需要认证的路径
   const publicPaths = [
