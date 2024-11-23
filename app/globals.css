@@ -60,3 +60,14 @@ body {
   height: 40px;
   border-radius: 8px;
 }
+
+.custom-tooltip-simple .ant-tooltip-inner {
+  padding: 0;
+  border-radius: 8px;
+  min-width: 120px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.custom-tooltip-simple .ant-tooltip-arrow {
+  display: none;
+}

@@ -139,19 +139,11 @@ export default function UsersPage() {
 
   return (
     <div className="p-4 sm:p-6">
-      <div className="flex flex-col gap-6 mb-6 sm:mb-8">
+      <div className="pt-16 flex flex-col gap-6 mb-6 sm:mb-8">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Link
-              href="/"
-              className="mr-2 p-2 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <ArrowLeftOutlined className="text-gray-600" />
-            </Link>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
-              用户管理
-            </h1>
-          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
+            用户管理
+          </h1>
         </div>
       </div>
 

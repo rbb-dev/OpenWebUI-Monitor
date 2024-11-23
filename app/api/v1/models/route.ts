@@ -11,6 +11,8 @@ interface ModelInfo {
 
 interface ModelResponse {
   data: {
+    id(id: any, name: any): unknown;
+    name(id: any, name: any): unknown;
     info: ModelInfo;
   }[];
 }
@@ -85,18 +87,14 @@ export async function GET() {
     // 获取所有模型的价格信息
     const modelsWithPrices = await Promise.all(
       data.data.map(async (item) => {
-        if (!item.info) {
-          console.warn("Model item missing info:", item);
-          return null;
-        }
         const priceInfo = await getOrCreateModelPrice(
-          item.info.id,
-          item.info.name
+          String(item.id),
+          String(item.name)
         );
         return {
-          id: item.info.id,
-          name: item.info.name,
-          imageUrl: item.info.meta?.profile_image_url || "",
+          id: item.id,
+          name: item.name,
+          imageUrl: item.info?.meta?.profile_image_url || "/openwebui.png",
           input_price: priceInfo.input_price,
           output_price: priceInfo.output_price,
         };

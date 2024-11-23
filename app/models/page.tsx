@@ -1,11 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Table, Input, message, Tooltip, Button, Upload } from "antd";
+import { Table, Input, message, Tooltip, Button, Upload, Space } from "antd";
 import {
   DownloadOutlined,
   UploadOutlined,
   ArrowLeftOutlined,
+  ExperimentOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  InfoCircleOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import Image from "next/image";
@@ -25,6 +29,7 @@ interface Model {
   imageUrl: string;
   input_price: number;
   output_price: number;
+  testStatus?: "success" | "error" | "testing";
 }
 
 export default function ModelsPage() {
@@ -35,6 +40,8 @@ export default function ModelsPage() {
     id: string;
     field: "input_price" | "output_price";
   } | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [apiKey, setApiKey] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -59,6 +66,22 @@ export default function ModelsPage() {
     };
 
     fetchModels();
+  }, []);
+
+  useEffect(() => {
+    const fetchApiKey = async () => {
+      try {
+        const response = await fetch("/api/config/key");
+        if (response.ok) {
+          const data = await response.json();
+          setApiKey(data.apiKey);
+        }
+      } catch (error) {
+        console.error("获取 API Key 失败:", error);
+      }
+    };
+
+    fetchApiKey();
   }, []);
 
   const handlePriceUpdate = async (
@@ -168,14 +191,41 @@ export default function ModelsPage() {
     );
   };
 
+  const handleTestSingleModel = async (model: Model) => {
+    try {
+      setModels((prev) =>
+        prev.map((m) =>
+          m.id === model.id ? { ...m, testStatus: "testing" } : m
+        )
+      );
+
+      const result = await testModel(model);
+
+      setModels((prev) =>
+        prev.map((m) =>
+          m.id === model.id
+            ? { ...m, testStatus: result.success ? "success" : "error" }
+            : m
+        )
+      );
+    } catch (error) {
+      setModels((prev) =>
+        prev.map((m) => (m.id === model.id ? { ...m, testStatus: "error" } : m))
+      );
+    }
+  };
+
   const columns: ColumnsType<Model> = [
     {
       title: "模型",
       key: "model",
       width: 200,
       render: (_, record) => (
-        <Tooltip title={record.id}>
-          <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 relative">
+          <div
+            className="relative cursor-pointer"
+            onClick={() => handleTestSingleModel(record)}
+          >
             {record.imageUrl && (
               <Image
                 src={record.imageUrl}
@@ -185,12 +235,33 @@ export default function ModelsPage() {
                 className="rounded-full object-cover"
               />
             )}
-            <div className="font-medium min-w-0 flex-1">
-              <div className="truncate">{record.name}</div>
-              <div className="text-xs text-gray-500 truncate">{record.id}</div>
+            {record.testStatus && (
+              <div className="absolute -top-1 -right-1">
+                {record.testStatus === "testing" && (
+                  <div className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center">
+                    <div className="w-3 h-3 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+                  </div>
+                )}
+                {record.testStatus === "success" && (
+                  <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
+                    <CheckOutlined className="text-[10px] text-green-500" />
+                  </div>
+                )}
+                {record.testStatus === "error" && (
+                  <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
+                    <CloseOutlined className="text-[10px] text-red-500" />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <div className="font-medium min-w-0 flex-1">
+            <div className="truncate">{record.name}</div>
+            <div className="text-xs text-gray-500 truncate opacity-60">
+              {record.id}
             </div>
           </div>
-        </Tooltip>
+        </div>
       ),
     },
     {
@@ -294,51 +365,208 @@ export default function ModelsPage() {
     return false;
   };
 
+  const testModel = async (
+    model: Model
+  ): Promise<{
+    id: string;
+    success: boolean;
+    error?: string;
+  }> => {
+    if (!apiKey) {
+      return {
+        id: model.id,
+        success: false,
+        error: "API Key 未获取",
+      };
+    }
+
+    try {
+      const response = await fetch("/api/v1/models/test", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          modelId: model.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "测试失败");
+      }
+
+      return {
+        id: model.id,
+        success: true,
+      };
+    } catch (error) {
+      return {
+        id: model.id,
+        success: false,
+        error: error instanceof Error ? error.message : "未知错误",
+      };
+    }
+  };
+
+  const handleTestModels = async () => {
+    if (!apiKey) {
+      message.error("API Key 未获取，无法进行测试");
+      return;
+    }
+
+    try {
+      console.log("开始测试所有模型...");
+
+      // 将所有模型设置为测试中状态
+      setModels((prev) => prev.map((m) => ({ ...m, testStatus: "testing" })));
+      setTesting(true);
+
+      // 创建所有测试请求，但不等待它们全部完成
+      models.forEach(async (model) => {
+        try {
+          const result = await testModel(model);
+          // 更新单个模型的状态，但保持其他正在测试的模型的状态
+          setModels((prev) =>
+            prev.map((m) =>
+              m.id === model.id
+                ? { ...m, testStatus: result.success ? "success" : "error" }
+                : m
+            )
+          );
+        } catch (error) {
+          // 如果单个模型测试失败，更新其状态，但保持其他正在测试的模型的状态
+          setModels((prev) =>
+            prev.map((m) =>
+              m.id === model.id ? { ...m, testStatus: "error" } : m
+            )
+          );
+        }
+      });
+
+      // 不再在这里设置 setTesting(false)，让按钮保持加载状态
+      message.info("测试已开始，结果将逐个显示");
+
+      // 创建一个 Promise 数组来跟踪所有测试
+      const testPromises = models.map((model) =>
+        testModel(model).catch((error) => ({
+          id: model.id,
+          success: false,
+          error: error instanceof Error ? error.message : "未知错误",
+        }))
+      );
+
+      // 等待所有测试完成后再关闭加载状态
+      await Promise.all(testPromises);
+    } catch (error) {
+      console.error("测试过程出错:", error);
+      message.error("测试过程出错");
+    } finally {
+      // 所有测试完成后再关闭加载状态
+      setTesting(false);
+    }
+  };
+
   if (error) {
     return <div className="p-4 text-red-500">错误: {error}</div>;
   }
 
   return (
     <div className="p-4 sm:p-6">
-      <div className="flex flex-col gap-6 mb-6 sm:mb-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Link
-              href="/"
-              className="mr-2 p-2 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <ArrowLeftOutlined className="text-gray-600" />
-            </Link>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
-              模型配置
-            </h1>
-          </div>
-        </div>
+      <div className="mb-8">
+        <h1 className="pt-16 text-2xl font-semibold text-gray-900">模型管理</h1>
+        <p className="mt-2 text-gray-600">
+          管理所有可用模型的价格配置。点击模型图标可进行单独测试，测试结果将显示在图标右上角。
+        </p>
       </div>
 
-      <div className="flex justify-end mb-4 flex-wrap gap-2">
-        <div className="space-x-2 sm:space-x-4">
-          <Button
-            icon={<DownloadOutlined />}
-            onClick={handleExportPrices}
-            size="middle"
-            className="bg-white hover:bg-gray-50 border-gray-200 shadow-sm"
-          >
-            导出价格
-          </Button>
-          <Upload
-            accept=".json"
-            showUploadList={false}
-            beforeUpload={handleImportPrices}
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <Tooltip title="批量测试所有模型的可用性">
+            <Button
+              icon={<ExperimentOutlined />}
+              onClick={handleTestModels}
+              loading={testing}
+              type="primary"
+              size="middle"
+              className="shadow-sm hover:opacity-90"
+            >
+              测试全部模型
+            </Button>
+          </Tooltip>
+
+          <Tooltip
+            title={
+              <div className="p-1.5">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center">
+                      <div className="w-2.5 h-2.5 rounded-full border-[1.5px] border-blue-500 border-t-transparent animate-spin" />
+                    </div>
+                    <span className="text-xs text-gray-500">测试进行中</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
+                      <CheckOutlined className="text-[9px] text-green-500" />
+                    </div>
+                    <span className="text-xs text-gray-500">测试通过</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
+                      <CloseOutlined className="text-[9px] text-red-500" />
+                    </div>
+                    <span className="text-xs text-gray-500">测试失败</span>
+                  </div>
+                </div>
+              </div>
+            }
+            placement="bottomRight"
+            color="white"
+            overlayClassName="custom-tooltip-simple"
+            overlayStyle={{
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+            }}
+            mouseEnterDelay={0}
+            mouseLeaveDelay={0.1}
           >
             <Button
-              icon={<UploadOutlined />}
+              type="text"
+              size="small"
+              icon={<InfoCircleOutlined />}
+              className="text-gray-400 hover:text-gray-500 hover:bg-gray-50 transition-colors ml-1"
+            />
+          </Tooltip>
+        </div>
+
+        <div className="flex items-center space-x-3">
+          <Tooltip title="导出当前模型价格配置">
+            <Button
+              icon={<DownloadOutlined />}
+              onClick={handleExportPrices}
               size="middle"
-              className="bg-white hover:bg-gray-50 border-gray-200 shadow-sm"
+              className="bg-white hover:bg-gray-50 border-gray-200 shadow-sm flex items-center"
             >
-              导入价格
+              <span className="hidden sm:inline ml-1">导出价格</span>
             </Button>
-          </Upload>
+          </Tooltip>
+
+          <Tooltip title="导入模型价格配置">
+            <Upload
+              accept=".json"
+              showUploadList={false}
+              beforeUpload={handleImportPrices}
+            >
+              <Button
+                icon={<UploadOutlined />}
+                size="middle"
+                className="bg-white hover:bg-gray-50 border-gray-200 shadow-sm flex items-center"
+              >
+                <span className="hidden sm:inline ml-1">导入价格</span>
+              </Button>
+            </Upload>
+          </Tooltip>
         </div>
       </div>
 
@@ -349,19 +577,19 @@ export default function ModelsPage() {
         loading={loading}
         pagination={false}
         size="middle"
-        className="bg-white rounded-lg shadow-sm [&_.ant-table]:!border-b-0 
-          [&_.ant-table-container]:!rounded-lg [&_.ant-table-container]:!border-hidden
+        className="bg-white rounded-lg shadow-sm 
+          [&_.ant-table]:!border-b-0 
+          [&_.ant-table-container]:!rounded-lg 
+          [&_.ant-table-container]:!border-hidden
           [&_.ant-table-cell]:!border-gray-100 
           [&_.ant-table-thead_.ant-table-cell]:!bg-gray-50/80
           [&_.ant-table-thead_.ant-table-cell]:!text-gray-600
+          [&_.ant-table-thead_.ant-table-cell]:!font-medium
           [&_.ant-table-row:hover>*]:!bg-blue-50/50
           [&_.ant-table-tbody_.ant-table-row]:!cursor-pointer
+          [&_.ant-table-tbody_.ant-table-cell]:!py-4
           [&_.ant-table-column-sorter-up.active_.anticon]:!text-blue-500
-          [&_.ant-table-column-sorter-down.active_.anticon]:!text-blue-500
-          [&_.ant-table-filter-trigger.active]:!text-blue-500
-          [&_.ant-table-filter-dropdown]:!rounded-lg
-          [&_.ant-table-filter-dropdown]:!shadow-lg
-          [&_.ant-table-filter-dropdown]:!border-gray-100"
+          [&_.ant-table-column-sorter-down.active_.anticon]:!text-blue-500"
         scroll={{ x: 500 }}
       />
     </div>

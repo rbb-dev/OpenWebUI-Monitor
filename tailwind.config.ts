@@ -9,9 +9,15 @@ const config: Config = {
   darkMode: "class",
   theme: {
     extend: {
+      keyframes: {
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-20px)" },
+        },
+      },
       animation: {
-        "fade-in": "fadeIn 0.6s ease-out forwards",
-        "fade-in-delay": "fadeIn 0.6s ease-out 0.2s forwards",
+        float: "float 6s ease-in-out infinite",
+        "float-delay": "float 6s ease-in-out infinite 3s",
       },
     },
   },

@@ -746,17 +746,7 @@ export default function PanelPage() {
       </Head>
       <div className={containerClass}>
         <div className="flex flex-col gap-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Link
-                href="/"
-                className="mr-2 p-2 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <ArrowLeftOutlined className="text-gray-600" />
-              </Link>
-              <h1 className="text-2xl font-bold text-gray-800">使用统计</h1>
-            </div>
-          </div>
+          <h1 className="pt-16 text-2xl font-bold text-gray-800">使用统计</h1>
 
           <div className="flex flex-col gap-2">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">

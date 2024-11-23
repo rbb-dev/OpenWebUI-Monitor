@@ -1,17 +1,65 @@
 "use client";
 
-import { Button, message, Upload, Modal } from "antd";
-import {
-  ImportOutlined,
-  ExportOutlined,
-  DatabaseOutlined,
-} from "@ant-design/icons";
+import { message, Upload, Modal } from "antd";
+import { ImportOutlined, ExportOutlined } from "@ant-design/icons";
 import type { UploadProps } from "antd";
-import { useState } from "react";
 
-const DatabaseBackup = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+interface DatabaseBackupProps {
+  open: boolean;
+  onClose: () => void;
+}
 
+interface MigrationCardProps {
+  type: "export" | "import";
+  onClick?: () => void;
+  uploadProps?: UploadProps;
+}
+
+const MigrationCard: React.FC<MigrationCardProps> = ({
+  type,
+  onClick,
+  uploadProps,
+}) => {
+  const config = {
+    export: {
+      icon: <ExportOutlined className="text-base text-blue-600" />,
+      title: "导出",
+      color: "border-blue-100 hover:border-blue-200 bg-blue-50/40",
+      iconBg: "bg-blue-50",
+    },
+    import: {
+      icon: <ImportOutlined className="text-base text-purple-600" />,
+      title: "导入",
+      color: "border-purple-100 hover:border-purple-200 bg-purple-50/40",
+      iconBg: "bg-purple-50",
+    },
+  }[type];
+
+  const card = (
+    <div
+      className={`w-full flex items-center gap-2 p-2 rounded-lg border transition-all duration-300 ${config.color}`}
+    >
+      <div className={`p-2 rounded ${config.iconBg}`}>{config.icon}</div>
+      <span className="text-sm font-medium text-gray-900">{config.title}</span>
+    </div>
+  );
+
+  if (type === "import" && uploadProps) {
+    return (
+      <Upload {...uploadProps} className="w-full">
+        <div className="w-full cursor-pointer">{card}</div>
+      </Upload>
+    );
+  }
+
+  return (
+    <div className="w-full cursor-pointer" onClick={onClick}>
+      {card}
+    </div>
+  );
+};
+
+const DatabaseBackup: React.FC<DatabaseBackupProps> = ({ open, onClose }) => {
   const handleExport = async () => {
     try {
       const response = await fetch("/api/v1/panel/database/export");
@@ -40,9 +88,6 @@ const DatabaseBackup = () => {
       const { file, onSuccess, onError } = options;
 
       try {
-        const formData = new FormData();
-        formData.append("file", file);
-
         const reader = new FileReader();
         reader.onload = async (e) => {
           try {
@@ -59,7 +104,6 @@ const DatabaseBackup = () => {
 
             if (result.success) {
               message.success("导入成功");
-              setIsModalOpen(false);
               onSuccess?.(result);
             } else {
               throw new Error(result.error || "导入失败");
@@ -72,6 +116,7 @@ const DatabaseBackup = () => {
         };
 
         reader.readAsText(file as Blob);
+        onSuccess && onSuccess("ok");
       } catch (err) {
         console.error("读取文件失败:", err);
         message.error("读取文件失败");
@@ -81,85 +126,25 @@ const DatabaseBackup = () => {
   };
 
   return (
-    <>
-      <button
-        onClick={() => setIsModalOpen(true)}
-        className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5
-                text-gray-600 hover:text-gray-800
-                rounded-full
-                transition-all duration-300
-                hover:bg-gray-100"
-      >
-        <DatabaseOutlined className="text-base sm:text-lg" />
-        <span className="hidden md:inline text-sm">数据迁移</span>
-      </button>
-
-      <Modal
-        title={
-          <div className="text-base sm:text-lg font-medium text-gray-900 text-center pb-1 sm:pb-2">
-            数据迁移
-          </div>
-        }
-        open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
-        footer={null}
-        width={600}
-        centered
-        className="rounded-2xl overflow-hidden px-4 sm:px-6"
-      >
-        <p className="text-xs sm:text-sm text-gray-500 text-center mb-4 sm:mb-6">
-          您可以导出数据进行备份，或导入之前备份的数据进行恢复
+    <Modal
+      title="数据迁移"
+      open={open}
+      onCancel={onClose}
+      footer={null}
+      width={360}
+      centered
+      className="rounded-xl"
+    >
+      <div className="py-4">
+        <p className="text-xs text-gray-500 text-center mb-4">
+          导出或导入系统数据
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6 py-2 sm:py-4">
-          {/* 导出卡片 */}
-          <div className="group relative overflow-hidden rounded-xl transition-all duration-300 hover:shadow-lg border border-gray-200">
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-white" />
-            <button
-              onClick={handleExport}
-              className="relative p-4 sm:p-6 w-full h-full text-left"
-            >
-              <div className="flex items-center mb-2 sm:mb-4">
-                <div
-                  className="p-2 sm:p-3 bg-gray-900/5 rounded-lg sm:rounded-xl mr-3 sm:mr-4 
-                              group-hover:bg-gray-900/10 transition-all duration-300"
-                >
-                  <ExportOutlined className="text-lg sm:text-xl text-gray-800" />
-                </div>
-                <h3 className="text-base sm:text-lg font-medium text-gray-900">
-                  导出数据
-                </h3>
-              </div>
-              <p className="text-xs sm:text-sm text-gray-600">
-                将当前系统数据导出为备份文件
-              </p>
-            </button>
-          </div>
-
-          {/* 导入卡片 */}
-          <div className="group relative overflow-hidden rounded-xl transition-all duration-300 hover:shadow-lg border border-gray-200">
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-white" />
-            <Upload {...uploadProps}>
-              <div className="relative p-4 sm:p-6 w-full h-full text-left cursor-pointer">
-                <div className="flex items-center mb-2 sm:mb-4">
-                  <div
-                    className="p-2 sm:p-3 bg-gray-900/5 rounded-lg sm:rounded-xl mr-3 sm:mr-4 
-                                group-hover:bg-gray-900/10 transition-all duration-300"
-                  >
-                    <ImportOutlined className="text-lg sm:text-xl text-gray-800" />
-                  </div>
-                  <h3 className="text-base sm:text-lg font-medium text-gray-900">
-                    导入数据
-                  </h3>
-                </div>
-                <p className="text-xs sm:text-sm text-gray-600">
-                  从备份文件中恢复系统数据
-                </p>
-              </div>
-            </Upload>
-          </div>
+        <div className="flex flex-col gap-2">
+          <MigrationCard type="export" onClick={handleExport} />
+          <MigrationCard type="import" uploadProps={uploadProps} />
         </div>
-      </Modal>
-    </>
+      </div>
+    </Modal>
   );
 };
 

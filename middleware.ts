@@ -8,10 +8,11 @@ export async function middleware(request: NextRequest) {
   console.log("中间件处理路径:", request.nextUrl.pathname);
   const { pathname } = request.nextUrl;
 
-  // 只验证 inlet/outlet API 请求
+  // 只验证 inlet/outlet/test API 请求
   if (
     pathname.startsWith("/api/v1/inlet") ||
-    pathname.startsWith("/api/v1/outlet")
+    pathname.startsWith("/api/v1/outlet") ||
+    pathname.startsWith("/api/v1/models/test")
   ) {
     // API 请求验证
     if (!API_KEY) {
@@ -27,7 +28,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.json({ error: "无效的API密钥" }, { status: 401 });
     }
 
-    // API 密钥验证通过后直接返回，不再进行 JWT 验证
+    // API 密钥验证通过后直接返回
     return NextResponse.next();
   } else if (!pathname.startsWith("/api/")) {
     // 页面访问验证
@@ -47,22 +48,6 @@ export async function middleware(request: NextRequest) {
       console.log("访问令牌无效,重定向到令牌验证页");
       return NextResponse.redirect(new URL("/token", request.url));
     }
-  }
-
-  // JWT token 验证逻辑
-  const authToken = request.cookies.get("auth_token")?.value;
-
-  // 不需要认证的路径
-  const publicPaths = [
-    "/auth",
-    "/api/auth/login",
-    "/api/auth/register",
-    "/token",
-  ];
-
-  if (publicPaths.includes(pathname)) {
-    console.log("允许访问公开路径");
-    return NextResponse.next();
   }
 
   return NextResponse.next();
