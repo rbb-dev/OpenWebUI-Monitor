@@ -27,8 +27,10 @@ export default function Header() {
   const [apiKey, setApiKey] = useState("加载中...");
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   const getAccessToken = () => {
+    if (typeof document === "undefined") return null;
     return document.cookie
       .split("; ")
       .find((row) => row.startsWith("access_token="))
@@ -37,6 +39,8 @@ export default function Header() {
 
   useEffect(() => {
     const token = getAccessToken();
+    setAccessToken(token);
+
     if (!token) {
       setApiKey("未授权");
       return;
@@ -237,7 +241,7 @@ export default function Header() {
       <DatabaseBackup
         open={isBackupModalOpen}
         onClose={() => setIsBackupModalOpen(false)}
-        token={getAccessToken()}
+        token={accessToken}
       />
     </>
   );
