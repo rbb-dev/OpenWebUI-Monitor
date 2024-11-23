@@ -1,20 +1,37 @@
-import { createClient } from "@vercel/postgres";
-import { Pool, QueryResult } from "pg";
+import {
+  createClient,
+  QueryResult as VercelQueryResult,
+} from "@vercel/postgres";
+import { Pool, PoolClient } from "pg";
 
 // 判断是否在 Vercel 环境
 const isVercel = process.env.VERCEL === "1";
 
-// Vercel 环境使用 @vercel/postgres 的 createClient
-// Docker 环境使用 node-postgres
-export const db = isVercel
-  ? createClient()
-  : new Pool({
-      host: process.env.POSTGRES_HOST || "db",
-      user: process.env.POSTGRES_USER || "postgres",
-      password: process.env.POSTGRES_PASSWORD,
-      database: process.env.POSTGRES_DATABASE || "openwebui_monitor",
-      port: parseInt(process.env.POSTGRES_PORT || "5432"),
-    });
+type DbClient = ReturnType<typeof createClient>;
+
+// 创建一个单例连接
+let vercelClient: DbClient | null = null;
+let pgPool: Pool | null = null;
+
+function getClient(): DbClient | Pool {
+  if (isVercel) {
+    if (!vercelClient) {
+      vercelClient = createClient();
+    }
+    return vercelClient;
+  } else {
+    if (!pgPool) {
+      pgPool = new Pool({
+        host: process.env.POSTGRES_HOST || "db",
+        user: process.env.POSTGRES_USER || "postgres",
+        password: process.env.POSTGRES_PASSWORD,
+        database: process.env.POSTGRES_DATABASE || "openwebui_monitor",
+        port: parseInt(process.env.POSTGRES_PORT || "5432"),
+      });
+    }
+    return pgPool;
+  }
+}
 
 // 定义一个通用的查询结果类型
 type CommonQueryResult<T = any> = {
@@ -27,24 +44,46 @@ export async function query<T = any>(
   text: string,
   params?: any[]
 ): Promise<CommonQueryResult<T>> {
+  const client = getClient();
+
   if (isVercel) {
-    // Vercel 环境
-    const result = await (db as any).query(text, params || []);
-    return {
-      rows: result.rows,
-      rowCount: result.rowCount || 0,
-    };
-  } else {
-    // Docker 环境
-    const client = await (db as Pool).connect();
     try {
-      const result = await client.query(text, params);
+      // 使用类型断言确保 Vercel 客户端的类型正确
+      const result = await (client as DbClient).query({
+        text,
+        values: params || [],
+      });
+      return {
+        rows: result.rows,
+        rowCount: result.rowCount || 0,
+      };
+    } catch (error) {
+      console.error("Vercel DB Query Error:", error);
+      throw error;
+    }
+  } else {
+    const pgClient = await (client as Pool).connect();
+    try {
+      const result = await (pgClient as PoolClient).query(text, params);
       return {
         rows: result.rows,
         rowCount: result.rowCount || 0,
       };
     } finally {
-      client.release();
+      (pgClient as PoolClient).release();
     }
   }
+}
+
+// 确保在应用关闭时清理连接
+if (typeof window === "undefined") {
+  // 仅在服务器端执行
+  process.on("SIGTERM", async () => {
+    if (pgPool) {
+      await pgPool.end();
+    }
+    if (vercelClient) {
+      await (vercelClient as any).end?.();
+    }
+  });
 }
