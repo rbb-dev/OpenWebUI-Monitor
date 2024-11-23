@@ -3,8 +3,6 @@ services:
     build: .
     ports:
       - "7878:3000"
-    env_file:
-      - .env.local
     environment:
       - POSTGRES_HOST=db
       - POSTGRES_USER=postgres
@@ -15,8 +13,10 @@ services:
       - POSTGRES_URL_NO_SSL=postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/openwebui_monitor?sslmode=disable
       - POSTGRES_PRISMA_URL=postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/openwebui_monitor?sslmode=disable
       - OPENWEBUI_DOMAIN=${OPENWEBUI_DOMAIN}
+      - OPENWEBUI_API_KEY=${OPENWEBUI_API_KEY}
       - API_KEY=${API_KEY}
       - INIT_BALANCE=${INIT_BALANCE:-1}
+      - ACCESS_TOKEN=${ACCESS_TOKEN}
     depends_on:
       db:
         condition: service_healthy
