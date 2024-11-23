@@ -54,11 +54,11 @@ export default function TokenPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-12 bg-gradient-to-br from-slate-50 via-white to-slate-100/50">
-      <div className="absolute top-0 left-0 w-[45rem] h-[45rem] bg-blue-50/40 rounded-full blur-3xl -z-10" />
-      <div className="absolute bottom-0 right-0 w-[50rem] h-[50rem] bg-rose-50/40 rounded-full blur-3xl -z-10" />
+    <div className="fixed inset-0 flex flex-col items-center justify-center px-4 sm:px-6 bg-gradient-to-br from-slate-50 via-white to-slate-100/50">
+      <div className="absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] max-w-[45rem] max-h-[45rem] bg-blue-50/40 rounded-full blur-3xl -z-10" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[75vw] h-[75vw] max-w-[50rem] max-h-[50rem] bg-rose-50/40 rounded-full blur-3xl -z-10" />
 
-      <div className="w-full max-w-md space-y-8 px-6 py-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm">
+      <div className="w-full max-w-md space-y-8 px-6 py-8">
         <div className="text-center">
           <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 bg-clip-text text-transparent mb-2">
             OpenWebUI Monitor

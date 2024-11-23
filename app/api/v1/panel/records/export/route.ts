@@ -1,9 +1,13 @@
-import { sql } from "@vercel/postgres";
+import { pool } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { PoolClient } from "pg";
 
 export async function GET() {
+  let client: PoolClient | null = null;
   try {
-    const records = await sql`
+    client = await pool.connect();
+
+    const records = await client.query(`
       SELECT 
         nickname,
         use_time,
@@ -14,7 +18,7 @@ export async function GET() {
         balance_after
       FROM user_usage_records
       ORDER BY use_time DESC
-    `;
+    `);
 
     // 生成 CSV 内容
     const csvHeaders = [
@@ -55,5 +59,9 @@ export async function GET() {
   } catch (error) {
     console.error("导出记录失败:", error);
     return NextResponse.json({ error: "导出记录失败" }, { status: 500 });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 }
