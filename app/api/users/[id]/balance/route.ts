@@ -1,4 +1,4 @@
-import { sql } from "@vercel/postgres";
+import { query } from "@/lib/db/client";
 import { NextResponse } from "next/server";
 
 export async function PUT(
@@ -13,12 +13,13 @@ export async function PUT(
       return NextResponse.json({ error: "余额必须是数字" }, { status: 400 });
     }
 
-    const result = await sql`
-      UPDATE users
-      SET balance = ${balance}
-      WHERE id = ${userId}
-      RETURNING id, email, balance
-    `;
+    const result = await query(
+      `UPDATE users
+       SET balance = $1
+       WHERE id = $2
+       RETURNING id, email, balance`,
+      [balance, userId]
+    );
 
     if (result.rows.length === 0) {
       return NextResponse.json({ error: "用户不存在" }, { status: 404 });

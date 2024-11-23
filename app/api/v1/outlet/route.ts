@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { encode } from "gpt-tokenizer/model/gpt-4";
-import { sql } from "@vercel/postgres";
+import { query } from "@/lib/db/client";
 import { updateUserBalance } from "@/lib/db/users";
 import { ensureTablesExist } from "@/lib/db";
 
@@ -17,11 +17,12 @@ interface ModelPrice {
 }
 
 async function getModelPrice(modelId: string): Promise<ModelPrice | null> {
-  const result = await sql<ModelPrice>`
-    SELECT id, name, input_price, output_price 
-    FROM model_prices 
-    WHERE id = ${modelId}
-  `;
+  const result = await query(
+    `SELECT id, name, input_price, output_price 
+     FROM model_prices 
+     WHERE id = $1`,
+    [modelId]
+  );
   return result.rows[0] || null;
 }
 
@@ -34,8 +35,6 @@ export async function POST(req: Request) {
     const modelId = data.body.model;
     const userId = data.user.id;
     const userName = data.user.name || "Unknown User";
-
-    // console.log(`outlet data: ${JSON.stringify(data.body)}`);
 
     // 获取最后一条消息（输出）的 tokens
     const lastMessage = data.body.messages[data.body.messages.length - 1];
@@ -62,9 +61,9 @@ export async function POST(req: Request) {
     const totalCost = inputCost + outputCost;
 
     // 首先获取用户信息和当前余额
-    const userResult = await sql`
-      SELECT balance FROM users WHERE id = ${userId}
-    `;
+    const userResult = await query(`SELECT balance FROM users WHERE id = $1`, [
+      userId,
+    ]);
 
     if (userResult.rows.length === 0) {
       return NextResponse.json({ error: "用户不存在" }, { status: 404 });
@@ -74,15 +73,16 @@ export async function POST(req: Request) {
     const newBalance = Number(user.balance) - Number(totalCost);
 
     // 开启事务
-    await sql`BEGIN`;
+    await query("BEGIN");
 
     try {
       // 更新用户余额
-      await sql`
-        UPDATE users 
-        SET balance = ${newBalance}
-        WHERE id = ${userId}
-      `;
+      await query(
+        `UPDATE users 
+         SET balance = $1
+         WHERE id = $2`,
+        [newBalance, userId]
+      );
 
       // 记录使用情况
       console.log("正在记录使用情况:", {
@@ -95,8 +95,8 @@ export async function POST(req: Request) {
         newBalance,
       });
 
-      await sql`
-        INSERT INTO user_usage_records (
+      await query(
+        `INSERT INTO user_usage_records (
           user_id,
           nickname,
           model_name,
@@ -104,18 +104,19 @@ export async function POST(req: Request) {
           output_tokens,
           cost,
           balance_after
-        ) VALUES (
-          ${userId},
-          ${userName},
-          ${modelId},
-          ${inputTokens},
-          ${outputTokens},
-          ${totalCost},
-          ${newBalance}
-        )
-      `;
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [
+          userId,
+          userName,
+          modelId,
+          inputTokens,
+          outputTokens,
+          totalCost,
+          newBalance,
+        ]
+      );
 
-      await sql`COMMIT`;
+      await query("COMMIT");
 
       return NextResponse.json({
         success: true,
@@ -126,7 +127,7 @@ export async function POST(req: Request) {
         message: "请求成功",
       });
     } catch (error) {
-      await sql`ROLLBACK`;
+      await query("ROLLBACK");
       throw error;
     }
   } catch (error) {

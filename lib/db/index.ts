@@ -1,16 +1,16 @@
-import { sql } from "@vercel/postgres";
+import { query } from "./client";
 import { ensureUserTableExists } from "./users";
 
 // 创建模型价格表
 async function ensureModelPricesTableExists() {
-  await sql`
-    CREATE TABLE IF NOT EXISTS model_prices (
+  await query(
+    `CREATE TABLE IF NOT EXISTS model_prices (
       model_id TEXT PRIMARY KEY,
       model_name TEXT NOT NULL,
       input_price DECIMAL(10, 6) DEFAULT 60,
       output_price DECIMAL(10, 6) DEFAULT 60
-    );
-  `;
+    );`
+  );
 }
 
 export async function ensureTablesExist() {
@@ -22,13 +22,14 @@ export async function getOrCreateModelPrice(
   modelId: string,
   modelName: string
 ) {
-  const result = await sql`
-    INSERT INTO model_prices (model_id, model_name)
-    VALUES (${modelId}, ${modelName})
+  const result = await query(
+    `INSERT INTO model_prices (model_id, model_name)
+    VALUES ($1, $2)
     ON CONFLICT (model_id) DO UPDATE
-    SET model_name = ${modelName}
-    RETURNING *;
-  `;
+    SET model_name = $2
+    RETURNING *;`,
+    [modelId, modelName]
+  );
 
   return {
     ...result.rows[0],
@@ -42,14 +43,15 @@ export async function updateModelPrice(
   input_price: number,
   output_price: number
 ) {
-  const result = await sql`
-    UPDATE model_prices 
+  const result = await query(
+    `UPDATE model_prices 
     SET 
-      input_price = CAST(${input_price} AS DECIMAL(10,6)),
-      output_price = CAST(${output_price} AS DECIMAL(10,6))
-    WHERE model_id = ${modelId}
-    RETURNING *;
-  `;
+      input_price = CAST($2 AS DECIMAL(10,6)),
+      output_price = CAST($3 AS DECIMAL(10,6))
+    WHERE model_id = $1
+    RETURNING *;`,
+    [modelId, input_price, output_price]
+  );
 
   if (result.rows.length === 0) {
     return null;
