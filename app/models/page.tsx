@@ -477,7 +477,7 @@ export default function ModelsPage() {
     <div className="p-4 sm:p-6">
       <div className="mb-8">
         <h1 className="pt-16 text-2xl font-semibold text-gray-900">模型管理</h1>
-        <p className="mt-2 text-gray-600">
+        <p className="mt-2 text-sm text-gray-500">
           管理所有可用模型的价格配置。点击模型图标可进行单独测试，测试结果将显示在图标右上角。
         </p>
       </div>
@@ -540,19 +540,27 @@ export default function ModelsPage() {
           </Tooltip>
         </div>
 
-        <div className="flex items-center gap-4 text-sm text-gray-500">
-          <span
-            className="cursor-pointer hover:text-gray-700"
+        <div className="flex items-center gap-3">
+          <Button
+            size="middle"
+            icon={<DownloadOutlined />}
             onClick={handleExportPrices}
+            className="flex items-center border border-gray-200 text-gray-600 hover:text-gray-800 hover:border-gray-300 shadow-sm transition-colors"
           >
-            导出
-          </span>
+            导出配置
+          </Button>
           <Upload
             accept=".json"
             showUploadList={false}
             beforeUpload={handleImportPrices}
           >
-            <span className="cursor-pointer hover:text-gray-700">导入</span>
+            <Button
+              size="middle"
+              icon={<UploadOutlined />}
+              className="flex items-center border border-gray-200 text-gray-600 hover:text-gray-800 hover:border-gray-300 shadow-sm transition-colors"
+            >
+              导入配置
+            </Button>
           </Upload>
         </div>
       </div>

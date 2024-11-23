@@ -14,17 +14,33 @@ import {
 import { message } from "antd";
 import DatabaseBackup from "./DatabaseBackup";
 import { APP_VERSION } from "@/lib/version";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
+  const pathname = usePathname();
+
+  // 如果是token页面，不显示Header
+  if (pathname === "/token") {
+    return null;
+  }
+
   const [apiKey, setApiKey] = useState("加载中...");
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
 
-  useEffect(() => {
-    const token = document.cookie
+  const getAccessToken = () => {
+    return document.cookie
       .split("; ")
       .find((row) => row.startsWith("access_token="))
       ?.split("=")[1];
+  };
+
+  useEffect(() => {
+    const token = getAccessToken();
+    if (!token) {
+      setApiKey("未授权");
+      return;
+    }
 
     fetch("/api/config", {
       headers: {
@@ -37,6 +53,11 @@ export default function Header() {
   }, []);
 
   const handleCopyApiKey = () => {
+    const token = getAccessToken();
+    if (!token) {
+      message.error("未授权，请重新登录");
+      return;
+    }
     if (apiKey === "未设置" || apiKey === "加载失败") {
       message.error("API密钥未设置或加载失败");
       return;
@@ -55,6 +76,12 @@ export default function Header() {
   };
 
   const checkUpdate = async () => {
+    const token = getAccessToken();
+    if (!token) {
+      message.error("未授权，请重新登录");
+      return;
+    }
+
     setIsCheckingUpdate(true);
     try {
       const response = await fetch(
@@ -132,7 +159,7 @@ export default function Header() {
           onClick={handleCopyApiKey}
         >
           <CopyOutlined className="text-base" />
-          <span>复制API KEY</span>
+          <span>复制 API KEY</span>
         </div>
       ),
     },
@@ -207,10 +234,10 @@ export default function Header() {
         </div>
       </header>
 
-      {/* 数据迁移模态框 */}
       <DatabaseBackup
         open={isBackupModalOpen}
         onClose={() => setIsBackupModalOpen(false)}
+        token={getAccessToken()}
       />
     </>
   );

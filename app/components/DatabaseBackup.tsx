@@ -6,12 +6,31 @@ import type { UploadProps } from "antd";
 interface DatabaseBackupProps {
   open: boolean;
   onClose: () => void;
+  token?: string;
 }
 
-const DatabaseBackup: React.FC<DatabaseBackupProps> = ({ open, onClose }) => {
+const DatabaseBackup: React.FC<DatabaseBackupProps> = ({
+  open,
+  onClose,
+  token,
+}) => {
   const handleExport = async () => {
+    if (!token) {
+      message.error("未授权，请重新登录");
+      return;
+    }
+
     try {
-      const response = await fetch("/api/v1/panel/database/export");
+      const response = await fetch("/api/v1/panel/database/export", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("导出失败");
+      }
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -36,6 +55,12 @@ const DatabaseBackup: React.FC<DatabaseBackupProps> = ({ open, onClose }) => {
     customRequest: async (options) => {
       const { file, onSuccess, onError } = options;
 
+      if (!token) {
+        message.error("未授权，请重新登录");
+        onError?.(new Error("未授权"));
+        return;
+      }
+
       try {
         const reader = new FileReader();
         reader.onload = async (e) => {
@@ -45,9 +70,14 @@ const DatabaseBackup: React.FC<DatabaseBackupProps> = ({ open, onClose }) => {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
               },
               body: JSON.stringify(content),
             });
+
+            if (!response.ok) {
+              throw new Error("导入失败");
+            }
 
             const result = await response.json();
 
@@ -65,7 +95,6 @@ const DatabaseBackup: React.FC<DatabaseBackupProps> = ({ open, onClose }) => {
         };
 
         reader.readAsText(file as Blob);
-        onSuccess && onSuccess("ok");
       } catch (err) {
         console.error("读取文件失败:", err);
         message.error("读取文件失败");
@@ -80,13 +109,13 @@ const DatabaseBackup: React.FC<DatabaseBackupProps> = ({ open, onClose }) => {
       open={open}
       onCancel={onClose}
       footer={null}
-      width={360}
+      width={280}
       centered
     >
-      <div className="flex flex-row justify-between gap-3 py-4">
+      <div className="flex flex-col items-center gap-3 py-4">
         <button
           onClick={handleExport}
-          className="flex items-center justify-center gap-2 w-[150px] px-4 py-3 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
+          className="flex items-center justify-center gap-2 w-[180px] px-4 py-3 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
         >
           <svg
             className="w-5 h-5"
@@ -106,7 +135,7 @@ const DatabaseBackup: React.FC<DatabaseBackupProps> = ({ open, onClose }) => {
         </button>
 
         <Upload {...uploadProps}>
-          <button className="flex items-center justify-center gap-2 w-[150px] px-4 py-3 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200">
+          <button className="flex items-center justify-center gap-2 w-[180px] px-4 py-3 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200">
             <svg
               className="w-5 h-5"
               fill="none"
