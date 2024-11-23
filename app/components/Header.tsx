@@ -31,10 +31,12 @@ export default function Header() {
 
   const getAccessToken = () => {
     if (typeof document === "undefined") return null;
-    return document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("access_token="))
-      ?.split("=")[1];
+    return (
+      document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("access_token="))
+        ?.split("=")[1] || null
+    );
   };
 
   useEffect(() => {
@@ -241,7 +243,7 @@ export default function Header() {
       <DatabaseBackup
         open={isBackupModalOpen}
         onClose={() => setIsBackupModalOpen(false)}
-        token={accessToken}
+        token={accessToken || undefined}
       />
     </>
   );
