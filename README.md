@@ -4,62 +4,62 @@
 
 </div>
 
-专为 OpenWebUI 设计的用量监控和用户余额管理面板。只需要向 OpenWebUI 添加一个简单的[函数](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/functions/openwebui_monitor.py)，就能在一个面板统一查看用户使用情况和余额。
+A monitoring dashboard for OpenWebUI that tracks usage and manages user balances. Simply add a [function](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/functions/openwebui_monitor.py) to OpenWebUI to view user activity and balances in a unified panel.
 
-## 特性
+## Features
 
-- 为 OpenWebUI 中的每个模型设置价格；
-- 为每个用户设置余额，根据对话消耗 tokens 和模型价格扣除，并在每条聊天末尾提示；
-- 查看用户使用数据和可视化。
-- 一键测试所有模型的可用性。
+- Set prices for each model in OpenWebUI;
+- Set balance for each user, deduct based on token consumption and model prices, with notifications at the end of each chat;
+- View user data and visualizations;
+- One-click test for all model availability.
 
-## 部署
+## Deployment
 
-### 部署服务端
+### Deploy Server
 
-**Vercel 部署**
+**Vercel Deployment**
 
 [![Deploy on Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FVariantConst%2FOpenWebUI-Monitor&project-name=openwebui-monitor&repository-name=OpenWebUI-Monitor)
 
-部署后，需要进入项目 `Storage -> Create Database` 选择 Neon Postgres 并链接。还需要前往 `Settings -> Environment Variables` 按照后文的说明逐个添加环境变量。最后重新 deploy 项目即可。项目部署成功后会得到一个域名，你需要把这个域名填写到 OpenWebUI 的函数插件中去。
+After deployment, go to `Storage -> Create Database` to select and connect Neon Postgres. You'll also need to go to `Settings -> Environment Variables` to add environment variables as described below. Finally, redeploy the project. Once successfully deployed, you'll get a domain name that needs to be added to the OpenWebUI function plugin.
 
-**Docker 部署**
+**Docker Deployment**
 
-复制并根据后文的要求填写环境变量。
+Copy and fill in the environment variables according to the requirements below.
 
 ```bash
 cp .env.example .env
 vi .env
 ```
 
-之后在项目根目录下运行
+Then run in the project root directory
 
 ```bash
 sudo docker compose up -d --build
 ```
 
-如果需要修改项目运行端口，请修改 `docker-compose.yml`。
+If you need to modify the project running port, please edit `docker-compose.yml`.
 
-### 安装 OpenWebUI 函数插件
+### Install OpenWebUI Function Plugin
 
-将这段 [OpenWebUI-Monitor函数](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/functions/openwebui_monitor.py) 添加到 OpenWebUI 的函数中。添加后，点击函数设置，配置好 api 端点和 api key。
+Add this [OpenWebUI-Monitor function](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/functions/openwebui_monitor.py) to OpenWebUI functions. After adding, click on function settings to configure the API endpoint and API key.
 
-## 环境变量
+## Environment Variables
 
-| 变量名            | 说明                 | 示例                       |
-| ----------------- | -------------------- | -------------------------- |
-| INIT_BALANCE      | 用户初始余额         | `1.14`                     |
-| OPENWEBUI_DOMAIN  | OpenWebUI 的域名     | `https://chat.example.com` |
-| OPENWEBUI_API_KEY | OpenWebUI 的 API Key，在 `个人设置 -> 账号 -> API密钥` 中获取 | `owui-xxxxxxxxxxxxxxxx`    |
-| API_KEY           | 用于 API 请求验证    | `your-api-key-here`        |
-| ACCESS_TOKEN      | 用于页面访问验证     | `your-access-token-here`   |
+| Variable Name     | Description                                                           | Example                    |
+| ----------------- | --------------------------------------------------------------------- | -------------------------- |
+| INIT_BALANCE      | Initial user balance                                                  | `1.14`                     |
+| OPENWEBUI_DOMAIN  | OpenWebUI domain                                                      | `https://chat.example.com` |
+| OPENWEBUI_API_KEY | OpenWebUI API Key, found in `Personal Settings -> Account -> API Key` | `owui-xxxxxxxxxxxxxxxx`    |
+| API_KEY           | For API request verification                                          | `your-api-key-here`        |
+| ACCESS_TOKEN      | For page access verification                                          | `your-access-token-here`   |
 
 ---
 
-确保生成强的 `API_KEY` 和 `ACCESS_TOKEN`，可以利用 [1Password](https://1password.com/password-generator) 在线生成。
+Ensure to generate strong `API_KEY` and `ACCESS_TOKEN`, you can use [1Password](https://1password.com/password-generator) to generate them online.
 
 <details>
-  <summary><h2>画廊</h2></summary>
+  <summary><h2>Gallery</h2></summary>
   <div style="display: flex; flex-wrap: wrap; justify-content: center;">
     <div style="flex: 1 1 50%; padding: 5px; box-sizing: border-box;">
       <img src="https://github.com/user-attachments/assets/653e2e01-9861-472b-a6c9-4ddcf1e9133a" alt="Gallery Image 1" style="width: 100%; display: block;">
@@ -78,4 +78,3 @@ sudo docker compose up -d --build
     </div>
   </div>
 </details>
-
