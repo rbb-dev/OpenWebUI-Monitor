@@ -22,7 +22,7 @@ class Filter:
         """
         从末尾开始找到最后一个“输入”及其后内容并截掉。
         """
-        last_index = content.rfind("输入")
+        last_index = content.rfind("\u200B输入")
         if last_index != -1:
             # 从最后一个“输入”之前截断
             return content[:last_index].strip()
@@ -116,7 +116,7 @@ class Filter:
             new_balance = result["newBalance"]
 
             message_content = (
-                f"输入`{input_tokens} tokens`, 输出`{output_tokens} tokens`, "
+                f"\u200B输入`{input_tokens} tokens`, 输出`{output_tokens} tokens`, "
                 f"消耗`¥{total_cost:.4f}`, 余额`¥{new_balance:.4f}`"
             )
 

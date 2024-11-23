@@ -21,7 +21,7 @@ RUN npm install -g pnpm --registry=https://registry.npmmirror.com
 COPY package.json pnpm-lock.yaml ./
 
 # 安装依赖
-RUN pnpm install --no-frozen-lockfile
+RUN pnpm install --no-frozen-lockfile --registry=https://registry.npmmirror.com
 
 # 复制项目文件
 COPY . .
