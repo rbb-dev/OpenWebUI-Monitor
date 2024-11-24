@@ -4,32 +4,31 @@ services:
     ports:
       - "7878:3000"
     environment:
-      - POSTGRES_HOST=db
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DATABASE=openwebui_monitor
-      - POSTGRES_URL=postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/openwebui_monitor?sslmode=disable
-      - POSTGRES_URL_NON_POOLING=postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/openwebui_monitor?sslmode=disable
-      - POSTGRES_URL_NO_SSL=postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/openwebui_monitor?sslmode=disable
-      - POSTGRES_PRISMA_URL=postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/openwebui_monitor?sslmode=disable
+      - POSTGRES_HOST=${POSTGRES_HOST:-db}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-openwebui}
+      - POSTGRES_DATABASE=${POSTGRES_DATABASE:-openwebui_monitor}
       - OPENWEBUI_DOMAIN=${OPENWEBUI_DOMAIN}
       - OPENWEBUI_API_KEY=${OPENWEBUI_API_KEY}
       - API_KEY=${API_KEY}
-      - INIT_BALANCE=${INIT_BALANCE:-1}
+      - INIT_BALANCE=${INIT_BALANCE:0}
       - ACCESS_TOKEN=${ACCESS_TOKEN}
     depends_on:
-      db:
+      ${POSTGRES_HOST:-db}:
         condition: service_healthy
     restart: always
 
   db:
+    profiles:
+      - ${POSTGRES_HOST:+never}
+      - ${POSTGRES_HOST:-default}
     image: postgres:15-alpine
     expose:
       - "5432"
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=openwebui_monitor
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-openwebui}
+      - POSTGRES_DB=${POSTGRES_DATABASE:-openwebui_monitor}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
