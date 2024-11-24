@@ -1,8 +1,8 @@
-from typing import Optional
-from pydantic import Field, BaseModel  # type: ignore
-import requests  # type: ignore
-import json
-from open_webui.utils.misc import get_last_assistant_message  # type: ignore
+from typing import Optional, Callable, Any, Awaitable
+from pydantic import Field, BaseModel
+import requests
+import time
+from open_webui.utils.misc import get_last_assistant_message
 
 
 class Filter:
@@ -11,40 +11,46 @@ class Filter:
             default="", description="The base URL for the API endpoint."
         )
         API_KEY: str = Field(default="", description="API key for authentication.")
+        priority: int = Field(
+            default=5, description="Priority level for the filter operations."
+        )
+        show_cost: bool = Field(default=True, description="Display cost information")
+        show_balance: bool = Field(
+            default=True, description="Display balance information"
+        )
+        show_tokens: bool = Field(default=True, description="Display token usage")
 
     def __init__(self):
         self.type = "filter"
         self.name = "OpenWebUI Monitor"
         self.valves = self.Valves()
         self.outage = False
+        self.start_time = None
 
     def clean_content(self, content: str) -> str:
-        """
-        从末尾开始找到最后一个“输入”及其后内容并截掉。
-        """
+        """清理消息中的统计信息"""
         last_index = content.rfind("\u200B输入")
         if last_index != -1:
-            # 从最后一个“输入”之前截断
             return content[:last_index].strip()
         return content
 
     def inlet(
         self, body: dict, user: Optional[dict] = None, __user__: dict = {}
     ) -> dict:
+        self.start_time = time.time()
+
         if "messages" in body and isinstance(body["messages"], list):
             for message in body["messages"]:
                 if "content" in message and isinstance(message["content"], str):
                     message["content"] = self.clean_content(message["content"])
 
         try:
-            # 使用写死的路径
             post_url = f"{self.valves.API_ENDPOINT}/api/v1/inlet"
             headers = {"Authorization": f"Bearer {self.valves.API_KEY}"}
             response = requests.post(
                 post_url, headers=headers, json={"user": __user__, "body": body}
             )
 
-            # 如果是 401 错误(API_KEY 验证失败)，直接返回 body
             if response.status_code == 401:
                 return body
 
@@ -72,8 +78,12 @@ class Filter:
         except Exception as e:
             raise Exception(f"处理请求时发生错误: {str(e)}")
 
-    def outlet(
-        self, body: dict, user: Optional[dict] = None, __user__: dict = {}
+    async def outlet(
+        self,
+        body: dict,
+        user: Optional[dict] = None,
+        __user__: dict = {},
+        __event_emitter__: Callable[[Any], Awaitable[None]] = None,
     ) -> dict:
         if self.outage:
             return body
@@ -84,22 +94,23 @@ class Filter:
                     message["content"] = self.clean_content(message["content"])
 
         try:
-            # 使用写死的路径
             post_url = f"{self.valves.API_ENDPOINT}/api/v1/outlet"
             headers = {"Authorization": f"Bearer {self.valves.API_KEY}"}
             request_data = {"user": __user__, "body": body}
 
             response = requests.post(post_url, headers=headers, json=request_data)
 
-            # 如果是 401 错误(API_KEY 验证失败)
             if response.status_code == 401:
-                # 在消息中附加提示信息
-                for message in reversed(body["messages"]):
-                    if message["role"] == "assistant":
-                        message[
-                            "content"
-                        ] += "\n\n`注意: 用量统计请求的API密钥验证失败`"
-                        break
+                if __event_emitter__:
+                    await __event_emitter__(
+                        {
+                            "type": "status",
+                            "data": {
+                                "description": "API密钥验证失败",
+                                "done": True,
+                            },
+                        }
+                    )
                 return body
 
             response.raise_for_status()
@@ -110,20 +121,40 @@ class Filter:
                 error_type = result.get("error_type", "UNKNOWN_ERROR")
                 raise Exception(f"请求失败: [{error_type}] {error_msg}")
 
+            # 获取统计数据
             input_tokens = result["inputTokens"]
             output_tokens = result["outputTokens"]
             total_cost = result["totalCost"]
             new_balance = result["newBalance"]
 
-            message_content = (
-                f"\u200B输入`{input_tokens} tokens`, 输出`{output_tokens} tokens`, "
-                f"消耗`¥{total_cost:.4f}`, 余额`¥{new_balance:.4f}`"
-            )
+            # 构建状态栏显示的统计信息
+            stats_array = []
 
-            for message in reversed(body["messages"]):
-                if message["role"] == "assistant":
-                    message["content"] += f"\n\n{message_content}"
-                    break
+            if self.valves.show_cost:
+                stats_array.append(f"费用: ¥{total_cost:.4f}")
+            if self.valves.show_balance:
+                stats_array.append(f"余额: ¥{new_balance:.4f}")
+            if self.valves.show_tokens:
+                stats_array.append(f"Token: {input_tokens}+{output_tokens}")
+
+            # 计算耗时（如果有start_time）
+            if self.start_time:
+                elapsed_time = time.time() - self.start_time
+                stats_array.append(f"耗时: {elapsed_time:.2f}s")
+
+            stats = " | ".join(stat for stat in stats_array)
+
+            # 发送状态更新
+            if __event_emitter__:
+                await __event_emitter__(
+                    {
+                        "type": "status",
+                        "data": {
+                            "description": stats,
+                            "done": True,
+                        },
+                    }
+                )
 
             return body
 
@@ -132,14 +163,27 @@ class Filter:
                 isinstance(e, requests.exceptions.HTTPError)
                 and e.response.status_code == 401
             ):
-                # 在消息中附加提示信息
-                for message in reversed(body["messages"]):
-                    if message["role"] == "assistant":
-                        message[
-                            "content"
-                        ] += "\n\n`注意: 用量统计请求的API密钥验证失败`"
-                        break
+                if __event_emitter__:
+                    await __event_emitter__(
+                        {
+                            "type": "status",
+                            "data": {
+                                "description": "API密钥验证失败",
+                                "done": True,
+                            },
+                        }
+                    )
                 return body
             raise Exception(f"网络请求失败: {str(e)}")
         except Exception as e:
+            if __event_emitter__:
+                await __event_emitter__(
+                    {
+                        "type": "status",
+                        "data": {
+                            "description": f"错误: {str(e)}",
+                            "done": True,
+                        },
+                    }
+                )
             raise Exception(f"处理请求时发生错误: {str(e)}")
