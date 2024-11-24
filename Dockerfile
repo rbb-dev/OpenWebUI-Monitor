@@ -32,9 +32,6 @@ RUN chmod +x start.sh
 # 构建应用
 RUN pnpm build
 
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN pnpm build || (echo "Build failed" && cat /app/.next/error.log && exit 1)
-
 # 暴露端口
 EXPOSE 3000
 
