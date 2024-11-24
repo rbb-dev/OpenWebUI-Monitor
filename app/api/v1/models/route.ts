@@ -17,28 +17,6 @@ interface ModelResponse {
   }[];
 }
 
-// 规范化域名格式
-function normalizeApiUrl(domain: string): string {
-  try {
-    // 移除首尾空格
-    const normalizedDomain = domain.trim();
-
-    // 提取域名的核心部分（移除协议、路径等）
-    const domainMatch = normalizedDomain.match(/(?:https?:\/\/)?([^\/\s]+)/i);
-    if (!domainMatch) {
-      throw new Error("Invalid domain format");
-    }
-
-    const coreDomain = domainMatch[1];
-
-    // 构建完整的 API URL
-    return `https://${coreDomain}/api/models`;
-  } catch (error) {
-    console.error("Domain normalization error:", error);
-    throw new Error("Invalid domain format");
-  }
-}
-
 export async function GET() {
   try {
     // 确保数据库已初始化
@@ -51,8 +29,7 @@ export async function GET() {
     }
 
     // 规范化 API URL
-    const apiUrl = normalizeApiUrl(domain);
-    // console.log("Normalized API URL:", apiUrl);
+    const apiUrl = domain.replace(/\/+$/, "") + "/api/models";
 
     const response = await fetch(apiUrl, {
       headers: {

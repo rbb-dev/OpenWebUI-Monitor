@@ -27,20 +27,29 @@ function getClient(): DbClient | Pool {
         password: process.env.POSTGRES_PASSWORD,
         database: process.env.POSTGRES_DATABASE || "openwebui_monitor",
         port: parseInt(process.env.POSTGRES_PORT || "5432"),
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 2000,
       };
 
-      // 如果是远程数据库（通过 URL 连接），添加 SSL 配置
       if (process.env.POSTGRES_URL) {
         pgPool = new Pool({
           connectionString: process.env.POSTGRES_URL,
           ssl: {
             rejectUnauthorized: false,
           },
+          max: 20,
+          idleTimeoutMillis: 30000,
+          connectionTimeoutMillis: 2000,
         });
       } else {
-        // 本地数据库不需要 SSL
         pgPool = new Pool(config);
       }
+
+      pgPool.on("error", (err) => {
+        console.error("Unexpected error on idle client", err);
+        process.exit(-1);
+      });
     }
     return pgPool;
   }
@@ -58,40 +67,54 @@ export async function query<T = any>(
   params?: any[]
 ): Promise<CommonQueryResult<T>> {
   const client = getClient();
+  const startTime = Date.now();
 
   if (isVercel) {
     try {
-      // 使用类型断言确保 Vercel 客户端的类型正确
+      console.log(`[DB Query Start] ${text.slice(0, 100)}...`);
       const result = await (client as DbClient).query({
         text,
         values: params || [],
       });
+      console.log(`[DB Query Complete] Took ${Date.now() - startTime}ms`);
       return {
         rows: result.rows,
         rowCount: result.rowCount || 0,
       };
     } catch (error) {
-      console.error("Vercel DB Query Error:", error);
+      console.error("[DB Query Error]", error);
+      console.error(`Query text: ${text}`);
+      console.error(`Query params:`, params);
       throw error;
     }
   } else {
-    const pgClient = await (client as Pool).connect();
+    let pgClient;
     try {
-      const result = await (pgClient as PoolClient).query(text, params);
+      pgClient = await (client as Pool).connect();
+      console.log(`[DB Query Start] ${text.slice(0, 100)}...`);
+      const result = await pgClient.query(text, params);
+      console.log(`[DB Query Complete] Took ${Date.now() - startTime}ms`);
       return {
         rows: result.rows,
         rowCount: result.rowCount || 0,
       };
+    } catch (error) {
+      console.error("[DB Query Error]", error);
+      console.error(`Query text: ${text}`);
+      console.error(`Query params:`, params);
+      throw error;
     } finally {
-      (pgClient as PoolClient).release();
+      if (pgClient) {
+        pgClient.release();
+      }
     }
   }
 }
 
 // 确保在应用关闭时清理连接
 if (typeof window === "undefined") {
-  // 仅在服务器端执行
   process.on("SIGTERM", async () => {
+    console.log("SIGTERM received, closing database connections");
     if (pgPool) {
       await pgPool.end();
     }

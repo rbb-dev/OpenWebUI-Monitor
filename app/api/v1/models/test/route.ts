@@ -1,15 +1,5 @@
 import { NextResponse } from "next/server";
 
-// 规范化域名格式
-function normalizeApiUrl(domain: string): string {
-  const normalizedDomain = domain.trim();
-  const domainMatch = normalizedDomain.match(/(?:https?:\/\/)?([^\/\s]+)/i);
-  if (!domainMatch) {
-    throw new Error("Invalid domain format");
-  }
-  return `https://${domainMatch[1]}/api/chat/completions`;
-}
-
 export async function POST(req: Request) {
   try {
     const { modelId } = await req.json();
@@ -25,7 +15,7 @@ export async function POST(req: Request) {
       throw new Error("环境变量未正确配置");
     }
 
-    const apiUrl = normalizeApiUrl(domain);
+    const apiUrl = domain.replace(/\/+$/, "") + "/api/models";
     // console.log("测试请求URL:", apiUrl);
     // console.log("测试模型ID:", modelId);
 
