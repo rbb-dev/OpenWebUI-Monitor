@@ -5,19 +5,23 @@ export async function POST(req: Request) {
     const { modelId } = await req.json();
 
     if (!modelId) {
-      throw new Error("模型ID不能为空");
+      return NextResponse.json({
+        success: false,
+        message: "模型ID不能为空",
+      });
     }
 
     const domain = process.env.OPENWEBUI_DOMAIN;
     const apiKey = process.env.OPENWEBUI_API_KEY;
 
     if (!domain || !apiKey) {
-      throw new Error("环境变量未正确配置");
+      return NextResponse.json({
+        success: false,
+        message: "环境变量未正确配置",
+      });
     }
 
     const apiUrl = domain.replace(/\/+$/, "") + "/api/chat/completions";
-    // console.log("测试请求URL:", apiUrl);
-    // console.log("测试模型ID:", modelId);
 
     const response = await fetch(apiUrl, {
       method: "POST",
@@ -37,30 +41,31 @@ export async function POST(req: Request) {
     });
 
     const responseText = await response.text();
-    // console.log("API响应:", responseText);
-
     let data;
+
     try {
       data = JSON.parse(responseText);
     } catch (e) {
-      console.error("解析响应JSON失败:", e);
-      throw new Error(`解析响应失败: ${responseText}`);
+      return NextResponse.json({
+        success: false,
+        message: `解析响应失败: ${responseText}`,
+      });
     }
 
     if (!response.ok) {
-      console.error("API请求失败:", {
-        status: response.status,
-        statusText: response.statusText,
-        data,
+      return NextResponse.json({
+        success: false,
+        message:
+          data.error ||
+          `API请求失败: ${response.status} ${response.statusText}`,
       });
-      throw new Error(
-        data.error || `API请求失败: ${response.status} ${response.statusText}`
-      );
     }
 
     if (!data.choices?.[0]?.message?.content) {
-      console.error("响应格式不正确:", data);
-      throw new Error("响应格式不正确");
+      return NextResponse.json({
+        success: false,
+        message: "响应格式不正确",
+      });
     }
 
     return NextResponse.json({
@@ -69,14 +74,9 @@ export async function POST(req: Request) {
       response: data.choices[0].message.content,
     });
   } catch (error) {
-    console.error("模型测试失败:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "未知错误",
-        details: error instanceof Error ? error.stack : undefined,
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: false,
+      message: error instanceof Error ? error.message : "未知错误",
+    });
   }
 }

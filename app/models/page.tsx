@@ -482,7 +482,7 @@ export default function ModelsPage() {
         </p>
       </div>
 
-      <div className="mb-6 flex items-center gap-6">
+      <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
         <div className="flex items-center gap-2">
           <Tooltip title="批量测试所有模型的可用性">
             <Button
@@ -540,14 +540,16 @@ export default function ModelsPage() {
           </Tooltip>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <Button
             size="middle"
-            icon={<DownloadOutlined />}
             onClick={handleExportPrices}
-            className="flex items-center border border-gray-200 text-gray-600 hover:text-gray-800 hover:border-gray-300 shadow-sm transition-colors"
+            className="flex-1 sm:w-[120px] items-center justify-center bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 hover:text-gray-900 hover:border-gray-300 shadow-sm transition-all duration-200 hover:shadow"
           >
-            导出配置
+            <span className="flex items-center gap-2">
+              <DownloadOutlined className="text-gray-500" />
+              <span> 导出配置</span>
+            </span>
           </Button>
           <Upload
             accept=".json"
@@ -556,10 +558,12 @@ export default function ModelsPage() {
           >
             <Button
               size="middle"
-              icon={<UploadOutlined />}
-              className="flex items-center border border-gray-200 text-gray-600 hover:text-gray-800 hover:border-gray-300 shadow-sm transition-colors"
+              className="flex-1 sm:w-[120px] items-center justify-center bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border border-blue-200 text-blue-700 hover:text-blue-800 hover:border-blue-300 shadow-sm transition-all duration-200 hover:shadow"
             >
-              导入配置
+              <span className="flex items-center gap-2">
+                <UploadOutlined className="text-blue-500" />
+                <span> 导入配置</span>
+              </span>
             </Button>
           </Upload>
         </div>

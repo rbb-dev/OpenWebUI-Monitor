@@ -5,7 +5,7 @@ const API_KEY = process.env.API_KEY;
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
 
 export async function middleware(request: NextRequest) {
-  console.log("中间件处理路径:", request.nextUrl.pathname);
+  // console.log("中间件处理路径:", request.nextUrl.pathname);
   const { pathname } = request.nextUrl;
 
   // 只验证 inlet/outlet/test API 请求
