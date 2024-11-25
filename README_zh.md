@@ -42,17 +42,17 @@ sudo docker compose up -d --build
 
 ### 安装 OpenWebUI 函数插件
 
-将这段 [OpenWebUI-Monitor函数](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/functions/openwebui_monitor.py) 添加到 OpenWebUI 的函数中。添加后，点击函数设置，配置好 api 端点和 api key。
+将这段 [OpenWebUI-Monitor 函数](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/functions/openwebui_monitor.py) 添加到 OpenWebUI 的函数中。添加后，点击函数设置，配置好 api 端点和 api key。
 
 ## 环境变量
 
-| 变量名            | 说明                 | 示例                       |
-| ----------------- | -------------------- | -------------------------- |
-| INIT_BALANCE      | 用户初始余额         | `1.14`                     |
-| OPENWEBUI_DOMAIN  | OpenWebUI 的域名     | `https://chat.example.com` |
+| 变量名            | 说明                                                          | 示例                       |
+| ----------------- | ------------------------------------------------------------- | -------------------------- |
+| INIT_BALANCE      | 用户初始余额                                                  | `1.14`                     |
+| OPENWEBUI_DOMAIN  | OpenWebUI 的域名                                              | `https://chat.example.com` |
 | OPENWEBUI_API_KEY | OpenWebUI 的 API Key，在 `个人设置 -> 账号 -> API密钥` 中获取 | `owui-xxxxxxxxxxxxxxxx`    |
-| API_KEY           | 用于 API 请求验证    | `your-api-key-here`        |
-| ACCESS_TOKEN      | 用于页面访问验证     | `your-access-token-here`   |
+| API_KEY           | 用于 API 请求验证                                             | `your-api-key-here`        |
+| ACCESS_TOKEN      | 用于页面访问验证                                              | `your-access-token-here`   |
 
 ---
 
@@ -78,4 +78,3 @@ sudo docker compose up -d --build
     </div>
   </div>
 </details>
-
