@@ -15,34 +15,16 @@
 
 ## 部署
 
-### 部署服务端
+支持 Vercel 一键部署 [![Deploy on Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FVariantConst%2FOpenWebUI-Monitor&project-name=openwebui-monitor&repository-name=OpenWebUI-Monitor) 和 Docker 部署。详见 [部署指南](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/tutorials/zh-cn/deployment_guide_zh.md)。
 
-**Vercel 部署**
+## 更新
 
-[![Deploy on Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FVariantConst%2FOpenWebUI-Monitor&project-name=openwebui-monitor&repository-name=OpenWebUI-Monitor)
-
-部署后，需要进入项目 `Storage -> Create Database` 选择 Neon Postgres 并链接。还需要前往 `Settings -> Environment Variables` 按照后文的说明逐个添加环境变量。最后重新 deploy 项目即可。项目部署成功后会得到一个域名，你需要把这个域名填写到 OpenWebUI 的函数插件中去。
-
-**Docker 部署**
-
-复制并根据后文的要求填写环境变量。
+Vercel 部署后会自动更新，如果有问题可以去 fork 的仓库手动 Sync fork。至于 Docker，拉取最新镜像后重启容器即可：
 
 ```bash
-cp .env.example .env
-vi .env
+sudo docker compose pull
+sudo docker compose up -d
 ```
-
-之后在项目根目录下运行
-
-```bash
-sudo docker compose up -d --build
-```
-
-如果需要修改项目运行端口，请修改 `docker-compose.yml`。
-
-### 安装 OpenWebUI 函数插件
-
-将这段 [OpenWebUI-Monitor 函数](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/functions/openwebui_monitor.py) 添加到 OpenWebUI 的函数中。添加后，点击函数设置，配置好 api 端点和 api key。
 
 ## 环境变量
 
@@ -53,10 +35,6 @@ sudo docker compose up -d --build
 | OPENWEBUI_API_KEY | OpenWebUI 的 API Key，在 `个人设置 -> 账号 -> API密钥` 中获取 | `owui-xxxxxxxxxxxxxxxx`    |
 | API_KEY           | 用于 API 请求验证                                             | `your-api-key-here`        |
 | ACCESS_TOKEN      | 用于页面访问验证                                              | `your-access-token-here`   |
-
----
-
-确保生成强的 `API_KEY` 和 `ACCESS_TOKEN`，可以利用 [1Password](https://1password.com/password-generator) 在线生成。
 
 <details>
   <summary><h2>画廊</h2></summary>

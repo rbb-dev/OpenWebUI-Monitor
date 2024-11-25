@@ -4,7 +4,7 @@
 
 </div>
 
-A monitoring dashboard for OpenWebUI that tracks usage and manages user balances. Simply add a [function](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/functions/openwebui_monitor.py) to OpenWebUI to view user activity and balances in a unified panel.
+A monitoring dashboard for OpenWebUI that tracks usage and manages user balances. Simply add a [function](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/functions/openwebui_monitor.py) to OpenWebUI to view user activity and balances in a unified panel.
 
 ## Features
 
@@ -15,34 +15,16 @@ A monitoring dashboard for OpenWebUI that tracks usage and manages user balances
 
 ## Deployment
 
-### Deploy Server
+Supports one-click deployment on Vercel [![Deploy on Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FVariantConst%2FOpenWebUI-Monitor&project-name=openwebui-monitor&repository-name=OpenWebUI-Monitor) and Docker deployment. See [Deployment Guide](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/tutorials/en/deployment_guide.md) for details.
 
-**Vercel Deployment**
+## Updates
 
-[![Deploy on Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FVariantConst%2FOpenWebUI-Monitor&project-name=openwebui-monitor&repository-name=OpenWebUI-Monitor)
-
-After deployment, go to `Storage -> Create Database` to select and connect Neon Postgres. You'll also need to go to `Settings -> Environment Variables` to add environment variables as described below. Finally, redeploy the project. Once successfully deployed, you'll get a domain name that needs to be added to the OpenWebUI function plugin.
-
-**Docker Deployment**
-
-Copy and fill in the environment variables according to the requirements below.
+Vercel deployments will update automatically. If there are issues, you can manually sync fork in your forked repository. For Docker, simply pull the latest image and restart the container:
 
 ```bash
-cp .env.example .env
-vi .env
+sudo docker compose pull
+sudo docker compose up -d
 ```
-
-Then run in the project root directory
-
-```bash
-sudo docker compose up -d --build
-```
-
-If you need to modify the project running port, please edit `docker-compose.yml`.
-
-### Install OpenWebUI Function Plugin
-
-Add this [OpenWebUI-Monitor function](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/functions/openwebui_monitor.py) to OpenWebUI functions. After adding, click on function settings to configure the API endpoint and API key.
 
 ## Environment Variables
 
@@ -53,10 +35,6 @@ Add this [OpenWebUI-Monitor function](https://github.com/VariantConst/OpenWebUI-
 | OPENWEBUI_API_KEY | OpenWebUI API Key, found in `Personal Settings -> Account -> API Key` | `owui-xxxxxxxxxxxxxxxx`    |
 | API_KEY           | For API request verification                                          | `your-api-key-here`        |
 | ACCESS_TOKEN      | For page access verification                                          | `your-access-token-here`   |
-
----
-
-Ensure to generate strong `API_KEY` and `ACCESS_TOKEN`, you can use [1Password](https://1password.com/password-generator) to generate them online.
 
 <details>
   <summary><h2>Gallery</h2></summary>
