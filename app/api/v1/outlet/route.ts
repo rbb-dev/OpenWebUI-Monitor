@@ -3,8 +3,6 @@ import { encode } from "gpt-tokenizer/model/gpt-4";
 import { Pool, PoolClient } from "pg";
 import { createClient } from "@vercel/postgres";
 import { query, getClient } from "@/lib/db/client";
-import { updateUserBalance } from "@/lib/db/users";
-import { ensureTablesExist } from "@/lib/db";
 
 const isVercel = process.env.VERCEL === "1";
 
