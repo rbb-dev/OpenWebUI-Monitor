@@ -4,21 +4,40 @@ import {
 } from "@vercel/postgres";
 import { Pool, PoolClient } from "pg";
 
-// 判断是否在 Vercel 环境
 const isVercel = process.env.VERCEL === "1";
 
-type DbClient = ReturnType<typeof createClient>;
-
-// 创建一个单例连接
-let vercelClient: DbClient | null = null;
+// 为 Vercel 环境添加连接池
+let vercelPool: {
+  client: ReturnType<typeof createClient>;
+  isConnected: boolean;
+} | null = null;
 let pgPool: Pool | null = null;
 
-function getClient(): DbClient | Pool {
-  if (isVercel) {
-    if (!vercelClient) {
-      vercelClient = createClient();
+async function getVercelClient() {
+  if (!vercelPool) {
+    vercelPool = {
+      client: createClient(),
+      isConnected: false,
+    };
+  }
+
+  // 如果还没连接，则建立连接
+  if (!vercelPool.isConnected) {
+    try {
+      await vercelPool.client.connect();
+      vercelPool.isConnected = true;
+    } catch (error) {
+      console.error("Vercel DB connection error:", error);
+      throw error;
     }
-    return vercelClient;
+  }
+
+  return vercelPool.client;
+}
+
+function getClient() {
+  if (isVercel) {
+    return getVercelClient();
   } else {
     if (!pgPool) {
       const config = {
@@ -66,13 +85,13 @@ export async function query<T = any>(
   text: string,
   params?: any[]
 ): Promise<CommonQueryResult<T>> {
-  const client = getClient();
+  const client = await getClient();
   const startTime = Date.now();
 
   if (isVercel) {
     try {
       console.log(`[DB Query Start] ${text.slice(0, 100)}...`);
-      const result = await (client as DbClient).query({
+      const result = await (client as ReturnType<typeof createClient>).query({
         text,
         values: params || [],
       });
@@ -83,8 +102,10 @@ export async function query<T = any>(
       };
     } catch (error) {
       console.error("[DB Query Error]", error);
-      console.error(`Query text: ${text}`);
-      console.error(`Query params:`, params);
+      // 如果连接出错，重置连接状态
+      if (vercelPool) {
+        vercelPool.isConnected = false;
+      }
       throw error;
     }
   } else {
@@ -118,8 +139,11 @@ if (typeof window === "undefined") {
     if (pgPool) {
       await pgPool.end();
     }
-    if (vercelClient) {
-      await (vercelClient as any).end?.();
+    if (vercelPool?.client) {
+      await vercelPool.client.end();
+      vercelPool.isConnected = false;
     }
   });
 }
+
+export { getClient };
