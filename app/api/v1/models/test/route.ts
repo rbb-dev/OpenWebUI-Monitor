@@ -15,7 +15,7 @@ export async function POST(req: Request) {
       throw new Error("环境变量未正确配置");
     }
 
-    const apiUrl = domain.replace(/\/+$/, "") + "/api/models";
+    const apiUrl = domain.replace(/\/+$/, "") + "/api/chat/completions";
     // console.log("测试请求URL:", apiUrl);
     // console.log("测试模型ID:", modelId);
 
