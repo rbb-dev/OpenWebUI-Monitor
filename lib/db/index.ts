@@ -4,10 +4,10 @@ import { ensureUserTableExists } from "./users";
 // 创建模型价格表
 async function ensureModelPricesTableExists() {
   const defaultInputPrice = parseFloat(
-    process.env.DEFAULT_MODEL_INPUT_PRICE || "0.01"
+    process.env.DEFAULT_MODEL_INPUT_PRICE || "60"
   );
   const defaultOutputPrice = parseFloat(
-    process.env.DEFAULT_MODEL_OUTPUT_PRICE || "0.03"
+    process.env.DEFAULT_MODEL_OUTPUT_PRICE || "60"
   );
 
   await query(

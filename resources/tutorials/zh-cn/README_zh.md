@@ -28,13 +28,22 @@ sudo docker compose up -d
 
 ## 环境变量
 
+### 必填
+
 | 变量名            | 说明                                                          | 示例                       |
 | ----------------- | ------------------------------------------------------------- | -------------------------- |
-| INIT_BALANCE      | 用户初始余额                                                  | `1.14`                     |
 | OPENWEBUI_DOMAIN  | OpenWebUI 的域名                                              | `https://chat.example.com` |
 | OPENWEBUI_API_KEY | OpenWebUI 的 API Key，在 `个人设置 -> 账号 -> API密钥` 中获取 | `sk-xxxxxxxxxxxxxxxx`      |
 | API_KEY           | 用于 API 请求验证                                             | `your-api-key-here`        |
 | ACCESS_TOKEN      | 用于页面访问验证                                              | `your-access-token-here`   |
+
+### 可选
+
+| 变量名                     | 默认值                                   | 示例 |
+| -------------------------- | ---------------------------------------- | ---- |
+| DEFAULT_MODEL_INPUT_PRICE  | 默认模型输入价格，单位为美元/百万 tokens | `60` |
+| DEFAULT_MODEL_OUTPUT_PRICE | 默认模型输出价格，单位为美元/百万 tokens | `60` |
+| INIT_BALANCE               | 用户初始余额                             | `0`  |
 
 <details>
   <summary><h2>画廊</h2></summary>
