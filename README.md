@@ -32,7 +32,7 @@ sudo docker compose up -d
 | ----------------- | --------------------------------------------------------------------- | -------------------------- |
 | INIT_BALANCE      | Initial user balance                                                  | `1.14`                     |
 | OPENWEBUI_DOMAIN  | OpenWebUI domain                                                      | `https://chat.example.com` |
-| OPENWEBUI_API_KEY | OpenWebUI API Key, found in `Personal Settings -> Account -> API Key` | `owui-xxxxxxxxxxxxxxxx`    |
+| OPENWEBUI_API_KEY | OpenWebUI API Key, found in `Personal Settings -> Account -> API Key` | `sk-xxxxxxxxxxxxxxxx`      |
 | API_KEY           | For API request verification                                          | `your-api-key-here`        |
 | ACCESS_TOKEN      | For page access verification                                          | `your-access-token-here`   |
 
