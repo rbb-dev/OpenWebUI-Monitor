@@ -27,22 +27,10 @@ class Filter:
         self.outage = False
         self.start_time = None
 
-    def clean_content(self, content: str) -> str:
-        """清理消息中的统计信息"""
-        last_index = content.rfind("\u200B输入")
-        if last_index != -1:
-            return content[:last_index].strip()
-        return content
-
     def inlet(
         self, body: dict, user: Optional[dict] = None, __user__: dict = {}
     ) -> dict:
         self.start_time = time.time()
-
-        if "messages" in body and isinstance(body["messages"], list):
-            for message in body["messages"]:
-                if "content" in message and isinstance(message["content"], str):
-                    message["content"] = self.clean_content(message["content"])
 
         try:
             post_url = f"{self.valves.API_ENDPOINT}/api/v1/inlet"
@@ -88,15 +76,13 @@ class Filter:
         if self.outage:
             return body
 
-        if "messages" in body and isinstance(body["messages"], list):
-            for message in body["messages"]:
-                if "content" in message and isinstance(message["content"], str):
-                    message["content"] = self.clean_content(message["content"])
-
         try:
             post_url = f"{self.valves.API_ENDPOINT}/api/v1/outlet"
             headers = {"Authorization": f"Bearer {self.valves.API_KEY}"}
-            request_data = {"user": __user__, "body": body}
+            request_data = {
+                "user": __user__,
+                "body": body,
+            }
 
             response = requests.post(post_url, headers=headers, json=request_data)
 
