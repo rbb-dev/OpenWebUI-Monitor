@@ -3,13 +3,21 @@ import { ensureUserTableExists } from "./users";
 
 // 创建模型价格表
 async function ensureModelPricesTableExists() {
+  const defaultInputPrice = parseFloat(
+    process.env.DEFAULT_MODEL_INPUT_PRICE || "0.01"
+  );
+  const defaultOutputPrice = parseFloat(
+    process.env.DEFAULT_MODEL_OUTPUT_PRICE || "0.03"
+  );
+
   await query(
     `CREATE TABLE IF NOT EXISTS model_prices (
       model_id TEXT PRIMARY KEY,
       model_name TEXT NOT NULL,
-      input_price DECIMAL(10, 6) DEFAULT 60,
-      output_price DECIMAL(10, 6) DEFAULT 60
-    );`
+      input_price DECIMAL(10, 6) DEFAULT CAST($1 AS DECIMAL(10, 6)),
+      output_price DECIMAL(10, 6) DEFAULT CAST($2 AS DECIMAL(10, 6))
+    );`,
+    [defaultInputPrice, defaultOutputPrice]
   );
 }
 

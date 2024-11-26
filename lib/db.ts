@@ -66,15 +66,21 @@ export async function ensureTablesExist() {
     `);
 
     // 然后创建 model_prices 表
-    await client.query(`
+    await client.query(
+      `
       CREATE TABLE IF NOT EXISTS model_prices (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
-        input_price NUMERIC(10, 6) DEFAULT 60,
-        output_price NUMERIC(10, 6) DEFAULT 60,
+        input_price NUMERIC(10, 6) DEFAULT CAST($1 AS NUMERIC(10, 6)),
+        output_price NUMERIC(10, 6) DEFAULT CAST($2 AS NUMERIC(10, 6)),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
-    `);
+    `,
+      [
+        parseFloat(process.env.DEFAULT_MODEL_INPUT_PRICE || "0.01"),
+        parseFloat(process.env.DEFAULT_MODEL_OUTPUT_PRICE || "0.03"),
+      ]
+    );
 
     // 最后创建 user_usage_records 表
     await client.query(`
@@ -91,7 +97,7 @@ export async function ensureTablesExist() {
         FOREIGN KEY (user_id) REFERENCES users(id)
       );
     `);
-    console.log("确保所有表已创建");
+    // console.log("确保所有表已创建");
   } catch (error) {
     console.error("Database connection/initialization error:", error);
     throw error;

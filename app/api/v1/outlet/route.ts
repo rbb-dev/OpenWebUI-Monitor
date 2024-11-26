@@ -27,7 +27,35 @@ async function getModelPrice(modelId: string): Promise<ModelPrice | null> {
      WHERE id = $1`,
     [modelId]
   );
-  return result.rows[0] || null;
+
+  if (result.rows[0]) {
+    return result.rows[0];
+  }
+
+  // 如果数据库中没有找到价格，使用默认价格
+  const defaultInputPrice = parseFloat(
+    process.env.DEFAULT_MODEL_INPUT_PRICE || "0"
+  );
+  const defaultOutputPrice = parseFloat(
+    process.env.DEFAULT_MODEL_OUTPUT_PRICE || "0"
+  );
+
+  // 验证默认价格是否为有效的非负数
+  if (
+    isNaN(defaultInputPrice) ||
+    defaultInputPrice < 0 ||
+    isNaN(defaultOutputPrice) ||
+    defaultOutputPrice < 0
+  ) {
+    return null;
+  }
+
+  return {
+    id: modelId,
+    name: modelId,
+    input_price: defaultInputPrice,
+    output_price: defaultOutputPrice,
+  };
 }
 
 export async function POST(req: Request) {
