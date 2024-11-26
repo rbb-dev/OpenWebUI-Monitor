@@ -39,11 +39,11 @@ sudo docker compose up -d
 
 ### Optional
 
-| Variable Name              | Default Value                                         | Example |
-| -------------------------- | ----------------------------------------------------- | ------- |
-| DEFAULT_MODEL_INPUT_PRICE  | Default model input price, in USD per million tokens  | `60`    |
-| DEFAULT_MODEL_OUTPUT_PRICE | Default model output price, in USD per million tokens | `60`    |
-| INIT_BALANCE               | Initial user balance                                  | `0`     |
+| Variable Name              | Description                                           | Default Value |
+| -------------------------- | ----------------------------------------------------- | ------------- |
+| DEFAULT_MODEL_INPUT_PRICE  | Default model input price, in USD per million tokens  | `60`          |
+| DEFAULT_MODEL_OUTPUT_PRICE | Default model output price, in USD per million tokens | `60`          |
+| INIT_BALANCE               | Initial user balance                                  | `0`           |
 
 <details>
   <summary><h2>Gallery</h2></summary>

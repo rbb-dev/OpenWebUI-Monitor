@@ -34,10 +34,10 @@ async function getModelPrice(modelId: string): Promise<ModelPrice | null> {
 
   // 如果数据库中没有找到价格，使用默认价格
   const defaultInputPrice = parseFloat(
-    process.env.DEFAULT_MODEL_INPUT_PRICE || "0"
+    process.env.DEFAULT_MODEL_INPUT_PRICE || "60"
   );
   const defaultOutputPrice = parseFloat(
-    process.env.DEFAULT_MODEL_OUTPUT_PRICE || "0"
+    process.env.DEFAULT_MODEL_OUTPUT_PRICE || "60"
   );
 
   // 验证默认价格是否为有效的非负数
@@ -86,12 +86,24 @@ export async function POST(req: Request) {
 
     // 计算 tokens
     const lastMessage = data.body.messages[data.body.messages.length - 1];
-    const outputTokens = encode(lastMessage.content).length;
-    const totalTokens = data.body.messages.reduce(
-      (sum: number, msg: Message) => sum + encode(msg.content).length,
-      0
-    );
-    const inputTokens = totalTokens - outputTokens;
+
+    let inputTokens: number;
+    let outputTokens: number;
+    if (
+      lastMessage.info &&
+      lastMessage.info.prompt_tokens &&
+      lastMessage.info.completion_tokens
+    ) {
+      inputTokens = lastMessage.info.prompt_tokens;
+      outputTokens = lastMessage.info.completion_tokens;
+    } else {
+      outputTokens = encode(lastMessage.content).length;
+      const totalTokens = data.body.messages.reduce(
+        (sum: number, msg: Message) => sum + encode(msg.content).length,
+        0
+      );
+      inputTokens = totalTokens - outputTokens;
+    }
 
     // 计算成本
     const inputCost = (inputTokens / 1_000_000) * modelPrice.input_price;
