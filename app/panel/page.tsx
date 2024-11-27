@@ -615,15 +615,17 @@ export default function PanelPage() {
       },
       xAxis: {
         type: "category",
-        data: columnData.map((item) => item.nickname),
+        data: columnData.map((item) =>
+          item.nickname.length > 15
+            ? item.nickname.slice(0, 12) + "..."
+            : item.nickname
+        ),
         axisLabel: {
           inside: false,
           color: "#666",
           fontSize: 12,
           rotate: 45,
           interval: "auto",
-          overflow: "truncate",
-          ellipsis: "...",
           hideOverlap: true,
         },
         axisTick: {
