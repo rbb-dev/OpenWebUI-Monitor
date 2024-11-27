@@ -19,6 +19,9 @@ class Filter:
             default=True, description="Display balance information"
         )
         show_tokens: bool = Field(default=True, description="Display token usage")
+        show_tokens_per_sec: bool = Field(
+            default=True, description="Display tokens per second"
+        )
 
     def __init__(self):
         self.type = "filter"
@@ -127,6 +130,10 @@ class Filter:
             if self.start_time:
                 elapsed_time = time.time() - self.start_time
                 stats_array.append(f"耗时: {elapsed_time:.2f}s")
+                
+                # 计算每秒输出速度
+                if self.valves.show_tokens_per_sec:
+                    stats_array.append(f"{(output_tokens/elapsed_time):.2f} T/s")
 
             stats = " | ".join(stat for stat in stats_array)
 
