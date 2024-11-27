@@ -1,6 +1,7 @@
 <div align="center">
 
 # OpenWebUI Monitor
+**English** / [简体中文](./README_CN.md) 
 
 </div>
 
