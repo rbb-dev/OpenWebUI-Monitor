@@ -30,6 +30,16 @@ class Filter:
         self.outage = False
         self.start_time = None
 
+    def _prepare_user_dict(self, __user__: dict) -> dict:
+        """将 __user__ 对象转换为可序列化的字典"""
+        user_dict = dict(__user__)  # 创建副本以避免修改原始对象
+        
+        # 如果存在 valves 且是 BaseModel 的实例，将其转换为字典
+        if "valves" in user_dict and hasattr(user_dict["valves"], "model_dump"):
+            user_dict["valves"] = user_dict["valves"].model_dump()
+        
+        return user_dict
+
     def inlet(
         self, body: dict, user: Optional[dict] = None, __user__: dict = {}
     ) -> dict:
@@ -38,8 +48,12 @@ class Filter:
         try:
             post_url = f"{self.valves.API_ENDPOINT}/api/v1/inlet"
             headers = {"Authorization": f"Bearer {self.valves.API_KEY}"}
+            
+            # 使用 _prepare_user_dict 处理 __user__ 对象
+            user_dict = self._prepare_user_dict(__user__)
+            
             response = requests.post(
-                post_url, headers=headers, json={"user": __user__, "body": body}
+                post_url, headers=headers, json={"user": user_dict, "body": body}
             )
 
             if response.status_code == 401:
@@ -82,8 +96,12 @@ class Filter:
         try:
             post_url = f"{self.valves.API_ENDPOINT}/api/v1/outlet"
             headers = {"Authorization": f"Bearer {self.valves.API_KEY}"}
+            
+            # 使用 _prepare_user_dict 处理 __user__ 对象
+            user_dict = self._prepare_user_dict(__user__)
+            
             request_data = {
-                "user": __user__,
+                "user": user_dict,
                 "body": body,
             }
 
