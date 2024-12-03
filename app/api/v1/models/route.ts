@@ -71,7 +71,7 @@ export async function GET() {
         return {
           id: item.id,
           name: item.name,
-          imageUrl: item.info?.meta?.profile_image_url || "/openwebui.png",
+          imageUrl: item.info?.meta?.profile_image_url || "/static/favicon.png",
           input_price: priceInfo.input_price,
           output_price: priceInfo.output_price,
         };

@@ -12,7 +12,6 @@ export default function TokenPage() {
   const [showToken, setShowToken] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    // 阻止表单默认提交行为
     e.preventDefault();
 
     if (!token.trim()) {
@@ -22,8 +21,8 @@ export default function TokenPage() {
 
     setLoading(true);
     try {
-      // 将令牌存储在 cookie 中
-      document.cookie = `access_token=${token}; path=/`;
+      // 将令牌存储在 localStorage 中而不是 cookie
+      localStorage.setItem("access_token", token);
 
       // 尝试访问 API 验证令牌
       const res = await fetch("/api/config", {
@@ -34,20 +33,17 @@ export default function TokenPage() {
 
       if (res.ok) {
         message.success("令牌验证成功");
-        // 等待消息显示完成后再跳转
         setTimeout(() => {
           window.location.href = "/";
         }, 500);
       } else {
         message.error("无效的访问令牌");
-        document.cookie =
-          "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        localStorage.removeItem("access_token");
       }
     } catch (error) {
       console.error("验证失败:", error);
       message.error("验证失败");
-      document.cookie =
-        "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      localStorage.removeItem("access_token");
     } finally {
       setLoading(false);
     }

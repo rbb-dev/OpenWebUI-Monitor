@@ -40,7 +40,7 @@ export default function Header() {
   };
 
   useEffect(() => {
-    const token = getAccessToken();
+    const token = localStorage.getItem("access_token");
     setAccessToken(token);
 
     if (!token) {
@@ -73,10 +73,6 @@ export default function Header() {
   };
 
   const handleLogout = () => {
-    document.cookie =
-      "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie =
-      "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     localStorage.removeItem("access_token");
     window.location.href = "/token";
   };

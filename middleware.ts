@@ -5,7 +5,6 @@ const API_KEY = process.env.API_KEY;
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
 
 export async function middleware(request: NextRequest) {
-  // console.log("中间件处理路径:", request.nextUrl.pathname);
   const { pathname } = request.nextUrl;
 
   // 只验证 inlet/outlet/test API 请求
@@ -28,7 +27,6 @@ export async function middleware(request: NextRequest) {
       return NextResponse.json({ error: "无效的API密钥" }, { status: 401 });
     }
 
-    // API 密钥验证通过后直接返回
     return NextResponse.next();
   } else if (!pathname.startsWith("/api/")) {
     // 页面访问验证
@@ -37,22 +35,27 @@ export async function middleware(request: NextRequest) {
       return NextResponse.json({ error: "服务器配置错误" }, { status: 500 });
     }
 
-    const token = request.cookies.get("access_token")?.value;
-
     // 如果是令牌验证页面，直接允许访问
     if (pathname === "/token") {
       return NextResponse.next();
     }
 
-    if (!token || token !== ACCESS_TOKEN) {
-      console.log("访问令牌无效,重定向到令牌验证页");
-      return NextResponse.redirect(new URL("/token", request.url));
-    }
+    // 添加 no-store 和 no-cache 头，防止 Cloudflare 缓存
+    const response = NextResponse.next();
+    response.headers.set(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate, proxy-revalidate"
+    );
+    response.headers.set("Pragma", "no-cache");
+    response.headers.set("Expires", "0");
+
+    return response;
   }
 
   return NextResponse.next();
 }
 
+// 配置中间件匹配的路由
 export const config = {
-  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
