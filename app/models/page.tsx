@@ -74,17 +74,18 @@ export default function ModelsPage() {
       try {
         const response = await fetch("/api/config/key");
         if (!response.ok) {
-          throw new Error("获取 API Key 失败");
+          throw new Error(`获取 API Key 失败: ${response.status}`);
         }
         const data = await response.json();
-        if (data.apiKey) {
-          setApiKey(data.apiKey);
-        } else {
-          throw new Error("API Key 数据格式不正确");
+        if (!data.apiKey) {
+          throw new Error("API Key 未配置");
         }
+        setApiKey(data.apiKey);
       } catch (error) {
         console.error("获取 API Key 失败:", error);
-        message.error("获取 API Key 失败");
+        message.error(
+          error instanceof Error ? error.message : "获取 API Key 失败"
+        );
       }
     };
 

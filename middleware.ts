@@ -50,6 +50,9 @@ export async function middleware(request: NextRequest) {
     response.headers.set("Expires", "0");
 
     return response;
+  } else if (pathname.startsWith("/api/config/key")) {
+    // 确保这个路径不被中间件拦截
+    return NextResponse.next();
   }
 
   return NextResponse.next();
