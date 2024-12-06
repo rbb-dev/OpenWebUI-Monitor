@@ -1,0 +1,274 @@
+"use client";
+
+import { useRef, useEffect } from "react";
+import { Spin } from "antd";
+import ReactECharts from "echarts-for-react";
+import type { ECharts } from "echarts";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+
+interface UserUsage {
+  nickname: string;
+  total_cost: number;
+  total_count: number;
+}
+
+interface UserRankingChartProps {
+  loading: boolean;
+  users: UserUsage[];
+  metric: "cost" | "count";
+  onMetricChange: (metric: "cost" | "count") => void;
+}
+
+const getBarOption = (users: UserUsage[], metric: "cost" | "count") => {
+  const columnData = users
+    .map((item) => ({
+      nickname: item.nickname,
+      value: metric === "cost" ? Number(item.total_cost) : item.total_count,
+    }))
+    .sort((a, b) => b.value - a.value);
+
+  const isSmallScreen = window.innerWidth < 640;
+
+  return {
+    tooltip: {
+      show: false,
+    },
+    grid: {
+      top: "8%",
+      bottom: "12%",
+      left: "3%",
+      right: "3%",
+      containLabel: true,
+    },
+    xAxis: {
+      type: "category",
+      data: columnData.map((item) =>
+        item.nickname.length > 15
+          ? item.nickname.slice(0, 12) + "..."
+          : item.nickname
+      ),
+      axisLabel: {
+        inside: false,
+        color: "#666",
+        fontSize: 12,
+        rotate: 45,
+        interval: "auto",
+        hideOverlap: true,
+      },
+      axisTick: {
+        show: false,
+      },
+      axisLine: {
+        show: true,
+        lineStyle: {
+          color: "#ddd",
+        },
+      },
+      z: 10,
+    },
+    yAxis: {
+      type: "value",
+      name: metric === "cost" ? "消耗金额" : "使用次数",
+      nameTextStyle: {
+        color: "#666",
+        padding: [0, 0, 8, 0],
+      },
+      axisLine: {
+        show: true,
+        lineStyle: {
+          color: "#ddd",
+        },
+      },
+      axisTick: {
+        show: true,
+        lineStyle: {
+          color: "#ddd",
+        },
+      },
+      splitLine: {
+        show: true,
+        lineStyle: {
+          color: "#f5f5f5",
+          type: "dashed",
+        },
+      },
+      axisLabel: {
+        color: "#999",
+        formatter: (value: number) => {
+          if (metric === "cost") {
+            return `¥${value.toFixed(1)}`;
+          }
+          return value;
+        },
+      },
+    },
+    dataZoom: [
+      {
+        type: "inside",
+        start: 0,
+        end: Math.min(100, Math.max(100 * (15 / columnData.length), 30)),
+        zoomLock: true,
+        moveOnMouseMove: true,
+      },
+    ],
+    series: [
+      {
+        type: "bar",
+        itemStyle: {
+          color: {
+            type: "linear",
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              {
+                offset: 0,
+                color: "#8BA3C7",
+              },
+              {
+                offset: 1,
+                color: "#4A6288",
+              },
+            ],
+          },
+          borderRadius: [6, 6, 0, 0],
+        },
+        emphasis: {
+          itemStyle: {
+            color: {
+              type: "linear",
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: [
+                {
+                  offset: 0,
+                  color: "#7691B8",
+                },
+                {
+                  offset: 1,
+                  color: "#385278",
+                },
+              ],
+            },
+          },
+        },
+        barWidth: "60%",
+        data: columnData.map((item) => item.value),
+        showBackground: true,
+        backgroundStyle: {
+          color: "rgba(180, 180, 180, 0.1)",
+          borderRadius: [6, 6, 0, 0],
+        },
+        label: {
+          show: !isSmallScreen,
+          position: "top",
+          formatter: (params: any) => {
+            return metric === "cost"
+              ? `¥${params.value.toFixed(2)}`
+              : `${params.value}`;
+          },
+          fontSize: 11,
+          color: "#666",
+          distance: 6,
+        },
+      },
+    ],
+    animation: true,
+    animationDuration: 1500,
+    animationEasing: "elasticOut" as const,
+  };
+};
+
+export default function UserRankingChart({
+  loading,
+  users,
+  metric,
+  onMetricChange,
+}: UserRankingChartProps) {
+  const chartRef = useRef<ECharts>();
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (chartRef.current) {
+        chartRef.current.resize();
+        chartRef.current.setOption(getBarOption(users, metric));
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [metric, users]);
+
+  const onChartReady = (instance: ECharts) => {
+    chartRef.current = instance;
+    const zoomSize = 6;
+    let isZoomed = false; // 增加一个状态变量
+
+    instance.on("click", (params) => {
+      const dataLength = users.length;
+
+      if (!isZoomed) {
+        // 第一次点击，放大区域
+        instance.dispatchAction({
+          type: "dataZoom",
+          startValue:
+            users[Math.max(params.dataIndex - zoomSize / 2, 0)].nickname,
+          endValue:
+            users[Math.min(params.dataIndex + zoomSize / 2, dataLength - 1)]
+              .nickname,
+        });
+        isZoomed = true;
+      } else {
+        // 第二次点击，还原缩放
+        instance.dispatchAction({
+          type: "dataZoom",
+          start: 0,
+          end: 100,
+        });
+        isZoomed = false;
+      }
+    });
+  };
+
+  return (
+    <div className="p-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+        <h2 className="text-2xl font-semibold tracking-tight">用户使用排行</h2>
+
+        <RadioGroup
+          value={metric}
+          onValueChange={(value) => onMetricChange(value as "cost" | "count")}
+          className="flex items-center space-x-2"
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="cost" id="bar-cost" />
+            <Label htmlFor="bar-cost">按金额</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="count" id="bar-count" />
+            <Label htmlFor="bar-count">按次数</Label>
+          </div>
+        </RadioGroup>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center items-center sm:h-[600px] h-[400px]">
+          <Spin size="large" />
+        </div>
+      ) : (
+        <div className="sm:h-[600px] h-[400px]">
+          <ReactECharts
+            option={getBarOption(users, metric)}
+            style={{ height: "100%", width: "100%" }}
+            onChartReady={onChartReady}
+            className="bar-chart"
+          />
+        </div>
+      )}
+    </div>
+  );
+}

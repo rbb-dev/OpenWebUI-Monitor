@@ -138,7 +138,7 @@ export default function UsersPage() {
   ];
 
   return (
-    <div className="p-4 sm:p-6">
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
       <div className="pt-16 flex flex-col gap-6 mb-6 sm:mb-8">
         <div className="flex items-center justify-between">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-800">

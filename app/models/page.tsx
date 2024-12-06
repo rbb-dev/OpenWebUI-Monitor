@@ -481,7 +481,7 @@ export default function ModelsPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6">
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
       <div className="mb-8">
         <h1 className="pt-16 text-2xl font-semibold text-gray-900">模型管理</h1>
         <p className="mt-2 text-sm text-gray-500">
