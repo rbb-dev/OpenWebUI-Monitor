@@ -14,10 +14,11 @@ import {
 import { message } from "antd";
 import DatabaseBackup from "./DatabaseBackup";
 import { APP_VERSION } from "@/lib/version";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
 
   // 如果是token页面，不显示Header
   if (pathname === "/token") {
@@ -29,37 +30,46 @@ export default function Header() {
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
-  const getAccessToken = () => {
-    if (typeof document === "undefined") return null;
-    return (
-      document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("access_token="))
-        ?.split("=")[1] || null
-    );
-  };
-
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     setAccessToken(token);
 
     if (!token) {
-      setApiKey("未授权");
+      // 如果没有token，重定向到token页���
+      router.push("/token");
       return;
     }
 
+    // 验证token的有效性
     fetch("/api/config", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
-      .then((res) => res.json())
-      .then((data) => setApiKey(data.apiKey))
-      .catch(() => setApiKey("加载失败"));
-  }, []);
+      .then((res) => {
+        if (!res.ok) {
+          // 如果token无效，清除token并重定向
+          localStorage.removeItem("access_token");
+          router.push("/token");
+          return;
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data) {
+          setApiKey(data.apiKey);
+        }
+      })
+      .catch(() => {
+        setApiKey("加载失败");
+        // 发生错误时也清除token并重定向
+        localStorage.removeItem("access_token");
+        router.push("/token");
+      });
+  }, [router]);
 
   const handleCopyApiKey = () => {
-    const token = getAccessToken();
+    const token = localStorage.getItem("access_token");
     if (!token) {
       message.error("未授权，请重新登录");
       return;
@@ -78,7 +88,7 @@ export default function Header() {
   };
 
   const checkUpdate = async () => {
-    const token = getAccessToken();
+    const token = localStorage.getItem("access_token");
     if (!token) {
       message.error("未授权，请重新登录");
       return;

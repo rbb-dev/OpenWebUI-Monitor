@@ -71,9 +71,16 @@ export default function ModelsPage() {
   useEffect(() => {
     const fetchApiKey = async () => {
       try {
+        const storedApiKey = localStorage.getItem("apiKey");
+        if (storedApiKey) {
+          setApiKey(storedApiKey);
+          return;
+        }
+
         const response = await fetch("/api/config/key");
         if (response.ok) {
           const data = await response.json();
+          localStorage.setItem("apiKey", data.apiKey);
           setApiKey(data.apiKey);
         }
       } catch (error) {
