@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Table, Input, message, Tooltip, Button, Upload, Space } from "antd";
+import { Table, Input, message, Tooltip, Upload, Space } from "antd";
 import {
   DownloadOutlined,
   UploadOutlined,
@@ -14,6 +14,7 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import Image from "next/image";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 interface ModelResponse {
   id: string;
@@ -425,7 +426,7 @@ export default function ModelsPage() {
     }
 
     try {
-      console.log("开始测试所有模型...");
+      console.log("开始测��所有模型...");
 
       // 将所有模型设置为测试中状态
       setModels((prev) => prev.map((m) => ({ ...m, testStatus: "testing" })));
@@ -493,13 +494,18 @@ export default function ModelsPage() {
         <div className="flex items-center gap-2">
           <Tooltip title="批量测试所有模型的可用性">
             <Button
-              icon={<ExperimentOutlined />}
+              variant="default"
+              size="sm"
               onClick={handleTestModels}
-              loading={testing}
-              type="primary"
-              size="middle"
-              className="shadow-sm hover:opacity-90"
+              disabled={testing}
+              className="relative"
             >
+              {testing && (
+                <div className="absolute inset-0 flex items-center justify-center bg-primary/10">
+                  <div className="w-4 h-4 border-2 border-primary/20 border-t-primary animate-spin rounded-full"></div>
+                </div>
+              )}
+              <ExperimentOutlined className="mr-2 h-4 w-4" />
               测试全部模型
             </Button>
           </Tooltip>
@@ -539,40 +545,50 @@ export default function ModelsPage() {
             mouseLeaveDelay={0.1}
           >
             <Button
-              type="text"
-              size="small"
-              icon={<InfoCircleOutlined />}
-              className="text-gray-400 hover:text-gray-500 hover:bg-gray-50 transition-colors ml-1"
-            />
+              variant="ghost"
+              size="icon"
+              className="text-gray-400 hover:text-gray-500"
+            >
+              <InfoCircleOutlined className="h-4 w-4" />
+            </Button>
           </Tooltip>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <Button
-            size="middle"
+            variant="outline"
+            size="sm"
             onClick={handleExportPrices}
-            className="flex-1 sm:w-[120px] items-center justify-center bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 hover:text-gray-900 hover:border-gray-300 shadow-sm transition-all duration-200 hover:shadow"
+            className="flex-1 sm:w-[120px]"
           >
-            <span className="flex items-center gap-2">
-              <DownloadOutlined className="text-gray-500" />
-              <span> 导出配置</span>
-            </span>
+            <DownloadOutlined className="mr-2 h-4 w-4" />
+            导出配置
           </Button>
-          <Upload
-            accept=".json"
-            showUploadList={false}
-            beforeUpload={handleImportPrices}
-          >
+
+          <div className="relative">
             <Button
-              size="middle"
-              className="flex-1 sm:w-[120px] items-center justify-center bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border border-blue-200 text-blue-700 hover:text-blue-800 hover:border-blue-300 shadow-sm transition-all duration-200 hover:shadow"
+              variant="secondary"
+              size="sm"
+              className="flex-1 sm:w-[120px]"
+              onClick={() => document.getElementById("import-input")?.click()}
             >
-              <span className="flex items-center gap-2">
-                <UploadOutlined className="text-blue-500" />
-                <span> 导入配置</span>
-              </span>
+              <UploadOutlined className="mr-2 h-4 w-4" />
+              导入配置
             </Button>
-          </Upload>
+            <input
+              id="import-input"
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  handleImportPrices(file);
+                }
+                e.target.value = ""; // 重置 input
+              }}
+            />
+          </div>
         </div>
       </div>
 

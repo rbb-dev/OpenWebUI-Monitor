@@ -1,7 +1,17 @@
 "use client";
 
-import { message, Upload, Modal } from "antd";
-import type { UploadProps } from "antd";
+import { useRef } from "react";
+import { message } from "antd";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { DatabaseIcon, DownloadIcon, UploadIcon } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface DatabaseBackupProps {
   open: boolean;
@@ -9,11 +19,13 @@ interface DatabaseBackupProps {
   token?: string;
 }
 
-const DatabaseBackup: React.FC<DatabaseBackupProps> = ({
+export default function DatabaseBackup({
   open,
   onClose,
   token,
-}) => {
+}: DatabaseBackupProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const handleExport = async () => {
     if (!token) {
       message.error("未授权，请重新登录");
@@ -49,113 +61,117 @@ const DatabaseBackup: React.FC<DatabaseBackupProps> = ({
     }
   };
 
-  const uploadProps: UploadProps = {
-    accept: ".json",
-    showUploadList: false,
-    customRequest: async (options) => {
-      const { file, onSuccess, onError } = options;
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-      if (!token) {
-        message.error("未授权，请重新登录");
-        onError?.(new Error("未授权"));
-        return;
+    if (!token) {
+      message.error("未授权，请重新登录");
+      return;
+    }
+
+    try {
+      const content = await file.text();
+      const data = JSON.parse(content);
+
+      const response = await fetch("/api/v1/panel/database/import", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error("导入失败");
       }
 
-      try {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          try {
-            const content = JSON.parse(e.target?.result as string);
-            const response = await fetch("/api/v1/panel/database/import", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify(content),
-            });
+      const result = await response.json();
 
-            if (!response.ok) {
-              throw new Error("导入失败");
-            }
-
-            const result = await response.json();
-
-            if (result.success) {
-              message.success("导入成功");
-              onSuccess?.(result);
-            } else {
-              throw new Error(result.error || "导入失败");
-            }
-          } catch (err) {
-            console.error("导入失败:", err);
-            message.error(err instanceof Error ? err.message : "导入失败");
-            onError?.(err as Error);
-          }
-        };
-
-        reader.readAsText(file as Blob);
-      } catch (err) {
-        console.error("读取文件失败:", err);
-        message.error("读取文件失败");
-        onError?.(err as Error);
+      if (result.success) {
+        message.success("导入成功");
+        // 清空文件选择
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+      } else {
+        throw new Error(result.error || "导入失败");
       }
-    },
+    } catch (err) {
+      console.error("导入失败:", err);
+      message.error(err instanceof Error ? err.message : "导入失败");
+    }
   };
 
   return (
-    <Modal
-      title="数据迁移"
-      open={open}
-      onCancel={onClose}
-      footer={null}
-      width={280}
-      centered
-    >
-      <div className="flex flex-col items-center gap-3 py-4">
-        <button
-          onClick={handleExport}
-          className="flex items-center justify-center gap-2 w-[180px] px-4 py-3 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="w-[calc(100%-2rem)] !max-w-[70vw] sm:max-w-[425px] rounded-lg">
+        <DialogHeader>
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-primary/10">
+              <DatabaseIcon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            </div>
+            <DialogTitle className="text-base sm:text-lg">数据迁移</DialogTitle>
+          </div>
+          <DialogDescription className="pt-2 text-sm">
+            导出或导入数据库备份，方便迁移和恢复数据
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 py-3 sm:py-4">
+          <Card
+            className={cn(
+              "cursor-pointer transition-colors hover:bg-accent",
+              "group relative overflow-hidden"
+            )}
+            onClick={handleExport}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            <CardContent className="flex items-center gap-3 sm:gap-4 p-4 sm:p-6">
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-primary/10 group-hover:bg-primary/20">
+                <DownloadIcon className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+              </div>
+              <div className="space-y-0.5 sm:space-y-1">
+                <h3 className="font-medium leading-none text-sm sm:text-base">
+                  导出数据
+                </h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  将当前数据导出为备份文件
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card
+            className={cn(
+              "cursor-pointer transition-colors hover:bg-accent",
+              "group relative overflow-hidden"
+            )}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              onChange={handleImport}
+              className="hidden"
             />
-          </svg>
-          导出数据
-        </button>
-
-        <Upload {...uploadProps}>
-          <button className="flex items-center justify-center gap-2 w-[180px] px-4 py-3 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200">
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-              />
-            </svg>
-            导入数据
-          </button>
-        </Upload>
-      </div>
-    </Modal>
+            <CardContent className="flex items-center gap-3 sm:gap-4 p-4 sm:p-6">
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-primary/10 group-hover:bg-primary/20">
+                <UploadIcon className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+              </div>
+              <div className="space-y-0.5 sm:space-y-1">
+                <h3 className="font-medium leading-none text-sm sm:text-base">
+                  导入数据
+                </h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  从备份文件中恢复数据
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
-};
-
-export default DatabaseBackup;
+}

@@ -221,3 +221,21 @@ body {
   );
   background-size: 24px 24px;
 }
+
+/* 添加以下样式 */
+@media (max-width: 640px) {
+  .toaster-group {
+    --viewport-padding: 16px;
+    right: var(--viewport-padding);
+    left: var(--viewport-padding);
+    width: calc(100% - var(--viewport-padding) * 2);
+  }
+
+  .toast {
+    --viewport-padding: 16px;
+    width: 100%;
+    border-radius: 12px;
+    margin-left: 0;
+    margin-right: 0;
+  }
+}

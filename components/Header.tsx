@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Dropdown, Modal } from "antd";
+import { Dropdown, Modal, message } from "antd";
 import type { MenuProps } from "antd";
 import {
   CopyOutlined,
@@ -11,10 +11,19 @@ import {
   DatabaseOutlined,
   GithubOutlined,
 } from "@ant-design/icons";
-import { message } from "antd";
 import DatabaseBackup from "./DatabaseBackup";
 import { APP_VERSION } from "@/lib/version";
 import { usePathname, useRouter } from "next/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { createRoot } from "react-dom/client";
 
 export default function Header() {
   const pathname = usePathname();
@@ -35,7 +44,7 @@ export default function Header() {
     setAccessToken(token);
 
     if (!token) {
-      // 如果没有token，重定向到token页���
+      // 如果没有token，重定向到token页面
       router.push("/token");
       return;
     }
@@ -112,46 +121,79 @@ export default function Header() {
       if (currentVer === latestVer) {
         message.success(`当前已是最新版本 v${APP_VERSION}`);
       } else {
-        Modal.confirm({
-          icon: null,
-          title: (
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-50">
-                <GithubOutlined className="text-lg text-blue-500" />
-              </div>
-              <div className="flex flex-col">
-                <div className="text-lg font-medium text-gray-800">
-                  发现新版本
-                </div>
-              </div>
-            </div>
-          ),
-          content: (
-            <div className="flex flex-col gap-4 py-2">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-500">当前版本</span>
-                <span className="font-mono text-gray-800">v{APP_VERSION}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-500">最新版本</span>
-                <span className="font-mono text-blue-600">{latestVersion}</span>
-              </div>
-            </div>
-          ),
-          centered: true,
-          width: 400,
-          okText: "前往更新",
-          cancelText: "暂不更新",
-          className: "update-modal",
-          okButtonProps: {
-            className: "bg-blue-500 hover:bg-blue-600",
-          },
-          onOk: () => {
-            window.open(
-              "https://github.com/VariantConst/OpenWebUI-Monitor/releases/latest",
-              "_blank"
+        return new Promise((resolve) => {
+          const dialog = document.createElement("div");
+          document.body.appendChild(dialog);
+
+          const DialogComponent = () => {
+            const [open, setOpen] = useState(true);
+
+            const handleClose = () => {
+              setOpen(false);
+              document.body.removeChild(dialog);
+              resolve(null);
+            };
+
+            const handleUpdate = () => {
+              window.open(
+                "https://github.com/VariantConst/OpenWebUI-Monitor/releases/latest",
+                "_blank"
+              );
+              handleClose();
+            };
+
+            return (
+              <Dialog open={open} onOpenChange={handleClose}>
+                <DialogContent className="w-[calc(100%-2rem)] !max-w-[70vw] sm:max-w-[425px] rounded-lg">
+                  <DialogHeader>
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-primary/10">
+                        <GithubOutlined className="text-base sm:text-lg text-primary" />
+                      </div>
+                      <DialogTitle className="text-base sm:text-lg">
+                        发现新版本
+                      </DialogTitle>
+                    </div>
+                  </DialogHeader>
+                  <div className="flex flex-col gap-3 sm:gap-4 py-3 sm:py-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm sm:text-base text-muted-foreground">
+                        当前版本
+                      </span>
+                      <span className="font-mono text-sm sm:text-base">
+                        v{APP_VERSION}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm sm:text-base text-muted-foreground">
+                        最新版本
+                      </span>
+                      <span className="font-mono text-sm sm:text-base text-primary">
+                        {latestVersion}
+                      </span>
+                    </div>
+                  </div>
+                  <DialogFooter className="gap-2 sm:gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={handleClose}
+                      className="h-8 sm:h-10 text-sm sm:text-base"
+                    >
+                      暂不更新
+                    </Button>
+                    <Button
+                      onClick={handleUpdate}
+                      className="h-8 sm:h-10 text-sm sm:text-base bg-primary hover:bg-primary/90 text-primary-foreground"
+                    >
+                      前往更新
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             );
-          },
+          };
+
+          createRoot(dialog).render(<DialogComponent />);
         });
       }
     } catch (error) {
