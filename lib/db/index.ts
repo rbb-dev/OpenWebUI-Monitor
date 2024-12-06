@@ -26,15 +26,23 @@ export async function ensureTablesExist() {
   await ensureUserTableExists();
 }
 
+// 添加 ModelPrice 接口定义
+interface ModelPrice {
+  model_id: string;
+  model_name: string;
+  input_price: number;
+  output_price: number;
+}
+
 export async function getOrCreateModelPrice(
   id: string,
   name: string
 ): Promise<ModelPrice> {
   try {
     const result = await query(
-      `INSERT INTO model_prices (id, name)
+      `INSERT INTO model_prices (model_id, model_name)
        VALUES ($1, $2)
-       ON CONFLICT (id) DO UPDATE SET name = $2
+       ON CONFLICT (model_id) DO UPDATE SET model_name = $2
        RETURNING *`,
       [id, name]
     );
@@ -44,12 +52,10 @@ export async function getOrCreateModelPrice(
       input_price: Number(result.rows[0].input_price),
       output_price: Number(result.rows[0].output_price),
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in getOrCreateModelPrice:", error);
-    // 如果是连接错误，可以添加重试逻辑
     if (error.message.includes("Connection terminated unexpectedly")) {
       console.log("Retrying database connection...");
-      // 等待一秒后重试
       await new Promise((resolve) => setTimeout(resolve, 1000));
       return getOrCreateModelPrice(id, name);
     }
