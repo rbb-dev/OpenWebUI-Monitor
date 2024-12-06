@@ -72,20 +72,19 @@ export default function ModelsPage() {
   useEffect(() => {
     const fetchApiKey = async () => {
       try {
-        const storedApiKey = localStorage.getItem("apiKey");
-        if (storedApiKey) {
-          setApiKey(storedApiKey);
-          return;
-        }
-
         const response = await fetch("/api/config/key");
-        if (response.ok) {
-          const data = await response.json();
-          localStorage.setItem("apiKey", data.apiKey);
+        if (!response.ok) {
+          throw new Error("获取 API Key 失败");
+        }
+        const data = await response.json();
+        if (data.apiKey) {
           setApiKey(data.apiKey);
+        } else {
+          throw new Error("API Key 数据格式不正确");
         }
       } catch (error) {
         console.error("获取 API Key 失败:", error);
+        message.error("获取 API Key 失败");
       }
     };
 
@@ -426,8 +425,6 @@ export default function ModelsPage() {
     }
 
     try {
-      console.log("开始测��所有模型...");
-
       // 将所有模型设置为测试中状态
       setModels((prev) => prev.map((m) => ({ ...m, testStatus: "testing" })));
       setTesting(true);
