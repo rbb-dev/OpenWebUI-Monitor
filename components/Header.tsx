@@ -10,6 +10,7 @@ import {
   SettingOutlined,
   DatabaseOutlined,
   GithubOutlined,
+  MenuOutlined,
 } from "@ant-design/icons";
 import DatabaseBackup from "./DatabaseBackup";
 import { APP_VERSION } from "@/lib/version";
@@ -24,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { createRoot } from "react-dom/client";
+import { motion } from "framer-motion";
 
 export default function Header() {
   const pathname = usePathname();
@@ -204,53 +206,77 @@ export default function Header() {
     }
   };
 
+  // 简化动画变量
+  const menuItemVariants = {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+  };
+
+  const menuIconVariants = {
+    initial: { rotate: 0 },
+    hover: { rotate: 180 },
+  };
+
+  // 修改items数组中的motion.div配置
   const items: MenuProps["items"] = [
     {
       key: "1",
       label: (
-        <div
-          className="flex items-center gap-2 px-2 py-1.5 text-gray-600 hover:text-gray-900"
+        <motion.div
+          variants={menuItemVariants}
+          className="flex items-center gap-3 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
           onClick={handleCopyApiKey}
         >
-          <CopyOutlined className="text-base" />
+          <CopyOutlined className="text-blue-500 text-base" />
           <span>复制 API KEY</span>
-        </div>
+        </motion.div>
       ),
     },
     {
       key: "2",
       label: (
-        <div
-          className="flex items-center gap-2 px-2 py-1.5 text-gray-600 hover:text-gray-900"
+        <motion.div
+          variants={menuItemVariants}
+          className="flex items-center gap-3 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
           onClick={() => setIsBackupModalOpen(true)}
         >
-          <DatabaseOutlined className="text-base" />
+          <DatabaseOutlined className="text-purple-500 text-base" />
           <span>数据迁移</span>
-        </div>
+        </motion.div>
       ),
     },
     {
       key: "3",
       label: (
-        <div
-          className="flex items-center gap-2 px-2 py-1.5 text-gray-600 hover:text-gray-900"
+        <motion.div
+          variants={menuItemVariants}
+          className="flex items-center gap-3 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
           onClick={checkUpdate}
         >
-          <GithubOutlined className="text-base" spin={isCheckingUpdate} />
+          <GithubOutlined
+            className={`text-green-500 text-base ${
+              isCheckingUpdate ? "animate-spin" : ""
+            }`}
+          />
           <span>检查更新</span>
-        </div>
+        </motion.div>
       ),
+    },
+    {
+      type: "divider",
+      style: { margin: "4px 0" },
     },
     {
       key: "4",
       label: (
-        <div
-          className="flex items-center gap-2 px-2 py-1.5 text-gray-600 hover:text-red-500"
+        <motion.div
+          variants={menuItemVariants}
+          className="flex items-center gap-3 px-3 py-2 text-red-500 hover:text-red-600 transition-colors"
           onClick={handleLogout}
         >
           <LogoutOutlined className="text-base" />
           <span>退出登录</span>
-        </div>
+        </motion.div>
       ),
     },
   ];
@@ -270,19 +296,31 @@ export default function Header() {
             <Dropdown
               menu={{
                 items,
-                className: "mt-2 !p-2 min-w-[200px]",
+                className: "!p-1.5 min-w-[160px]",
               }}
               trigger={["click"]}
               placement="bottomRight"
               dropdownRender={(menu) => (
-                <div className="bg-white rounded-xl shadow-lg border border-gray-100/50 backdrop-blur-xl">
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ ease: "easeOut", duration: 0.1 }}
+                  className="bg-white rounded-lg shadow-lg border border-gray-100"
+                >
                   {menu}
-                </div>
+                </motion.div>
               )}
             >
-              <button className="p-2 hover:bg-gray-50 rounded-lg transition-all">
-                <SettingOutlined className="text-lg text-gray-600" />
-              </button>
+              <motion.button
+                className="p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                variants={menuIconVariants}
+                initial="initial"
+                whileHover="hover"
+                transition={{ duration: 0.2 }}
+              >
+                <MenuOutlined className="text-lg text-gray-600" />
+              </motion.button>
             </Dropdown>
           </div>
         </div>
