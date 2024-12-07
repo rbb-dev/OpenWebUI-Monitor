@@ -83,6 +83,9 @@ export async function ensureTablesExist() {
     const defaultOutputPrice = parseFloat(
       process.env.DEFAULT_MODEL_OUTPUT_PRICE || "60"
     );
+    const defaultPerMsgPrice = parseFloat(
+      process.env.DEFAULT_MODEL_PER_MSG_PRICE || "-1"
+    );
 
     // 然后创建 model_prices 表，使用具体的默认值而不是参数绑定
     await client.query(`
@@ -91,7 +94,7 @@ export async function ensureTablesExist() {
         name TEXT NOT NULL,
         input_price NUMERIC(10, 6) DEFAULT ${defaultInputPrice},
         output_price NUMERIC(10, 6) DEFAULT ${defaultOutputPrice},
-        per_msg_price NUMERIC(10, 6) DEFAULT -1,
+        per_msg_price NUMERIC(10, 6) DEFAULT ${defaultPerMsgPrice},
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
@@ -102,7 +105,7 @@ export async function ensureTablesExist() {
       BEGIN 
         BEGIN
           ALTER TABLE model_prices 
-          ADD COLUMN per_msg_price NUMERIC(10, 6) DEFAULT -1;
+          ADD COLUMN per_msg_price NUMERIC(10, 6) DEFAULT ${defaultPerMsgPrice};
         EXCEPTION 
           WHEN duplicate_column THEN NULL;
         END;

@@ -215,9 +215,10 @@ export default function ModelsPage() {
         className="cursor-pointer font-medium text-blue-600"
         onClick={() => setEditingCell({ id: record.id, field })}
       >
-        {currentValue.toFixed(2)}
-        {field === "per_msg_price" && currentValue === -1 && (
-          <span className="text-gray-400 ml-1">(未设置)</span>
+        {currentValue < 0 ? (
+          <span className="text-gray-400">未设置</span>
+        ) : (
+          currentValue.toFixed(2)
         )}
       </div>
     );
@@ -318,7 +319,7 @@ export default function ModelsPage() {
       title: (
         <span>
           每条消息价格 ¥{" "}
-          <Tooltip title="每条消息的固定收费，设置为 -1 表示不收取固定费用">
+          <Tooltip title="每条消息的固定收费，如果设置为负数则按 token 计费">
             <InfoCircleOutlined className="text-gray-400 cursor-help" />
           </Tooltip>
         </span>
