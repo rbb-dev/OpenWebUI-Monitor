@@ -221,7 +221,7 @@ export default function PanelPage() {
         <title>使用统计看板 - OpenWebUI</title>
       </Head>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24 space-y-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24 space-y-6 sm:space-y-8">
         <div className="space-y-4">
           <h1 className="text-3xl font-bold tracking-tight">使用统计</h1>
 
@@ -247,14 +247,17 @@ export default function PanelPage() {
           onMetricChange={setBarMetric}
         />
 
-        <UsageRecordsTable
-          loading={tableLoading}
-          records={records}
-          tableParams={tableParams}
-          models={usageData.models}
-          users={usageData.users}
-          onTableChange={handleTableChange}
-        />
+        <div className="space-y-6">
+          <h2 className="text-2xl font-semibold tracking-tight">使用详情</h2>
+          <UsageRecordsTable
+            loading={tableLoading}
+            records={records}
+            tableParams={tableParams}
+            models={usageData.models}
+            users={usageData.users}
+            onTableChange={handleTableChange}
+          />
+        </div>
       </div>
     </>
   );

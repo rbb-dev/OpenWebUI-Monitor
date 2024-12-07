@@ -35,7 +35,7 @@ const getBarOption = (users: UserUsage[], metric: "cost" | "count") => {
       show: false,
     },
     grid: {
-      top: "8%",
+      top: isSmallScreen ? "12%" : "8%",
       bottom: "12%",
       left: "3%",
       right: "3%",
@@ -72,7 +72,7 @@ const getBarOption = (users: UserUsage[], metric: "cost" | "count") => {
       name: metric === "cost" ? "消耗金额" : "使用次数",
       nameTextStyle: {
         color: "#666",
-        padding: [0, 0, 8, 0],
+        padding: isSmallScreen ? [0, 0, 8, 0] : [30, 0, 8, 0],
       },
       axisLine: {
         show: true,
@@ -235,7 +235,7 @@ export default function UserRankingChart({
   };
 
   return (
-    <div className="p-6">
+    <div>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <h2 className="text-2xl font-semibold tracking-tight">用户使用排行</h2>
 

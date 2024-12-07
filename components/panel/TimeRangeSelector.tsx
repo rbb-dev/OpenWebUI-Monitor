@@ -155,7 +155,7 @@ export default function TimeRangeSelector({
   onTimeRangeChange,
 }: TimeRangeSelectorProps) {
   return (
-    <div className="p-6 pb-16">
+    <div className="pb-16">
       <div className="space-y-6">
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">

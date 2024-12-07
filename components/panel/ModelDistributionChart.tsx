@@ -100,7 +100,7 @@ const getPieOption = (models: ModelUsage[], metric: "cost" | "count") => {
     legend: {
       show: isSmallScreen,
       orient: "horizontal",
-      bottom: 0,
+      bottom: 50,
       type: "scroll",
       itemWidth: 15,
       itemHeight: 15,
@@ -113,8 +113,8 @@ const getPieOption = (models: ModelUsage[], metric: "cost" | "count") => {
       {
         name: metric === "cost" ? "消耗金额" : "使用次数",
         type: "pie",
-        radius: isSmallScreen ? ["40%", "75%"] : ["50%", "80%"],
-        center: isSmallScreen ? ["50%", "40%"] : ["50%", "50%"],
+        radius: isSmallScreen ? ["40%", "70%"] : ["50%", "80%"],
+        center: isSmallScreen ? ["50%", "45%"] : ["50%", "50%"],
         avoidLabelOverlap: false,
         itemStyle: {
           borderRadius: 10,
@@ -202,7 +202,7 @@ const getPieOption = (models: ModelUsage[], metric: "cost" | "count") => {
       {
         type: "text",
         left: "center",
-        top: isSmallScreen ? "35%" : "middle",
+        top: isSmallScreen ? "40%" : "middle",
         style: {
           text:
             metric === "cost"
@@ -242,8 +242,8 @@ export default function ModelDistributionChart({
   }, [metric, models]);
 
   return (
-    <div className="p-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+    <div>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-6 gap-2 sm:gap-4">
         <h2 className="text-2xl font-semibold tracking-tight">模型使用分布</h2>
 
         <RadioGroup
@@ -267,7 +267,7 @@ export default function ModelDistributionChart({
           <Skeleton className="w-full h-full" />
         </div>
       ) : (
-        <div className="h-[450px]">
+        <div className="h-[400px] sm:h-[450px]">
           <ReactECharts
             option={getPieOption(models, metric)}
             style={{ height: "100%", width: "100%" }}

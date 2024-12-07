@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { Table, Input, message, Tooltip, Upload, Space } from "antd";
 import {
   DownloadOutlined,
-  UploadOutlined,
   ArrowLeftOutlined,
   ExperimentOutlined,
   CheckOutlined,
@@ -15,6 +14,8 @@ import type { ColumnsType } from "antd/es/table";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { TestProgress } from "../../components/models/TestProgress";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ModelResponse {
   id: string;
@@ -45,6 +46,8 @@ export default function ModelsPage() {
   } | null>(null);
   const [testing, setTesting] = useState(false);
   const [apiKey, setApiKey] = useState<string | null>(null);
+  const [showTestStatus, setShowTestStatus] = useState(false);
+  const [isTestComplete, setIsTestComplete] = useState(false);
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -431,6 +434,9 @@ export default function ModelsPage() {
       };
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
     try {
       const response = await fetch("/api/v1/models/test", {
         method: "POST",
@@ -441,8 +447,10 @@ export default function ModelsPage() {
         body: JSON.stringify({
           modelId: model.id,
         }),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
       const data = await response.json();
 
       if (!response.ok || !data.success) {
@@ -454,6 +462,7 @@ export default function ModelsPage() {
         success: true,
       };
     } catch (error) {
+      clearTimeout(timeoutId);
       return {
         id: model.id,
         success: false,
@@ -469,15 +478,12 @@ export default function ModelsPage() {
     }
 
     try {
-      // 将所有模型设置为测试中状态
       setModels((prev) => prev.map((m) => ({ ...m, testStatus: "testing" })));
       setTesting(true);
+      setIsTestComplete(false);
 
-      // 创建所有试请求，但不等待它们全部完成
-      models.forEach(async (model) => {
-        try {
-          const result = await testModel(model);
-          // 更新单个模型的状态，但保持其他正在测试的模型的状态
+      const testPromises = models.map((model) =>
+        testModel(model).then((result) => {
           setModels((prev) =>
             prev.map((m) =>
               m.id === model.id
@@ -485,35 +491,16 @@ export default function ModelsPage() {
                 : m
             )
           );
-        } catch (error) {
-          // 如果单个模型测试失败，更新其状态，但保持其他正在测试的模型的状态
-          setModels((prev) =>
-            prev.map((m) =>
-              m.id === model.id ? { ...m, testStatus: "error" } : m
-            )
-          );
-        }
-      });
-
-      // 不再在这里设置 setTesting(false)，让按钮保持加载状态
-      message.info("测试已开始，结果将逐个显示");
-
-      // 创建一个 Promise 数组来跟踪所有测试
-      const testPromises = models.map((model) =>
-        testModel(model).catch((error) => ({
-          id: model.id,
-          success: false,
-          error: error instanceof Error ? error.message : "未知错误",
-        }))
+          return result;
+        })
       );
 
-      // 等待所有测试完成后再关闭加载状态
       await Promise.all(testPromises);
+      setIsTestComplete(true);
     } catch (error) {
       console.error("测试过程出错:", error);
       message.error("测试过程出错");
     } finally {
-      // 所有测试完成后再关闭加载状态
       setTesting(false);
     }
   };
@@ -607,89 +594,69 @@ export default function ModelsPage() {
         </p>
       </div>
 
-      <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-        <div className="flex items-center gap-2">
-          <Tooltip title="批量测试所有模型的可用性">
+      <AnimatePresence mode="wait">
+        {(!testing || isTestComplete) && (
+          <motion.div
+            key="test-button"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="mb-6"
+          >
             <Button
               variant="default"
               size="sm"
               onClick={handleTestModels}
-              disabled={testing}
               className="relative"
             >
-              {testing && (
-                <div className="absolute inset-0 flex items-center justify-center bg-primary/10">
-                  <div className="w-4 h-4 border-2 border-primary/20 border-t-primary animate-spin rounded-full"></div>
-                </div>
-              )}
               <ExperimentOutlined className="mr-2 h-4 w-4" />
               测试全部模型
             </Button>
-          </Tooltip>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-          <Tooltip
-            title={
-              <div className="p-1.5">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center">
-                      <div className="w-2.5 h-2.5 rounded-full border-[1.5px] border-blue-500 border-t-transparent animate-spin" />
-                    </div>
-                    <span className="text-xs text-gray-500">测试进行中</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
-                      <CheckOutlined className="text-[9px] text-green-500" />
-                    </div>
-                    <span className="text-xs text-gray-500">测试通过</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
-                      <CloseOutlined className="text-[9px] text-red-500" />
-                    </div>
-                    <span className="text-xs text-gray-500">测试失败</span>
-                  </div>
-                </div>
-              </div>
-            }
-            placement="bottomRight"
-            color="white"
-            overlayClassName="custom-tooltip-simple"
-            overlayStyle={{
-              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-            }}
-            mouseEnterDelay={0}
-            mouseLeaveDelay={0.1}
-          >
+      <TestProgress
+        isVisible={testing || isTestComplete}
+        models={models}
+        isComplete={isTestComplete}
+      />
+
+      <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+        <div className="flex items-center gap-3 w-full">
+          <div className="flex-1 sm:flex-none sm:w-[120px]">
             <Button
-              variant="ghost"
-              size="icon"
-              className="text-gray-400 hover:text-gray-500"
-            >
-              <InfoCircleOutlined className="h-4 w-4" />
-            </Button>
-          </Tooltip>
-        </div>
-
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportPrices}
-            className="flex-1 sm:w-[120px]"
-          >
-            <DownloadOutlined className="mr-2 h-4 w-4" />
-            导出配置
-          </Button>
-
-          <div className="relative">
-            <Button
-              variant="secondary"
+              variant="outline"
               size="sm"
-              className="flex-1 sm:w-[120px]"
+              onClick={handleExportPrices}
+              className="w-full h-9"
+            >
+              <DownloadOutlined className="mr-2 h-4 w-4" />
+              导出配置
+            </Button>
+          </div>
+
+          <div className="flex-1 sm:flex-none sm:w-[120px]">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full h-9"
               onClick={() => document.getElementById("import-input")?.click()}
             >
-              <UploadOutlined className="mr-2 h-4 w-4" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                />
+              </svg>
               导入配置
             </Button>
             <input
@@ -702,7 +669,7 @@ export default function ModelsPage() {
                 if (file) {
                   handleImportPrices(file);
                 }
-                e.target.value = ""; // 重置 input
+                e.target.value = "";
               }}
             />
           </div>

@@ -159,9 +159,6 @@ export default function UsageRecordsTable({
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">使用详情</h2>
-
-      {/* 移动设备筛选器 */}
       <div className="sm:hidden space-y-3">
         <Select
           mode="multiple"
