@@ -473,7 +473,7 @@ export default function ModelsPage() {
       setModels((prev) => prev.map((m) => ({ ...m, testStatus: "testing" })));
       setTesting(true);
 
-      // 创建所有测试请求，但不等待它们全部完成
+      // 创建所有试请求，但不等待它们全部完成
       models.forEach(async (model) => {
         try {
           const result = await testModel(model);
@@ -516,6 +516,82 @@ export default function ModelsPage() {
       // 所有测试完成后再关闭加载状态
       setTesting(false);
     }
+  };
+
+  // 添加自定义渲染的卡片组件
+  const MobileCard = ({ record }: { record: Model }) => {
+    return (
+      <div className="p-4 bg-card text-card-foreground rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex items-center gap-3 mb-4">
+          <div
+            className="relative cursor-pointer"
+            onClick={() => handleTestSingleModel(record)}
+          >
+            {record.imageUrl && (
+              <Image
+                src={record.imageUrl}
+                alt={record.name}
+                width={40}
+                height={40}
+                className="rounded-full object-cover"
+              />
+            )}
+            {record.testStatus && (
+              <div className="absolute -top-1 -right-1">
+                {record.testStatus === "testing" && (
+                  <div className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center">
+                    <div className="w-3 h-3 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+                  </div>
+                )}
+                {record.testStatus === "success" && (
+                  <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
+                    <CheckOutlined className="text-[10px] text-green-500" />
+                  </div>
+                )}
+                {record.testStatus === "error" && (
+                  <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
+                    <CloseOutlined className="text-[10px] text-red-500" />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <div className="font-medium min-w-0 flex-1">
+            <div className="text-base truncate">{record.name}</div>
+            <div className="text-xs text-muted-foreground truncate">
+              {record.id}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <div className="flex flex-col items-center">
+            <span className="text-xs text-muted-foreground mb-1.5">
+              输入价格
+            </span>
+            <div className="w-full flex justify-center border rounded-md px-2 py-1.5">
+              {renderPriceCell("input_price", record)}
+            </div>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-xs text-muted-foreground mb-1.5">
+              输出价格
+            </span>
+            <div className="w-full flex justify-center border rounded-md px-2 py-1.5">
+              {renderPriceCell("output_price", record)}
+            </div>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-xs text-muted-foreground mb-1.5">
+              每条消息
+            </span>
+            <div className="w-full flex justify-center border rounded-md px-2 py-1.5">
+              {renderPriceCell("per_msg_price", record)}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   if (error) {
@@ -633,28 +709,40 @@ export default function ModelsPage() {
         </div>
       </div>
 
-      <Table
-        columns={columns}
-        dataSource={models}
-        rowKey="id"
-        loading={loading}
-        pagination={false}
-        size="middle"
-        className="bg-white rounded-lg shadow-sm 
-          [&_.ant-table]:!border-b-0 
-          [&_.ant-table-container]:!rounded-lg 
-          [&_.ant-table-container]:!border-hidden
-          [&_.ant-table-cell]:!border-gray-100 
-          [&_.ant-table-thead_.ant-table-cell]:!bg-gray-50/80
-          [&_.ant-table-thead_.ant-table-cell]:!text-gray-600
-          [&_.ant-table-thead_.ant-table-cell]:!font-medium
-          [&_.ant-table-row:hover>*]:!bg-blue-50/50
-          [&_.ant-table-tbody_.ant-table-row]:!cursor-pointer
-          [&_.ant-table-tbody_.ant-table-cell]:!py-4
-          [&_.ant-table-column-sorter-up.active_.anticon]:!text-blue-500
-          [&_.ant-table-column-sorter-down.active_.anticon]:!text-blue-500"
-        scroll={{ x: 500 }}
-      />
+      <div className="hidden sm:block">
+        <Table
+          columns={columns}
+          dataSource={models}
+          rowKey="id"
+          loading={loading}
+          pagination={false}
+          size="middle"
+          className="bg-white rounded-lg shadow-sm 
+            [&_.ant-table]:!border-b-0 
+            [&_.ant-table-container]:!rounded-lg 
+            [&_.ant-table-container]:!border-hidden
+            [&_.ant-table-cell]:!border-gray-100 
+            [&_.ant-table-thead_.ant-table-cell]:!bg-gray-50/80
+            [&_.ant-table-thead_.ant-table-cell]:!text-gray-600
+            [&_.ant-table-thead_.ant-table-cell]:!font-medium
+            [&_.ant-table-row:hover>*]:!bg-blue-50/50
+            [&_.ant-table-tbody_.ant-table-row]:!cursor-pointer
+            [&_.ant-table-tbody_.ant-table-cell]:!py-4
+            [&_.ant-table-column-sorter-up.active_.anticon]:!text-blue-500
+            [&_.ant-table-column-sorter-down.active_.anticon]:!text-blue-500"
+          scroll={{ x: 500 }}
+        />
+      </div>
+
+      <div className="sm:hidden space-y-4">
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="w-6 h-6 border-2 border-primary/20 border-t-primary animate-spin rounded-full"></div>
+          </div>
+        ) : (
+          models.map((model) => <MobileCard key={model.id} record={model} />)
+        )}
+      </div>
     </div>
   );
 }
