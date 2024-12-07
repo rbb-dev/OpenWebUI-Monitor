@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Dropdown, Avatar } from "antd";
 import type { MenuProps } from "antd";
-import { UserOutlined, LogoutOutlined } from "@ant-design/icons";
+import { User, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { jwtVerify } from "jose";
 import React from "react";
@@ -67,7 +67,7 @@ export default function UserMenu() {
     {
       key: "logout",
       label: "退出登录",
-      icon: <LogoutOutlined />,
+      icon: <LogOut className="w-4 h-4 text-gray-500" />,
       onClick: handleLogout,
     },
   ];
@@ -82,9 +82,12 @@ export default function UserMenu() {
   return (
     <div className="absolute top-4 right-4 z-50">
       <Dropdown menu={{ items }} placement="bottomRight">
-        <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 px-3 py-1.5 rounded-full transition-colors">
-          <Avatar size="small" icon={<UserOutlined />} />
-          <span className="text-sm text-gray-700">{user.username}</span>
+        <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50/80 px-3 py-1.5 rounded-full transition-colors">
+          <Avatar
+            size="small"
+            icon={<User className="w-3 h-3 text-gray-600" />}
+          />
+          <span className="text-sm text-gray-600">{user.username}</span>
         </div>
       </Dropdown>
     </div>

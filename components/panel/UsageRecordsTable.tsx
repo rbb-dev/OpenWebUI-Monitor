@@ -193,10 +193,31 @@ export default function UsageRecordsTable({
           dataSource={records}
           loading={loading}
           onChange={onTableChange}
-          pagination={tableParams.pagination}
+          pagination={{
+            ...tableParams.pagination,
+            className: "px-2",
+            showTotal: (total) => `共 ${total} 条`,
+            itemRender: (page, type, originalElement) => {
+              if (type === "prev") {
+                return (
+                  <button className="px-2 py-0.5 hover:text-primary">
+                    上一页
+                  </button>
+                );
+              }
+              if (type === "next") {
+                return (
+                  <button className="px-2 py-0.5 hover:text-primary">
+                    下一页
+                  </button>
+                );
+              }
+              return originalElement;
+            },
+          }}
           rowKey="id"
           scroll={{ x: 800 }}
-          className="bg-card text-card-foreground rounded-lg shadow-sm"
+          className="bg-background rounded-md border [&_.ant-table-thead]:bg-muted [&_.ant-table-thead>tr>th]:bg-transparent [&_.ant-table-thead>tr>th]:text-muted-foreground [&_.ant-table-tbody>tr>td]:border-muted [&_.ant-table-tbody>tr:last-child>td]:border-b-0 [&_.ant-table-tbody>tr:hover>td]:bg-muted/50 [&_.ant-pagination]:flex [&_.ant-pagination]:items-center [&_.ant-pagination]:px-2 [&_.ant-pagination]:py-4 [&_.ant-pagination]:border-t [&_.ant-pagination]:border-muted [&_.ant-pagination-item]:border-muted [&_.ant-pagination-item]:bg-transparent [&_.ant-pagination-item]:hover:border-primary [&_.ant-pagination-item]:hover:text-primary [&_.ant-pagination-item-active]:border-primary [&_.ant-pagination-item-active]:text-primary [&_.ant-pagination-item-active]:bg-transparent [&_.ant-pagination-prev]:hover:text-primary [&_.ant-pagination-next]:hover:text-primary [&_.ant-pagination-prev>button]:hover:border-primary [&_.ant-pagination-next>button]:hover:border-primary [&_.ant-pagination-options]:ml-auto [&_.ant-select]:border-muted [&_.ant-select]:hover:border-primary [&_.ant-select-focused]:border-primary"
         />
       </div>
 

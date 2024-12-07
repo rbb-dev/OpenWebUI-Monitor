@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Slider } from "antd";
+import { useState } from "react";
 import dayjs from "dayjs";
+import { DatePicker } from "antd";
 import { Button as ShadcnButton } from "@/components/ui/button";
 
 export type TimeRangeType =
@@ -22,60 +22,6 @@ interface TimeRangeSelectorProps {
   };
   onTimeRangeChange: (range: [number, number], type: TimeRangeType) => void;
 }
-
-const generateTimeMarks = (minTime: Date, maxTime: Date) => {
-  const diff = dayjs(maxTime).diff(minTime, "hour");
-  const marks: Record<
-    number,
-    { label: React.ReactNode; style: React.CSSProperties }
-  > = {
-    0: {
-      label: (
-        <div className="flex flex-col items-center">
-          <span className="text-xs font-medium text-gray-600">
-            {dayjs(minTime).format("MM-DD")}
-          </span>
-          <span className="text-[10px] text-gray-500">
-            {dayjs(minTime).format("HH:00")}
-          </span>
-        </div>
-      ),
-      style: { transform: "translateX(0%)" },
-    },
-    100: {
-      label: (
-        <div className="flex flex-col items-center">
-          <span className="text-xs font-medium text-gray-600">
-            {dayjs(maxTime).format("MM-DD")}
-          </span>
-          <span className="text-[10px] text-gray-500">
-            {dayjs(maxTime).format("HH:00")}
-          </span>
-        </div>
-      ),
-      style: { transform: "translateX(-100%)" },
-    },
-  };
-
-  [20, 40, 60, 80].forEach((percent) => {
-    const time = dayjs(minTime).add((diff * percent) / 100, "hour");
-    marks[percent] = {
-      label: (
-        <div className="flex flex-col items-center">
-          <span className="text-xs font-medium text-gray-600">
-            {time.format("MM-DD")}
-          </span>
-          <span className="text-[10px] text-gray-500">
-            {time.format("HH:00")}
-          </span>
-        </div>
-      ),
-      style: { transform: "translateX(-50%)" },
-    };
-  });
-
-  return marks;
-};
 
 const calculateTimeRange = (
   type: TimeRangeType,
@@ -121,24 +67,23 @@ const calculateTimeRange = (
 };
 
 const checkTimeRangeType = (
-  range: [number, number],
+  startTime: dayjs.Dayjs,
+  endTime: dayjs.Dayjs,
   availableTimeRange: { minTime: Date; maxTime: Date }
 ): TimeRangeType => {
-  const [start, end] = range;
-  if (start === 0 && end === 100) return "all";
-  if (end !== 100) return "custom";
+  if (
+    dayjs(startTime).isSame(availableTimeRange.minTime, "hour") &&
+    dayjs(endTime).isSame(availableTimeRange.maxTime, "hour")
+  ) {
+    return "all";
+  }
 
   const now = dayjs();
-  const totalHours = now.diff(availableTimeRange.minTime, "hour");
-  const startTime = dayjs(availableTimeRange.minTime).add(
-    (start * totalHours) / 100,
-    "hour"
-  );
-
-  const isToday = startTime.isSame(now.startOf("day"));
-  const isWeek = startTime.isSame(now.startOf("week"));
-  const isMonth = startTime.isSame(now.startOf("month"));
-  const is30Days = startTime.isSame(now.subtract(30, "day"), "hour");
+  const isToday = startTime.isSame(now.startOf("day")) && endTime.isSame(now);
+  const isWeek = startTime.isSame(now.startOf("week")) && endTime.isSame(now);
+  const isMonth = startTime.isSame(now.startOf("month")) && endTime.isSame(now);
+  const is30Days =
+    startTime.isSame(now.subtract(30, "day"), "hour") && endTime.isSame(now);
 
   if (isToday) return "today";
   if (isWeek) return "week";
@@ -154,44 +99,60 @@ export default function TimeRangeSelector({
   availableTimeRange,
   onTimeRangeChange,
 }: TimeRangeSelectorProps) {
-  return (
-    <div className="pb-16">
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">时间范围</span>
-            <div className="flex items-center gap-2 font-mono text-sm transition-all duration-300 hover:text-gray-900">
-              <span className="text-gray-600">
-                {dayjs(availableTimeRange.minTime)
-                  .add(
-                    (timeRange[0] *
-                      dayjs(availableTimeRange.maxTime).diff(
-                        availableTimeRange.minTime,
-                        "hour"
-                      )) /
-                      100,
-                    "hour"
-                  )
-                  .format("YYYY-MM-DD HH:00")}
-              </span>
-              <span className="text-gray-400">至</span>
-              <span className="text-gray-600">
-                {dayjs(availableTimeRange.minTime)
-                  .add(
-                    (timeRange[1] *
-                      dayjs(availableTimeRange.maxTime).diff(
-                        availableTimeRange.minTime,
-                        "hour"
-                      )) /
-                      100,
-                    "hour"
-                  )
-                  .format("YYYY-MM-DD HH:00")}
-              </span>
-            </div>
-          </div>
+  const totalHours = dayjs(availableTimeRange.maxTime).diff(
+    availableTimeRange.minTime,
+    "hour"
+  );
 
-          <div className="flex flex-wrap gap-2">
+  const startTime = dayjs(availableTimeRange.minTime).add(
+    (timeRange[0] * totalHours) / 100,
+    "hour"
+  );
+  const endTime = dayjs(availableTimeRange.minTime).add(
+    (timeRange[1] * totalHours) / 100,
+    "hour"
+  );
+
+  const handleTimeChange = (dates: [dayjs.Dayjs, dayjs.Dayjs] | null) => {
+    if (!dates) return;
+    const [start, end] = dates;
+
+    const startPercentage = Math.max(
+      0,
+      (start.diff(availableTimeRange.minTime, "hour") / totalHours) * 100
+    );
+    const endPercentage = Math.min(
+      100,
+      (end.diff(availableTimeRange.minTime, "hour") / totalHours) * 100
+    );
+
+    const newType = checkTimeRangeType(start, end, availableTimeRange);
+    onTimeRangeChange([startPercentage, endPercentage], newType);
+  };
+
+  return (
+    <div className="pb-8">
+      <div className="w-full">
+        <div className="space-y-2">
+          <span className="text-xs text-muted-foreground">时间范围</span>
+
+          <DatePicker.RangePicker
+            showTime={{ format: "HH:00" }}
+            format="YYYY-MM-DD HH:00"
+            value={[startTime, endTime]}
+            onChange={(dates) =>
+              handleTimeChange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)
+            }
+            disabledDate={(current) => {
+              return (
+                current < dayjs(availableTimeRange.minTime) ||
+                current > dayjs(availableTimeRange.maxTime)
+              );
+            }}
+            className="w-full"
+          />
+
+          <div className="grid grid-cols-5 gap-2">
             {[
               { type: "today", label: "本日" },
               { type: "week", label: "本周" },
@@ -203,7 +164,7 @@ export default function TimeRangeSelector({
                 key={type}
                 variant={timeRangeType === type ? "default" : "outline"}
                 size="sm"
-                className="transition-all duration-300 hover:scale-105"
+                className="w-full transition-all duration-300 hover:scale-105"
                 onClick={() => {
                   const newRange = calculateTimeRange(
                     type as TimeRangeType,
@@ -217,66 +178,6 @@ export default function TimeRangeSelector({
             ))}
           </div>
         </div>
-
-        <Slider
-          range
-          value={timeRange}
-          marks={generateTimeMarks(
-            availableTimeRange.minTime,
-            availableTimeRange.maxTime
-          )}
-          tooltip={{
-            formatter: (value?: number) => {
-              if (value === undefined) return "";
-              const time = dayjs(availableTimeRange.minTime).add(
-                (value *
-                  dayjs(availableTimeRange.maxTime).diff(
-                    availableTimeRange.minTime,
-                    "hour"
-                  )) /
-                  100,
-                "hour"
-              );
-              return (
-                <div className="flex flex-col items-center bg-gray-800 text-white rounded-lg shadow-md p-2">
-                  <span className="font-medium">{time.format("MM-DD")}</span>
-                  <span className="text-xs">{time.format("HH:00")}</span>
-                </div>
-              );
-            },
-          }}
-          onChange={(value) => {
-            const newRange = value as [number, number];
-            const newType = checkTimeRangeType(newRange, availableTimeRange);
-            onTimeRangeChange(newRange, newType);
-          }}
-          className="mt-8 mb-4 [&_.ant-slider-mark-text]:!whitespace-nowrap
-            [&_.ant-slider-rail]:!bg-gray-100/80 
-            [&_.ant-slider-track]:!bg-gray-300/80
-            [&_.ant-slider-handle]:!border-gray-400 
-            [&_.ant-slider-handle]:!bg-white
-            [&_.ant-slider-handle]:!transition-all
-            [&_.ant-slider-handle]:!duration-300
-            [&_.ant-slider-handle]:hover:!scale-110
-            [&_.ant-slider-handle]:!shadow-sm
-            [&_.ant-slider-handle:hover]:!border-gray-500
-            [&_.ant-slider-handle:active]:!border-gray-600
-            [&_.ant-slider-handle:focus]:!border-gray-600
-            [&_.ant-slider-handle:focus]:!box-shadow-[0_0_0_4px_rgba(0,0,0,0.05)]
-            hover:[&_.ant-slider-track]:!bg-gray-400/90
-            [&_.ant-slider-dot]:!border-gray-200
-            [&_.ant-slider-dot]:!bg-gray-50
-            [&_.ant-slider-dot-active]:!border-gray-300
-            [&_.ant-slider-dot-active]:!bg-gray-100
-            [&_.ant-slider-dot]:hover:!border-gray-400
-            [&_.ant-slider-mark-text]:!text-gray-500
-            [&_.ant-slider-mark-text]:!transition-all
-            [&_.ant-slider-mark-text]:!duration-300
-            [&_.ant-slider-mark-text-active]:!text-gray-700
-            [&_.ant-slider-mark-text]:hover:!text-gray-900
-            [&_.ant-slider-handle-1]:after:!bg-gray-400
-            [&_.ant-slider-handle-2]:after:!bg-gray-400"
-        />
       </div>
     </div>
   );

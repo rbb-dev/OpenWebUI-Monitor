@@ -4,8 +4,7 @@ import { useRef, useEffect } from "react";
 import { Spin } from "antd";
 import ReactECharts from "echarts-for-react";
 import type { ECharts } from "echarts";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import { MetricSwitch } from "@/components/ui/metric-switch";
 
 interface UserUsage {
   nickname: string;
@@ -236,23 +235,9 @@ export default function UserRankingChart({
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+      <div className="flex items-center justify-between mb-6 gap-2">
         <h2 className="text-2xl font-semibold tracking-tight">用户使用排行</h2>
-
-        <RadioGroup
-          value={metric}
-          onValueChange={(value) => onMetricChange(value as "cost" | "count")}
-          className="flex items-center space-x-2"
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="cost" id="bar-cost" />
-            <Label htmlFor="bar-cost">按金额</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="count" id="bar-count" />
-            <Label htmlFor="bar-count">按次数</Label>
-          </div>
-        </RadioGroup>
+        <MetricSwitch value={metric} onChange={onMetricChange} />
       </div>
 
       {loading ? (
@@ -260,7 +245,7 @@ export default function UserRankingChart({
           <Spin size="large" />
         </div>
       ) : (
-        <div className="sm:h-[600px] h-[400px]">
+        <div className="sm:h-[650px] h-[400px]">
           <ReactECharts
             option={getBarOption(users, metric)}
             style={{ height: "100%", width: "100%" }}

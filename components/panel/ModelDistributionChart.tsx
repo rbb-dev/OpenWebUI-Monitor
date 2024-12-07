@@ -7,6 +7,7 @@ import { Card as ShadcnCard } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { MetricSwitch } from "@/components/ui/metric-switch";
 
 interface ModelUsage {
   model_name: string;
@@ -100,7 +101,7 @@ const getPieOption = (models: ModelUsage[], metric: "cost" | "count") => {
     legend: {
       show: isSmallScreen,
       orient: "horizontal",
-      bottom: 50,
+      bottom: 30,
       type: "scroll",
       itemWidth: 15,
       itemHeight: 15,
@@ -243,31 +244,17 @@ export default function ModelDistributionChart({
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-6 gap-2 sm:gap-4">
+      <div className="flex items-center justify-between mb-2 sm:mb-6 gap-2">
         <h2 className="text-2xl font-semibold tracking-tight">模型使用分布</h2>
-
-        <RadioGroup
-          value={metric}
-          onValueChange={(value) => onMetricChange(value as "cost" | "count")}
-          className="flex items-center space-x-2"
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="cost" id="pie-cost" />
-            <Label htmlFor="pie-cost">按金额</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="count" id="pie-count" />
-            <Label htmlFor="pie-count">按次数</Label>
-          </div>
-        </RadioGroup>
+        <MetricSwitch value={metric} onChange={onMetricChange} />
       </div>
 
       {loading ? (
-        <div className="h-[450px] flex items-center justify-center">
+        <div className="h-[350px] sm:h-[450px] flex items-center justify-center">
           <Skeleton className="w-full h-full" />
         </div>
       ) : (
-        <div className="h-[400px] sm:h-[450px]">
+        <div className="h-[350px] sm:h-[450px]">
           <ReactECharts
             option={getPieOption(models, metric)}
             style={{ height: "100%", width: "100%" }}

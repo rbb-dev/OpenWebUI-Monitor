@@ -4,14 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Dropdown, Modal, message } from "antd";
 import type { MenuProps } from "antd";
-import {
-  CopyOutlined,
-  LogoutOutlined,
-  SettingOutlined,
-  DatabaseOutlined,
-  GithubOutlined,
-  MenuOutlined,
-} from "@ant-design/icons";
+import { Copy, LogOut, Settings, Database, Github, Menu } from "lucide-react";
 import DatabaseBackup from "./DatabaseBackup";
 import { APP_VERSION } from "@/lib/version";
 import { usePathname, useRouter } from "next/navigation";
@@ -150,7 +143,7 @@ export default function Header() {
                   <DialogHeader>
                     <div className="flex items-center gap-2">
                       <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-primary/10">
-                        <GithubOutlined className="text-base sm:text-lg text-primary" />
+                        <Github className="w-4 h-4 text-gray-500" />
                       </div>
                       <DialogTitle className="text-base sm:text-lg">
                         发现新版本
@@ -224,10 +217,10 @@ export default function Header() {
       label: (
         <motion.div
           variants={menuItemVariants}
-          className="flex items-center gap-3 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+          className="flex items-center gap-3 px-3 py-2 text-gray-600 hover:text-gray-700 transition-colors"
           onClick={handleCopyApiKey}
         >
-          <CopyOutlined className="text-blue-500 text-base" />
+          <Copy className="w-4 h-4 text-gray-500" />
           <span>复制 API KEY</span>
         </motion.div>
       ),
@@ -237,10 +230,10 @@ export default function Header() {
       label: (
         <motion.div
           variants={menuItemVariants}
-          className="flex items-center gap-3 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+          className="flex items-center gap-3 px-3 py-2 text-gray-600 hover:text-gray-700 transition-colors"
           onClick={() => setIsBackupModalOpen(true)}
         >
-          <DatabaseOutlined className="text-purple-500 text-base" />
+          <Database className="w-4 h-4 text-gray-500" />
           <span>数据迁移</span>
         </motion.div>
       ),
@@ -250,11 +243,11 @@ export default function Header() {
       label: (
         <motion.div
           variants={menuItemVariants}
-          className="flex items-center gap-3 px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+          className="flex items-center gap-3 px-3 py-2 text-gray-600 hover:text-gray-700 transition-colors"
           onClick={checkUpdate}
         >
-          <GithubOutlined
-            className={`text-green-500 text-base ${
+          <Github
+            className={`w-4 h-4 text-gray-500 ${
               isCheckingUpdate ? "animate-spin" : ""
             }`}
           />
@@ -271,10 +264,10 @@ export default function Header() {
       label: (
         <motion.div
           variants={menuItemVariants}
-          className="flex items-center gap-3 px-3 py-2 text-red-500 hover:text-red-600 transition-colors"
+          className="flex items-center gap-3 px-3 py-2 text-gray-600 hover:text-gray-700 transition-colors"
           onClick={handleLogout}
         >
-          <LogoutOutlined className="text-base" />
+          <LogOut className="w-4 h-4 text-gray-500" />
           <span>退出登录</span>
         </motion.div>
       ),
@@ -313,13 +306,13 @@ export default function Header() {
               )}
             >
               <motion.button
-                className="p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                className="p-2 rounded-lg hover:bg-gray-50/80 transition-colors"
                 variants={menuIconVariants}
                 initial="initial"
                 whileHover="hover"
                 transition={{ duration: 0.2 }}
               >
-                <MenuOutlined className="text-lg text-gray-600" />
+                <Menu className="w-5 h-5 text-gray-600" />
               </motion.button>
             </Dropdown>
           </div>
