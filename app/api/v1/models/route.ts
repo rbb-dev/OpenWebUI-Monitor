@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ensureTablesExist, getOrCreateModelPrice } from "@/lib/db";
+import { ModelPrice } from "@/lib/db";
 
 interface ModelInfo {
   id: string;
@@ -9,10 +10,20 @@ interface ModelInfo {
   };
 }
 
+interface ModelWithPrice {
+  id: string;
+  name: string;
+  imageUrl: string;
+  input_price: number;
+  output_price: number;
+  per_msg_price: number;
+  updated_at: Date;
+}
+
 interface ModelResponse {
   data: {
-    id(id: any, name: any): unknown;
-    name(id: any, name: any): unknown;
+    id: string;
+    name: string;
     info: ModelInfo;
   }[];
 }
@@ -68,13 +79,16 @@ export async function GET() {
           String(item.id),
           String(item.name)
         );
-        return {
-          id: item.id,
-          name: item.name,
+        const model: ModelWithPrice = {
+          id: priceInfo.id,
+          name: priceInfo.name,
           imageUrl: item.info?.meta?.profile_image_url || "/static/favicon.png",
           input_price: priceInfo.input_price,
           output_price: priceInfo.output_price,
+          per_msg_price: priceInfo.per_msg_price,
+          updated_at: priceInfo.updated_at,
         };
+        return model;
       })
     );
 

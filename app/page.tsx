@@ -28,7 +28,6 @@ export default function HomePage() {
         );
         const data = await response.json();
         const latestVer = data.tag_name;
-        console.log(latestVer);
         if (!latestVer) {
           return;
         }

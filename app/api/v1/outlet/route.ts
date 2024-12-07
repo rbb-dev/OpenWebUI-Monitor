@@ -16,13 +16,14 @@ interface ModelPrice {
   name: string;
   input_price: number;
   output_price: number;
+  per_msg_price: number;
 }
 
 type DbClient = ReturnType<typeof createClient> | Pool | PoolClient;
 
 async function getModelPrice(modelId: string): Promise<ModelPrice | null> {
   const result = await query(
-    `SELECT id, name, input_price, output_price 
+    `SELECT id, name, input_price, output_price, per_msg_price 
      FROM model_prices 
      WHERE id = $1`,
     [modelId]
@@ -55,6 +56,7 @@ async function getModelPrice(modelId: string): Promise<ModelPrice | null> {
     name: modelId,
     input_price: defaultInputPrice,
     output_price: defaultOutputPrice,
+    per_msg_price: -1, // 默认使用按 token 计费
   };
 }
 
@@ -106,9 +108,19 @@ export async function POST(req: Request) {
     }
 
     // 计算成本
-    const inputCost = (inputTokens / 1_000_000) * modelPrice.input_price;
-    const outputCost = (outputTokens / 1_000_000) * modelPrice.output_price;
-    const totalCost = inputCost + outputCost;
+    let totalCost: number;
+    if (modelPrice.per_msg_price >= 0) {
+      // 如果设置了每条消息的固定价格，直接使用
+      totalCost = Number(modelPrice.per_msg_price);
+      console.log(
+        `使用固定价格计费: ${totalCost} (每条消息价格: ${modelPrice.per_msg_price})`
+      );
+    } else {
+      // 否则按 token 数量计算价格
+      const inputCost = (inputTokens / 1_000_000) * modelPrice.input_price;
+      const outputCost = (outputTokens / 1_000_000) * modelPrice.output_price;
+      totalCost = inputCost + outputCost;
+    }
 
     // 获取并更新用户余额
     const userResult = await query(
@@ -144,6 +156,17 @@ export async function POST(req: Request) {
     );
 
     await query("COMMIT");
+
+    console.log(
+      JSON.stringify({
+        success: true,
+        inputTokens,
+        outputTokens,
+        totalCost,
+        newBalance,
+        message: "请求成功",
+      })
+    );
 
     return NextResponse.json({
       success: true,

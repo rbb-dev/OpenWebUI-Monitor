@@ -22,6 +22,7 @@ interface ModelResponse {
   imageUrl: string;
   input_price: number;
   output_price: number;
+  per_msg_price: number;
 }
 
 interface Model {
@@ -30,6 +31,7 @@ interface Model {
   imageUrl: string;
   input_price: number;
   output_price: number;
+  per_msg_price: number;
   testStatus?: "success" | "error" | "testing";
 }
 
@@ -39,7 +41,7 @@ export default function ModelsPage() {
   const [error, setError] = useState<string | null>(null);
   const [editingCell, setEditingCell] = useState<{
     id: string;
-    field: "input_price" | "output_price";
+    field: "input_price" | "output_price" | "per_msg_price";
   } | null>(null);
   const [testing, setTesting] = useState(false);
   const [apiKey, setApiKey] = useState<string | null>(null);
@@ -57,6 +59,7 @@ export default function ModelsPage() {
             ...model,
             input_price: model.input_price || 60,
             output_price: model.output_price || 60,
+            per_msg_price: model.per_msg_price || -1,
           }))
         );
       } catch (err) {
@@ -94,7 +97,7 @@ export default function ModelsPage() {
 
   const handlePriceUpdate = async (
     id: string,
-    field: "input_price" | "output_price",
+    field: "input_price" | "output_price" | "per_msg_price",
     value: number
   ) => {
     try {
@@ -102,14 +105,22 @@ export default function ModelsPage() {
       if (!model) return;
 
       const validValue = Number(value);
-      if (!isFinite(validValue) || validValue < 0) {
+      if (
+        field !== "per_msg_price" &&
+        (!isFinite(validValue) || validValue < 0)
+      ) {
         throw new Error("请输入有效的正数");
+      }
+      if (field === "per_msg_price" && !isFinite(validValue)) {
+        throw new Error("请输入有效的数字");
       }
 
       const input_price =
         field === "input_price" ? validValue : model.input_price;
       const output_price =
         field === "output_price" ? validValue : model.output_price;
+      const per_msg_price =
+        field === "per_msg_price" ? validValue : model.per_msg_price;
 
       const response = await fetch("/api/v1/models/price", {
         method: "POST",
@@ -120,6 +131,7 @@ export default function ModelsPage() {
               id,
               input_price: Number(input_price),
               output_price: Number(output_price),
+              per_msg_price: Number(per_msg_price),
             },
           ],
         }),
@@ -136,6 +148,7 @@ export default function ModelsPage() {
                   ...model,
                   input_price: Number(data.results[0].data.input_price),
                   output_price: Number(data.results[0].data.output_price),
+                  per_msg_price: Number(data.results[0].data.per_msg_price),
                 }
               : model
           )
@@ -153,7 +166,7 @@ export default function ModelsPage() {
   };
 
   const renderPriceCell = (
-    field: "input_price" | "output_price",
+    field: "input_price" | "output_price" | "per_msg_price",
     record: Model
   ) => {
     const isEditing =
@@ -166,10 +179,18 @@ export default function ModelsPage() {
         className="w-28 sm:w-36"
         onPressEnter={(e: React.KeyboardEvent<HTMLInputElement>) => {
           const numValue = Number(e.currentTarget.value);
-          if (isFinite(numValue) && numValue >= 0) {
+          if (
+            field === "per_msg_price"
+              ? isFinite(numValue)
+              : isFinite(numValue) && numValue >= 0
+          ) {
             handlePriceUpdate(record.id, field, numValue);
           } else {
-            message.error("请输入有效的正数");
+            message.error(
+              field === "per_msg_price"
+                ? "请输入有效的数字"
+                : "请输入有效的正数"
+            );
             setEditingCell(null);
           }
         }}
@@ -179,7 +200,7 @@ export default function ModelsPage() {
           if (
             value &&
             !isNaN(numValue) &&
-            numValue >= 0 &&
+            (field === "per_msg_price" ? isFinite(numValue) : numValue >= 0) &&
             numValue !== currentValue
           ) {
             handlePriceUpdate(record.id, field, numValue);
@@ -195,6 +216,9 @@ export default function ModelsPage() {
         onClick={() => setEditingCell({ id: record.id, field })}
       >
         {currentValue.toFixed(2)}
+        {field === "per_msg_price" && currentValue === -1 && (
+          <span className="text-gray-400 ml-1">(未设置)</span>
+        )}
       </div>
     );
   };
@@ -290,6 +314,22 @@ export default function ModelsPage() {
       sortDirections: ["descend", "ascend", "descend"],
       render: (_, record) => renderPriceCell("output_price", record),
     },
+    {
+      title: (
+        <span>
+          每条消息价格 ¥{" "}
+          <Tooltip title="每条消息的固定收费，设置为 -1 表示不收取固定费用">
+            <InfoCircleOutlined className="text-gray-400 cursor-help" />
+          </Tooltip>
+        </span>
+      ),
+      key: "per_msg_price",
+      width: 150,
+      dataIndex: "per_msg_price",
+      sorter: (a, b) => a.per_msg_price - b.per_msg_price,
+      sortDirections: ["descend", "ascend", "descend"],
+      render: (_, record) => renderPriceCell("per_msg_price", record),
+    },
   ];
 
   const handleExportPrices = () => {
@@ -297,6 +337,7 @@ export default function ModelsPage() {
       id: model.id,
       input_price: model.input_price,
       output_price: model.output_price,
+      per_msg_price: model.per_msg_price,
     }));
 
     const blob = new Blob([JSON.stringify(priceData, null, 2)], {
@@ -352,6 +393,7 @@ export default function ModelsPage() {
                   ...model,
                   input_price: Number(update.data.input_price),
                   output_price: Number(update.data.output_price),
+                  per_msg_price: Number(update.data.per_msg_price),
                 };
               }
               return model;

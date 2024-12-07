@@ -1,5 +1,6 @@
 import { query } from "./client";
 import { ensureUserTableExists } from "./users";
+import { ModelPrice } from "../db";
 
 // 创建模型价格表
 async function ensureModelPricesTableExists() {
@@ -15,9 +16,24 @@ async function ensureModelPricesTableExists() {
       model_id TEXT PRIMARY KEY,
       model_name TEXT NOT NULL,
       input_price DECIMAL(10, 6) DEFAULT CAST($1 AS DECIMAL(10, 6)),
-      output_price DECIMAL(10, 6) DEFAULT CAST($2 AS DECIMAL(10, 6))
+      output_price DECIMAL(10, 6) DEFAULT CAST($2 AS DECIMAL(10, 6)),
+      per_msg_price DECIMAL(10, 6) DEFAULT -1,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );`,
     [defaultInputPrice, defaultOutputPrice]
+  );
+
+  // 为现有记录添加 per_msg_price 字段（如果不存在）
+  await query(
+    `DO $$ 
+    BEGIN 
+      BEGIN
+        ALTER TABLE model_prices ADD COLUMN per_msg_price DECIMAL(10, 6) DEFAULT -1;
+        ALTER TABLE model_prices ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+      EXCEPTION 
+        WHEN duplicate_column THEN NULL;
+      END;
+    END $$;`
   );
 }
 
@@ -26,31 +42,27 @@ export async function ensureTablesExist() {
   await ensureUserTableExists();
 }
 
-// 添加 ModelPrice 接口定义
-interface ModelPrice {
-  model_id: string;
-  model_name: string;
-  input_price: number;
-  output_price: number;
-}
-
 export async function getOrCreateModelPrice(
   id: string,
   name: string
 ): Promise<ModelPrice> {
   try {
     const result = await query(
-      `INSERT INTO model_prices (model_id, model_name)
-       VALUES ($1, $2)
-       ON CONFLICT (model_id) DO UPDATE SET model_name = $2
+      `INSERT INTO model_prices (model_id, model_name, updated_at)
+       VALUES ($1, $2, CURRENT_TIMESTAMP)
+       ON CONFLICT (model_id) DO UPDATE 
+       SET model_name = $2, updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
       [id, name]
     );
 
     return {
-      ...result.rows[0],
+      id: result.rows[0].model_id,
+      name: result.rows[0].model_name,
       input_price: Number(result.rows[0].input_price),
       output_price: Number(result.rows[0].output_price),
+      per_msg_price: Number(result.rows[0].per_msg_price),
+      updated_at: result.rows[0].updated_at,
     };
   } catch (error: any) {
     console.error("Error in getOrCreateModelPrice:", error);
@@ -66,16 +78,19 @@ export async function getOrCreateModelPrice(
 export async function updateModelPrice(
   modelId: string,
   input_price: number,
-  output_price: number
-) {
+  output_price: number,
+  per_msg_price: number
+): Promise<ModelPrice | null> {
   const result = await query(
     `UPDATE model_prices 
     SET 
       input_price = CAST($2 AS DECIMAL(10,6)),
-      output_price = CAST($3 AS DECIMAL(10,6))
+      output_price = CAST($3 AS DECIMAL(10,6)),
+      per_msg_price = CAST($4 AS DECIMAL(10,6)),
+      updated_at = CURRENT_TIMESTAMP
     WHERE model_id = $1
     RETURNING *;`,
-    [modelId, input_price, output_price]
+    [modelId, input_price, output_price, per_msg_price]
   );
 
   if (result.rows.length === 0) {
@@ -83,9 +98,12 @@ export async function updateModelPrice(
   }
 
   return {
-    ...result.rows[0],
+    id: result.rows[0].model_id,
+    name: result.rows[0].model_name,
     input_price: Number(result.rows[0].input_price),
     output_price: Number(result.rows[0].output_price),
+    per_msg_price: Number(result.rows[0].per_msg_price),
+    updated_at: result.rows[0].updated_at,
   };
 }
 

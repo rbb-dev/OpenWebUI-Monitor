@@ -27,11 +27,22 @@ pool.on("error", (err) => {
   process.exit(-1);
 });
 
+// 数据库行的类型定义
+interface ModelPriceRow {
+  id: string;
+  name: string;
+  input_price: string | number;
+  output_price: string | number;
+  per_msg_price: string | number;
+  updated_at: Date;
+}
+
 export interface ModelPrice {
   id: string;
   name: string;
   input_price: number;
   output_price: number;
+  per_msg_price: number;
   updated_at: Date;
 }
 
@@ -80,8 +91,22 @@ export async function ensureTablesExist() {
         name TEXT NOT NULL,
         input_price NUMERIC(10, 6) DEFAULT ${defaultInputPrice},
         output_price NUMERIC(10, 6) DEFAULT ${defaultOutputPrice},
+        per_msg_price NUMERIC(10, 6) DEFAULT -1,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+    `);
+
+    // 检查并添加 per_msg_price 列（如果不存在）
+    await client.query(`
+      DO $$ 
+      BEGIN 
+        BEGIN
+          ALTER TABLE model_prices 
+          ADD COLUMN per_msg_price NUMERIC(10, 6) DEFAULT -1;
+        EXCEPTION 
+          WHEN duplicate_column THEN NULL;
+        END;
+      END $$;
     `);
 
     // 最后创建 user_usage_records 表
@@ -117,14 +142,21 @@ export async function getOrCreateModelPrice(
   let client: PoolClient | null = null;
   try {
     client = await pool.connect();
-    const result = await client.query<ModelPrice>(
+    const result = await client.query<ModelPriceRow>(
       `INSERT INTO model_prices (id, name)
        VALUES ($1, $2)
        ON CONFLICT (id) DO UPDATE SET name = $2
        RETURNING *`,
       [id, name]
     );
-    return result.rows[0];
+    return {
+      id: result.rows[0].id,
+      name: result.rows[0].name,
+      input_price: Number(result.rows[0].input_price),
+      output_price: Number(result.rows[0].output_price),
+      per_msg_price: Number(result.rows[0].per_msg_price),
+      updated_at: result.rows[0].updated_at,
+    };
   } catch (error) {
     console.error("Error in getOrCreateModelPrice:", error);
     throw error;
@@ -139,29 +171,34 @@ export async function getOrCreateModelPrice(
 export async function updateModelPrice(
   id: string,
   input_price: number,
-  output_price: number
+  output_price: number,
+  per_msg_price: number
 ): Promise<ModelPrice | null> {
   let client: PoolClient | null = null;
   try {
     client = await pool.connect();
 
     // 使用 CAST 确保数据类型正确
-    const result = await client.query<ModelPrice>(
+    const result = await client.query<ModelPriceRow>(
       `UPDATE model_prices 
        SET 
          input_price = CAST($2 AS NUMERIC(10,6)),
          output_price = CAST($3 AS NUMERIC(10,6)),
+         per_msg_price = CAST($4 AS NUMERIC(10,6)),
          updated_at = CURRENT_TIMESTAMP
        WHERE id = $1
        RETURNING *`,
-      [id, input_price, output_price]
+      [id, input_price, output_price, per_msg_price]
     );
 
     if (result.rows[0]) {
       return {
-        ...result.rows[0],
+        id: result.rows[0].id,
+        name: result.rows[0].name,
         input_price: Number(result.rows[0].input_price),
         output_price: Number(result.rows[0].output_price),
+        per_msg_price: Number(result.rows[0].per_msg_price),
+        updated_at: result.rows[0].updated_at,
       };
     }
     return null;
@@ -175,7 +212,7 @@ export async function updateModelPrice(
   }
 }
 
-// 添加一个初始化函数
+// 添加一个始化函数
 export async function initDatabase() {
   try {
     await ensureTablesExist();
