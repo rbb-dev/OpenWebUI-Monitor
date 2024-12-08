@@ -43,27 +43,11 @@ sudo docker compose up -d
 
 | 变量名                     | 说明                                     | 默认值 |
 | -------------------------- | ---------------------------------------- | ------ |
-| DEFAULT_MODEL_INPUT_PRICE  | 默认模型输入价格，单位为美元/百万 tokens | `60`   |
-| DEFAULT_MODEL_OUTPUT_PRICE | 默认模型输出价格，单位为美元/百万 tokens | `60`   |
+| DEFAULT_MODEL_INPUT_PRICE  | 默认模型输入价格，单位为元/百万 tokens | `60`   |
+| DEFAULT_MODEL_OUTPUT_PRICE | 默认模型输出价格，单位为元/百万 tokens | `60`   |
+| DEFAULT_MODEL_PER_MSG_PRICE | 模型默认每条消息价格，设为负数将按 token 计费 | `-1`   |
 | INIT_BALANCE               | 用户初始余额                             | `0`    |
 
-<details>
-  <summary><h2>画廊</h2></summary>
-  <div style="display: flex; flex-wrap: wrap; justify-content: center;">
-    <div style="flex: 1 1 50%; padding: 5px; box-sizing: border-box;">
-      <img src="https://github.com/user-attachments/assets/653e2e01-9861-472b-a6c9-4ddcf1e9133a" alt="Gallery Image 1" style="width: 100%; display: block;">
-    </div>
-    <div style="flex: 1 1 50%; padding: 5px; box-sizing: border-box;">
-      <img src="https://github.com/user-attachments/assets/ebacc463-d31a-4cfa-bae2-2e5d05c18483" alt="Gallery Image 2" style="width: 100%; display: block;">
-    </div>
-    <div style="flex: 1 1 50%; padding: 5px; box-sizing: border-box;">
-      <img src="https://github.com/user-attachments/assets/20c7078b-4d12-49ac-b347-35d770abe85e" alt="Gallery Image 3" style="width: 100%; display: block;">
-    </div>
-    <div style="flex: 1 1 50%; padding: 5px; box-sizing: border-box;">
-      <img src="https://github.com/user-attachments/assets/d88d9b44-3254-4189-82ae-ce4fbb6279b8" alt="Gallery Image 4" style="width: 100%; display: block;">
-    </div>
-    <div style="flex: 1 1 50%; padding: 5px; box-sizing: border-box;">
-      <img src="https://github.com/user-attachments/assets/3eec480e-cb73-41f3-9cea-0759d77e30c4" alt="Gallery Image 5" style="width: 100%; display: block;">
-    </div>
-  </div>
-</details>
+<h2>Gallery</h2>
+
+<img width="993" alt="image" src="https://github.com/user-attachments/assets/0bc0043e-c949-4935-a5ef-d0d15e5501e0">
