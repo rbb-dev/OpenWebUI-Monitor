@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import AuthCheck from "@/components/AuthCheck";
 import { Toaster } from "@/components/ui/toaster";
+import I18nProvider from "@/components/I18nProvider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -29,11 +30,13 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body>
-        <AuthCheck>
-          <Header />
-          {children}
-        </AuthCheck>
-        <Toaster />
+        <I18nProvider>
+          <AuthCheck>
+            <Header />
+            {children}
+          </AuthCheck>
+          <Toaster />
+        </I18nProvider>
       </body>
     </html>
   );

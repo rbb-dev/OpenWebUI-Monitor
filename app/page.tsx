@@ -15,8 +15,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { useTranslation } from "react-i18next";
 
 export default function HomePage() {
+  const { t } = useTranslation("common");
   const [isUpdateVisible, setIsUpdateVisible] = useState(false);
   const [latestVersion, setLatestVersion] = useState("");
 
@@ -77,10 +79,10 @@ export default function HomePage() {
             <div className="w-full space-y-6 sm:space-y-8 mb-8 sm:mb-12">
               <div className="text-center space-y-2">
                 <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 via-indigo-800 to-gray-900 bg-clip-text text-transparent mb-2 sm:mb-3 tracking-tight">
-                  OpenWebUI Monitor
+                  {t("common.appName")}
                 </h1>
                 <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto font-light">
-                  专为 OpenWebUI 设计的用量监控和用户余额管理平台
+                  {t("common.description")}
                 </p>
               </div>
             </div>
@@ -95,11 +97,11 @@ export default function HomePage() {
                         <FiDatabase className="text-xl text-blue-600" />
                       </div>
                       <h2 className="text-lg font-medium text-gray-900">
-                        模型管理
+                        {t("home.features.models.title")}
                       </h2>
                     </div>
                     <p className="text-sm text-gray-600">
-                      OpenWebUI 提供模型的价格管理
+                      {t("home.features.models.description")}
                     </p>
                   </div>
                 </Card>
@@ -113,11 +115,11 @@ export default function HomePage() {
                         <FiUsers className="text-xl text-purple-600" />
                       </div>
                       <h2 className="text-lg font-medium text-gray-900">
-                        用户管理
+                        {t("home.features.users.title")}
                       </h2>
                     </div>
                     <p className="text-sm text-gray-600">
-                      用户信息查询和余额管理
+                      {t("home.features.users.description")}
                     </p>
                   </div>
                 </Card>
@@ -131,11 +133,11 @@ export default function HomePage() {
                         <FiBarChart2 className="text-xl text-green-600" />
                       </div>
                       <h2 className="text-lg font-medium text-gray-900">
-                        使用统计
+                        {t("home.features.stats.title")}
                       </h2>
                     </div>
                     <p className="text-sm text-gray-600">
-                      使用统计数据和可视化
+                      {t("home.features.stats.description")}
                     </p>
                   </div>
                 </Card>
@@ -168,20 +170,22 @@ export default function HomePage() {
         <div className="fixed bottom-4 right-4 animate-slide-up">
           <div className="bg-gray-50/90 backdrop-blur-sm text-xs rounded-lg shadow-sm border border-gray-100/50 py-2 px-3">
             <div className="flex items-center gap-3 text-gray-600">
-              <span>发现新版本 {latestVersion}</span>
+              <span>
+                {t("update.newVersion")} {latestVersion}
+              </span>
               <div className="flex gap-2">
                 <button
                   onClick={handleIgnore}
                   className="hover:text-gray-900 transition-colors"
                 >
-                  忽略
+                  {t("update.ignore")}
                 </button>
                 <span className="text-gray-300">|</span>
                 <button
                   onClick={handleUpdate}
                   className="text-blue-500 hover:text-blue-600 transition-colors"
                 >
-                  更新
+                  {t("update.update")}
                 </button>
               </div>
               <button

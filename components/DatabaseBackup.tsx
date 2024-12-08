@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { message } from "antd";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -24,11 +25,12 @@ export default function DatabaseBackup({
   onClose,
   token,
 }: DatabaseBackupProps) {
+  const { t } = useTranslation("common");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExport = async () => {
     if (!token) {
-      message.error("未授权，请重新登录");
+      message.error(t("auth.unauthorized"));
       return;
     }
 
@@ -40,7 +42,7 @@ export default function DatabaseBackup({
       });
 
       if (!response.ok) {
-        throw new Error("导出失败");
+        throw new Error(t("backup.export.error"));
       }
 
       const blob = await response.blob();
@@ -54,10 +56,10 @@ export default function DatabaseBackup({
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      message.success("导出成功");
+      message.success(t("backup.export.success"));
     } catch (error) {
-      console.error("导出失败:", error);
-      message.error("导出失败");
+      console.error(t("backup.export.error"), error);
+      message.error(t("backup.export.error"));
     }
   };
 
@@ -66,7 +68,7 @@ export default function DatabaseBackup({
     if (!file) return;
 
     if (!token) {
-      message.error("未授权，请重新登录");
+      message.error(t("auth.unauthorized"));
       return;
     }
 
@@ -84,38 +86,41 @@ export default function DatabaseBackup({
       });
 
       if (!response.ok) {
-        throw new Error("导入失败");
+        throw new Error(t("backup.import.error"));
       }
 
       const result = await response.json();
 
       if (result.success) {
-        message.success("导入成功");
-        // 清空文件选择
+        message.success(t("backup.import.success"));
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
         }
       } else {
-        throw new Error(result.error || "导入失败");
+        throw new Error(result.error || t("backup.import.error"));
       }
     } catch (err) {
-      console.error("导入失败:", err);
-      message.error(err instanceof Error ? err.message : "导入失败");
+      console.error(t("backup.import.error"), err);
+      message.error(
+        err instanceof Error ? err.message : t("backup.import.error")
+      );
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[calc(100%-2rem)] !max-w-[70vw] sm:max-w-[425px] rounded-lg">
+      <DialogContent className="w-[calc(100%-2rem)] !max-w-[400px] rounded-lg">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-primary/10">
               <DatabaseIcon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
-            <DialogTitle className="text-base sm:text-lg">数据迁移</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">
+              {t("backup.title")}
+            </DialogTitle>
           </div>
           <DialogDescription className="pt-2 text-sm">
-            导出或导入数据库备份，方便迁移和恢复数据
+            {t("backup.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -133,10 +138,10 @@ export default function DatabaseBackup({
               </div>
               <div className="space-y-0.5 sm:space-y-1">
                 <h3 className="font-medium leading-none text-sm sm:text-base">
-                  导出数据
+                  {t("backup.export.title")}
                 </h3>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  将当前数据导出为备份文件
+                  {t("backup.export.description")}
                 </p>
               </div>
             </CardContent>
@@ -162,10 +167,10 @@ export default function DatabaseBackup({
               </div>
               <div className="space-y-0.5 sm:space-y-1">
                 <h3 className="font-medium leading-none text-sm sm:text-base">
-                  导入数据
+                  {t("backup.import.title")}
                 </h3>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  从备份文件中恢复数据
+                  {t("backup.import.description")}
                 </p>
               </div>
             </CardContent>

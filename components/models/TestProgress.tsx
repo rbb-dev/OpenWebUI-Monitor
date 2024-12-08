@@ -6,6 +6,7 @@ import { CheckCircle2, XCircle, Clock } from "lucide-react";
 import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface TestProgressProps {
   isVisible: boolean;
@@ -22,6 +23,7 @@ export function TestProgress({
   models,
   isComplete,
 }: TestProgressProps) {
+  const { t } = useTranslation("common");
   const [expandedSection, setExpandedSection] = useState<
     "success" | "error" | null
   >(null);
@@ -100,7 +102,7 @@ export function TestProgress({
                     className="text-sm text-left pb-2"
                   >
                     <span className="text-muted-foreground">
-                      测试完成，点击卡片查看详细信息
+                      {t("models.test.result.complete")}
                     </span>
                   </motion.div>
                   <div className="grid grid-cols-2 gap-4">
@@ -113,7 +115,7 @@ export function TestProgress({
                           <CheckCircle2 className="w-5 h-5 text-green-500" />
                         }
                         color="bg-green-50"
-                        label="有效"
+                        label={t("models.test.status.valid")}
                       />
                     </div>
                     <div className="col-span-1">
@@ -123,7 +125,7 @@ export function TestProgress({
                         count={failedModels.length}
                         icon={<XCircle className="w-5 h-5 text-red-500" />}
                         color="bg-red-50"
-                        label="无效"
+                        label={t("models.test.status.invalid")}
                       />
                     </div>
                   </div>
@@ -137,7 +139,7 @@ export function TestProgress({
                       count={successModels.length}
                       icon={<CheckCircle2 className="w-5 h-5 text-green-500" />}
                       color="bg-green-50"
-                      label="有效"
+                      label={t("models.test.status.valid")}
                     />
                     <StatusSection
                       type="error"
@@ -145,7 +147,7 @@ export function TestProgress({
                       count={failedModels.length}
                       icon={<XCircle className="w-5 h-5 text-red-500" />}
                       color="bg-red-50"
-                      label="无效"
+                      label={t("models.test.status.invalid")}
                     />
                     <StatusSection
                       type="pending"
@@ -153,13 +155,15 @@ export function TestProgress({
                       count={pendingModels.length}
                       icon={<Clock className="w-5 h-5 text-blue-500" />}
                       color="bg-blue-50"
-                      label="等待中"
+                      label={t("models.test.status.pending")}
                     />
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">测试进度</span>
+                      <span className="text-muted-foreground">
+                        {t("models.test.progress.title")}
+                      </span>
                       <span className="font-medium whitespace-nowrap ml-4">
                         {testedModels} / {totalModels}
                       </span>
@@ -182,8 +186,8 @@ export function TestProgress({
                     <div className="pt-3 border-t">
                       <div className="text-sm font-medium mb-3">
                         {expandedSection === "success"
-                          ? "有效模型"
-                          : "无效模型"}
+                          ? t("models.test.result.success")
+                          : t("models.test.result.failed")}
                       </div>
                       <ScrollArea className="h-[200px] pr-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">

@@ -3,14 +3,13 @@
 import { useState, useEffect } from "react";
 import { Table, Input, message, Modal } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { ArrowLeftOutlined } from "@ant-design/icons";
-import Link from "next/link";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useTranslation } from "react-i18next";
 
 interface User {
   id: string;
@@ -21,6 +20,7 @@ interface User {
 }
 
 export default function UsersPage() {
+  const { t } = useTranslation("common");
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
@@ -37,7 +37,9 @@ export default function UsersPage() {
       setUsers(data.users);
       setTotal(data.total);
     } catch (err) {
-      message.error(err instanceof Error ? err.message : "获取用户列表失败");
+      message.error(
+        err instanceof Error ? err.message : t("users.message.fetchUsersError")
+      );
     } finally {
       setLoading(false);
     }
@@ -58,11 +60,15 @@ export default function UsersPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      message.success("余额更新成功");
+      message.success(t("users.message.updateBalance.success"));
       setEditingKey("");
       fetchUsers(currentPage);
     } catch (err) {
-      message.error(err instanceof Error ? err.message : "更新余额失败");
+      message.error(
+        err instanceof Error
+          ? err.message
+          : t("users.message.updateBalance.error")
+      );
     }
   };
 
@@ -70,7 +76,7 @@ export default function UsersPage() {
     // 基础列配置 - 在所有设备上都显示
     const baseColumns: ColumnsType<User> = [
       {
-        title: "用户信息",
+        title: t("users.userInfo"),
         key: "userInfo",
         width: "65%",
         render: (_, record) => (
@@ -89,7 +95,7 @@ export default function UsersPage() {
         ),
       },
       {
-        title: "余额",
+        title: t("users.balance"),
         dataIndex: "balance",
         key: "balance",
         width: "35%",
@@ -106,7 +112,7 @@ export default function UsersPage() {
                 if (!isNaN(numValue)) {
                   handleUpdateBalance(record.id, numValue);
                 } else {
-                  message.error("请输入有效的数字");
+                  message.error(t("users.message.invalidNumber"));
                   setEditingKey("");
                 }
               }}
@@ -136,7 +142,7 @@ export default function UsersPage() {
     // 仅在桌面设备显示的额外列
     const desktopColumns: ColumnsType<User> = [
       {
-        title: "角色",
+        title: t("users.role"),
         dataIndex: "role",
         key: "role",
         width: 100,
@@ -157,7 +163,7 @@ export default function UsersPage() {
       <div className="pt-16 flex flex-col gap-6 mb-6 sm:mb-8">
         <div className="flex items-center justify-between">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
-            用户管理
+            {t("users.title")}
           </h1>
         </div>
       </div>
@@ -200,7 +206,9 @@ export default function UsersPage() {
           },
           className: "!mb-0",
           showTotal: (total) => (
-            <span className="text-muted-foreground">共 {total} 条记录</span>
+            <span className="text-muted-foreground">
+              {t("users.total")} {total} {t("users.totalRecords")}
+            </span>
           ),
           size: "small",
         }}
@@ -213,26 +221,34 @@ export default function UsersPage() {
       >
         <DialogContent className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-[calc(100%-2rem)] sm:w-full sm:max-w-[425px] rounded-lg">
           <DialogHeader>
-            <DialogTitle>用户详细信息</DialogTitle>
+            <DialogTitle>{t("users.userDetails")}</DialogTitle>
           </DialogHeader>
           {selectedUser && (
             <div className="grid gap-4 py-2">
               <div className="space-y-2">
-                <div className="text-sm text-muted-foreground">昵称</div>
+                <div className="text-sm text-muted-foreground">
+                  {t("users.nickname")}
+                </div>
                 <div className="font-medium">{selectedUser.name}</div>
               </div>
               <div className="space-y-2">
-                <div className="text-sm text-muted-foreground">邮箱</div>
+                <div className="text-sm text-muted-foreground">
+                  {t("users.email")}
+                </div>
                 <div className="break-all">{selectedUser.email}</div>
               </div>
               <div className="space-y-2">
-                <div className="text-sm text-muted-foreground">用户 ID</div>
+                <div className="text-sm text-muted-foreground">
+                  {t("users.id")}
+                </div>
                 <div className="font-mono text-sm break-all">
                   {selectedUser.id}
                 </div>
               </div>
               <div className="space-y-2">
-                <div className="text-sm text-muted-foreground">角色</div>
+                <div className="text-sm text-muted-foreground">
+                  {t("users.role")}
+                </div>
                 <div>
                   <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary/10 text-primary">
                     {selectedUser.role}

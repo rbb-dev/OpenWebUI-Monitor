@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 interface MetricSwitchProps {
   value: "cost" | "count";
@@ -14,6 +15,8 @@ export function MetricSwitch({
   onChange,
   className,
 }: MetricSwitchProps) {
+  const { t } = useTranslation("common");
+
   return (
     <div
       className={cn(
@@ -38,7 +41,7 @@ export function MetricSwitch({
             value === "cost" ? "text-foreground" : "text-muted-foreground"
           )}
         >
-          按金额
+          {t("panel.byAmount")}
         </button>
         <button
           onClick={() => onChange("count")}
@@ -47,7 +50,7 @@ export function MetricSwitch({
             value === "count" ? "text-foreground" : "text-muted-foreground"
           )}
         >
-          按次数
+          {t("panel.byCount")}
         </button>
       </div>
     </div>

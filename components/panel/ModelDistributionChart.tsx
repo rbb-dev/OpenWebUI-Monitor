@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MetricSwitch } from "@/components/ui/metric-switch";
+import { useTranslation } from "react-i18next";
 
 interface ModelUsage {
   model_name: string;
@@ -22,7 +23,11 @@ interface ModelDistributionChartProps {
   onMetricChange: (metric: "cost" | "count") => void;
 }
 
-const getPieOption = (models: ModelUsage[], metric: "cost" | "count") => {
+const getPieOption = (
+  models: ModelUsage[],
+  metric: "cost" | "count",
+  t: (key: string) => string
+) => {
   const pieData = models
     .map((item) => ({
       type: item.model_name,
@@ -37,12 +42,14 @@ const getPieOption = (models: ModelUsage[], metric: "cost" | "count") => {
     .reduce((acc, curr) => {
       const percentage = (curr.value / total) * 100;
       if (percentage < 5) {
-        const otherIndex = acc.findIndex((item) => item.name === "其他");
+        const otherIndex = acc.findIndex(
+          (item) => item.name === t("panel.modelUsage.others")
+        );
         if (otherIndex >= 0) {
           acc[otherIndex].value += curr.value;
         } else {
           acc.push({
-            name: "其他",
+            name: t("panel.modelUsage.others"),
             value: curr.value,
           });
         }
@@ -78,14 +85,16 @@ const getPieOption = (models: ModelUsage[], metric: "cost" | "count") => {
               <span class="inline-block w-2 h-2 rounded-full" style="background-color: ${
                 params.color
               }"></span>
-              <span class="text-sm">${
-                metric === "cost" ? "消耗金额" : "使用次数"
-              }</span>
+              <span class="text-sm">
+                {metric === "cost"
+                  ? t("panel.modelUsageChart.yaxis.byAmount")
+                  : t("panel.modelUsageChart.yaxis.byCount")}
+              </span>
               <span class="font-mono text-sm font-medium text-gray-900">
                 ${
                   metric === "cost"
-                    ? `¥${params.value.toFixed(4)}`
-                    : `${params.value}次`
+                    ? `${t("common.currency")}${params.value.toFixed(4)}`
+                    : `${params.value} ${t("common.count")}`
                 }
               </span>
             </div>
@@ -112,7 +121,10 @@ const getPieOption = (models: ModelUsage[], metric: "cost" | "count") => {
     },
     series: [
       {
-        name: metric === "cost" ? "消耗金额" : "使用次数",
+        name:
+          metric === "cost"
+            ? t("panel.modelUsageChart.yaxis.byAmount")
+            : t("panel.modelUsageChart.yaxis.byCount"),
         type: "pie",
         radius: isSmallScreen ? ["40%", "70%"] : ["50%", "80%"],
         center: isSmallScreen ? ["50%", "45%"] : ["50%", "50%"],
@@ -133,8 +145,8 @@ const getPieOption = (models: ModelUsage[], metric: "cost" | "count") => {
               `{name|${params.name}}`,
               `{value|${
                 metric === "cost"
-                  ? `¥${params.value.toFixed(4)}`
-                  : `${params.value}次`
+                  ? `${t("common.currency")}${params.value.toFixed(4)}`
+                  : `${params.value} ${t("common.count")}`
               }}`,
               `{per|${percentage}%}`,
             ].join("\n");
@@ -207,8 +219,10 @@ const getPieOption = (models: ModelUsage[], metric: "cost" | "count") => {
         style: {
           text:
             metric === "cost"
-              ? `总计\n¥${total.toFixed(2)}`
-              : `总计\n${total}次`,
+              ? `${t("common.total")}\n${t("common.currency")}${total.toFixed(
+                  2
+                )}`
+              : `${t("common.total")}\n${total}${t("common.count")}`,
           textAlign: "center",
           fontSize: 14,
           fontWeight: "bold",
@@ -229,23 +243,26 @@ export default function ModelDistributionChart({
   onMetricChange,
 }: ModelDistributionChartProps) {
   const chartRef = useRef<ECharts>();
+  const { t } = useTranslation("common");
 
   useEffect(() => {
     const handleResize = () => {
       if (chartRef.current) {
         chartRef.current.resize();
-        chartRef.current.setOption(getPieOption(models, metric));
+        chartRef.current.setOption(getPieOption(models, metric, t));
       }
     };
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [metric, models]);
+  }, [metric, models, t]);
 
   return (
     <div>
       <div className="flex items-center justify-between mb-2 sm:mb-6 gap-2">
-        <h2 className="text-2xl font-semibold tracking-tight">模型使用分布</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">
+          {t("panel.modelUsage.title")}
+        </h2>
         <MetricSwitch value={metric} onChange={onMetricChange} />
       </div>
 
@@ -256,7 +273,7 @@ export default function ModelDistributionChart({
       ) : (
         <div className="h-[350px] sm:h-[450px]">
           <ReactECharts
-            option={getPieOption(models, metric)}
+            option={getPieOption(models, metric, t)}
             style={{ height: "100%", width: "100%" }}
             onChartReady={(instance) => (chartRef.current = instance)}
           />

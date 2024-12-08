@@ -13,6 +13,7 @@ import TimeRangeSelector, {
 import ModelDistributionChart from "@/components/panel/ModelDistributionChart";
 import UserRankingChart from "@/components/panel/UserRankingChart";
 import UsageRecordsTable from "@/components/panel/UsageRecordsTable";
+import { useTranslation } from "react-i18next";
 
 interface ModelUsage {
   model_name: string;
@@ -54,6 +55,7 @@ interface TableParams {
 }
 
 export default function PanelPage() {
+  const { t } = useTranslation("common");
   const [loading, setLoading] = useState(true);
   const [tableLoading, setTableLoading] = useState(true);
   const [usageData, setUsageData] = useState<UsageData>({
@@ -218,12 +220,14 @@ export default function PanelPage() {
   return (
     <>
       <Head>
-        <title>使用统计看板 - OpenWebUI</title>
+        <title>{t("panel.header")}</title>
       </Head>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24 space-y-6 sm:space-y-8">
         <div className="space-y-4">
-          <h1 className="text-3xl font-bold tracking-tight">使用统计</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {t("panel.title")}
+          </h1>
 
           <TimeRangeSelector
             timeRange={timeRange}
@@ -248,7 +252,9 @@ export default function PanelPage() {
         />
 
         <div className="space-y-6">
-          <h2 className="text-2xl font-semibold tracking-tight">使用详情</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">
+            {t("panel.usageDetails.title")}
+          </h2>
           <UsageRecordsTable
             loading={tableLoading}
             records={records}

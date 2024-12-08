@@ -5,7 +5,7 @@ import { Spin } from "antd";
 import ReactECharts from "echarts-for-react";
 import type { ECharts } from "echarts";
 import { MetricSwitch } from "@/components/ui/metric-switch";
-
+import { useTranslation } from "react-i18next";
 interface UserUsage {
   nickname: string;
   total_cost: number;
@@ -19,7 +19,11 @@ interface UserRankingChartProps {
   onMetricChange: (metric: "cost" | "count") => void;
 }
 
-const getBarOption = (users: UserUsage[], metric: "cost" | "count") => {
+const getBarOption = (
+  users: UserUsage[],
+  metric: "cost" | "count",
+  t: (key: string) => string
+) => {
   const columnData = users
     .map((item) => ({
       nickname: item.nickname,
@@ -68,7 +72,10 @@ const getBarOption = (users: UserUsage[], metric: "cost" | "count") => {
     },
     yAxis: {
       type: "value",
-      name: metric === "cost" ? "消耗金额" : "使用次数",
+      name:
+        metric === "cost"
+          ? t("panel.userUsageChart.yaxis.byAmount")
+          : t("panel.userUsageChart.yaxis.byCount"),
       nameTextStyle: {
         color: "#666",
         padding: isSmallScreen ? [0, 0, 8, 0] : [30, 0, 8, 0],
@@ -96,7 +103,7 @@ const getBarOption = (users: UserUsage[], metric: "cost" | "count") => {
         color: "#999",
         formatter: (value: number) => {
           if (metric === "cost") {
-            return `¥${value.toFixed(1)}`;
+            return `${t("common.currency")}${value.toFixed(1)}`;
           }
           return value;
         },
@@ -167,7 +174,7 @@ const getBarOption = (users: UserUsage[], metric: "cost" | "count") => {
           position: "top",
           formatter: (params: any) => {
             return metric === "cost"
-              ? `¥${params.value.toFixed(2)}`
+              ? `${t("common.currency")}${params.value.toFixed(2)}`
               : `${params.value}`;
           },
           fontSize: 11,
@@ -188,19 +195,20 @@ export default function UserRankingChart({
   metric,
   onMetricChange,
 }: UserRankingChartProps) {
+  const { t } = useTranslation("common");
   const chartRef = useRef<ECharts>();
 
   useEffect(() => {
     const handleResize = () => {
       if (chartRef.current) {
         chartRef.current.resize();
-        chartRef.current.setOption(getBarOption(users, metric));
+        chartRef.current.setOption(getBarOption(users, metric, t));
       }
     };
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [metric, users]);
+  }, [metric, users, t]);
 
   const onChartReady = (instance: ECharts) => {
     chartRef.current = instance;
@@ -236,7 +244,9 @@ export default function UserRankingChart({
   return (
     <div>
       <div className="flex items-center justify-between mb-6 gap-2">
-        <h2 className="text-2xl font-semibold tracking-tight">用户使用排行</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">
+          {t("panel.userUsageChart.title")}
+        </h2>
         <MetricSwitch value={metric} onChange={onMetricChange} />
       </div>
 
@@ -247,7 +257,7 @@ export default function UserRankingChart({
       ) : (
         <div className="sm:h-[650px] h-[400px]">
           <ReactECharts
-            option={getBarOption(users, metric)}
+            option={getBarOption(users, metric, t)}
             style={{ height: "100%", width: "100%" }}
             onChartReady={onChartReady}
             className="bar-chart"

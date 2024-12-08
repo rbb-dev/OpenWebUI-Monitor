@@ -1,19 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "sonner";
 import {
   Card,
-  CardHeader,
   CardContent,
-  CardTitle,
   CardDescription,
   CardFooter,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import {
   Tooltip,
@@ -21,27 +22,24 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { motion } from "framer-motion";
-import { Loader2, HelpCircle } from "lucide-react";
+import { HelpCircle, Loader2 } from "lucide-react";
 
 export default function TokenPage() {
   const [token, setToken] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
   const [showToken, setShowToken] = useState(false);
+  const { t } = useTranslation("common");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!token.trim()) {
-      toast.error("请输入访问令牌");
+      toast.error(t("auth.accessTokenRequired"));
       return;
     }
 
     setLoading(true);
     try {
       localStorage.setItem("access_token", token);
-
       const res = await fetch("/api/config", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -49,17 +47,17 @@ export default function TokenPage() {
       });
 
       if (res.ok) {
-        toast.success("令牌验证成功");
+        toast.success(t("auth.loginSuccess"));
         setTimeout(() => {
           window.location.href = "/";
         }, 500);
       } else {
-        toast.error("无效的访问令牌");
+        toast.error(t("auth.invalidToken"));
         localStorage.removeItem("access_token");
       }
     } catch (error) {
-      console.error("验证失败:", error);
-      toast.error("验证失败");
+      console.error(t("auth.verificationFailed"), error);
+      toast.error(t("auth.verificationFailed"));
       localStorage.removeItem("access_token");
     } finally {
       setLoading(false);
@@ -67,8 +65,10 @@ export default function TokenPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-dot-pattern dark:bg-dot-pattern-dark relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-background/90 via-background/50 to-background/90 backdrop-blur-sm" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-gray-100 to-white relative overflow-hidden">
+      {/* 背景装饰 */}
+      <div className="absolute top-0 left-0 w-[45rem] h-[45rem] bg-blue-50/40 rounded-full blur-3xl -z-10 animate-float" />
+      <div className="absolute bottom-0 right-0 w-[50rem] h-[50rem] bg-purple-50/30 rounded-full blur-3xl -z-10 animate-float-delay" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -76,27 +76,27 @@ export default function TokenPage() {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md space-y-6 z-10 px-4"
       >
-        <Card className="border-border/50 shadow-lg backdrop-blur-md bg-background/95">
-          <CardHeader className="space-y-2">
-            <motion.div
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              <CardTitle className="text-3xl font-bold text-center bg-gradient-to-br from-foreground to-foreground/80 bg-clip-text text-transparent">
-                OpenWebUI Monitor
+        <Card className="border-border/40 shadow-lg backdrop-blur-md bg-background/95">
+          <CardHeader className="space-y-3">
+            <div className="mx-auto w-24 h-24 flex items-center justify-center">
+              <img
+                src="/icon.png"
+                alt="Logo"
+                className="w-24 h-24 object-contain"
+              />
+            </div>
+            <div className="space-y-2 text-center">
+              <CardTitle className="text-2xl font-bold bg-gradient-to-br from-gray-900 via-indigo-800 to-gray-900 bg-clip-text text-transparent">
+                {t("common.appName")}
               </CardTitle>
-            </motion.div>
-            <CardDescription className="text-center text-muted-foreground/80 text-sm">
-              请输入访问令牌以继续访问系统
-            </CardDescription>
+            </div>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Label htmlFor="token" className="text-sm font-medium">
-                    访问令牌
+                    {t("auth.accessToken")}
                   </Label>
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
@@ -104,26 +104,24 @@ export default function TokenPage() {
                         <HelpCircle className="h-4 w-4 text-muted-foreground/70 hover:text-muted-foreground cursor-pointer transition-colors" />
                       </TooltipTrigger>
                       <TooltipContent
-                        className="max-w-[260px] text-xs"
                         side="right"
-                        sideOffset={10}
+                        className="max-w-[260px] text-xs"
                       >
-                        ACCESS_TOKEN 环境变量
+                        {t("auth.accessTokenHelp")}
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-                <div className="relative group">
+                <div className="relative">
                   <Input
                     id="token"
                     type={showToken ? "text" : "password"}
                     value={token}
                     onChange={(e) => setToken(e.target.value)}
-                    placeholder="请输入访问令牌"
-                    className="w-full transition-shadow focus:shadow-md pr-4"
+                    placeholder={t("auth.accessTokenPlaceholder")}
+                    className="pr-4"
                     autoComplete="off"
                   />
-                  <div className="absolute inset-0 rounded-md ring-1 ring-foreground/10 pointer-events-none" />
                 </div>
               </div>
               <div className="flex items-center space-x-2">
@@ -133,13 +131,12 @@ export default function TokenPage() {
                   onCheckedChange={(checked) =>
                     setShowToken(checked as boolean)
                   }
-                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 />
                 <Label
                   htmlFor="showToken"
-                  className="text-sm font-medium leading-none cursor-pointer hover:text-foreground/80 transition-colors"
+                  className="text-sm font-medium leading-none cursor-pointer select-none"
                 >
-                  显示令牌
+                  {t("auth.showToken")}
                 </Label>
               </div>
             </form>
@@ -147,18 +144,17 @@ export default function TokenPage() {
           <CardFooter>
             <Button
               onClick={handleSubmit}
-              className="w-full font-medium relative overflow-hidden transition-all hover:shadow-md"
+              className="w-full font-medium relative"
               disabled={loading}
-              variant="default"
               size="lg"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  验证中...
+                  {t("auth.verifying")}
                 </span>
               ) : (
-                "确认"
+                t("common.confirm")
               )}
             </Button>
           </CardFooter>

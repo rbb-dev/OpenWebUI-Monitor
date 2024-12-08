@@ -5,7 +5,7 @@ import { Table, TablePaginationConfig, Select } from "antd";
 import type { FilterValue } from "antd/es/table/interface";
 import type { SorterResult } from "antd/es/table/interface";
 import dayjs from "dayjs";
-
+import { useTranslation } from "react-i18next";
 interface UsageRecord {
   id: number;
   nickname: string;
@@ -37,7 +37,13 @@ interface Props {
   ) => void;
 }
 
-const MobileCard = ({ record }: { record: UsageRecord }) => {
+const MobileCard = ({
+  record,
+  t,
+}: {
+  record: UsageRecord;
+  t: (key: string) => string;
+}) => {
   return (
     <div className="p-4 bg-card text-card-foreground rounded-lg border shadow-sm">
       <div className="flex justify-between items-start mb-3">
@@ -49,17 +55,21 @@ const MobileCard = ({ record }: { record: UsageRecord }) => {
         </div>
         <div className="text-right">
           <div className="font-medium text-blue-600">
-            ¥{Number(record.cost).toFixed(4)}
+            {t("common.currency")}
+            {Number(record.cost).toFixed(4)}
           </div>
           <div className="text-xs text-muted-foreground">
-            余额: ¥{Number(record.balance_after).toFixed(2)}
+            {t("panel.usageDetails.table.balance")}: {t("common.currency")}
+            {Number(record.balance_after).toFixed(2)}
           </div>
         </div>
       </div>
 
       <div className="flex items-center gap-3">
         <div className="flex-1">
-          <div className="text-xs text-muted-foreground mb-1">模型</div>
+          <div className="text-xs text-muted-foreground mb-1">
+            {t("panel.usageDetails.table.model")}
+          </div>
           <div className="text-sm truncate">{record.model_name}</div>
         </div>
         <div>
@@ -81,6 +91,8 @@ export default function UsageRecordsTable({
   users,
   onTableChange,
 }: Props) {
+  const { t } = useTranslation("common");
+
   const [filters, setFilters] = useState<Record<string, FilterValue | null>>(
     tableParams.filters || {}
   );
@@ -96,7 +108,7 @@ export default function UsageRecordsTable({
 
   const columns = [
     {
-      title: "用户",
+      title: t("panel.usageDetails.table.user"),
       dataIndex: "nickname",
       key: "nickname",
       width: 120,
@@ -109,7 +121,7 @@ export default function UsageRecordsTable({
       filteredValue: filters.nickname || null,
     },
     {
-      title: "时间",
+      title: t("panel.usageDetails.table.time"),
       dataIndex: "use_time",
       key: "use_time",
       width: 180,
@@ -117,7 +129,7 @@ export default function UsageRecordsTable({
       render: (time: string) => dayjs(time).format("YYYY-MM-DD HH:mm:ss"),
     },
     {
-      title: "模型",
+      title: t("panel.usageDetails.table.model"),
       dataIndex: "model_name",
       key: "model_name",
       width: 150,
@@ -130,7 +142,7 @@ export default function UsageRecordsTable({
       filteredValue: filters.model_name || null,
     },
     {
-      title: "Token 用量",
+      title: t("panel.usageDetails.table.tokens"),
       key: "tokens",
       width: 120,
       sorter: true,
@@ -138,7 +150,7 @@ export default function UsageRecordsTable({
         (record.input_tokens + record.output_tokens).toLocaleString(),
     },
     {
-      title: "费用",
+      title: t("panel.usageDetails.table.cost"),
       dataIndex: "cost",
       key: "cost",
       width: 100,
@@ -147,7 +159,7 @@ export default function UsageRecordsTable({
         `¥${Number(record.cost).toFixed(4)}`,
     },
     {
-      title: "余额",
+      title: t("panel.usageDetails.table.balance"),
       dataIndex: "balance_after",
       key: "balance_after",
       width: 100,
@@ -162,7 +174,7 @@ export default function UsageRecordsTable({
       <div className="sm:hidden space-y-3">
         <Select
           mode="multiple"
-          placeholder="选择用户"
+          placeholder={t("panel.usageDetails.table.user")}
           className="w-full"
           value={filters.nickname as string[]}
           onChange={(value) => handleFilterChange("nickname", value)}
@@ -174,7 +186,7 @@ export default function UsageRecordsTable({
         />
         <Select
           mode="multiple"
-          placeholder="选择模型"
+          placeholder={t("panel.usageDetails.table.model")}
           className="w-full"
           value={filters.model_name as string[]}
           onChange={(value) => handleFilterChange("model_name", value)}
@@ -196,19 +208,19 @@ export default function UsageRecordsTable({
           pagination={{
             ...tableParams.pagination,
             className: "px-2",
-            showTotal: (total) => `共 ${total} 条`,
+            showTotal: (total) => `${t("common.total")} ${total}`,
             itemRender: (page, type, originalElement) => {
               if (type === "prev") {
                 return (
                   <button className="px-2 py-0.5 hover:text-primary">
-                    上一页
+                    {t("common.prev")}
                   </button>
                 );
               }
               if (type === "next") {
                 return (
                   <button className="px-2 py-0.5 hover:text-primary">
-                    下一页
+                    {t("common.next")}
                   </button>
                 );
               }
@@ -231,7 +243,7 @@ export default function UsageRecordsTable({
           <>
             <div className="space-y-3">
               {records.map((record) => (
-                <MobileCard key={record.id} record={record} />
+                <MobileCard key={record.id} record={record} t={t} />
               ))}
             </div>
             <Table

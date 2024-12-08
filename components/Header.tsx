@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Dropdown, Modal, message } from "antd";
 import type { MenuProps } from "antd";
-import { Copy, LogOut, Settings, Database, Github, Menu } from "lucide-react";
+import { Copy, LogOut, Database, Github, Menu, Globe } from "lucide-react";
 import DatabaseBackup from "./DatabaseBackup";
 import { APP_VERSION } from "@/lib/version";
 import { usePathname, useRouter } from "next/navigation";
@@ -13,23 +13,55 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { createRoot } from "react-dom/client";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 export default function Header() {
+  const { t, i18n } = useTranslation("common");
   const pathname = usePathname();
   const router = useRouter();
 
-  // 如果是token页面，不显示Header
-  if (pathname === "/token") {
-    return null;
+  // 将函数声明移到前面
+  const handleLanguageChange = async (newLang: string) => {
+    await i18n.changeLanguage(newLang);
+    localStorage.setItem("language", newLang);
+  };
+
+  // 如果是token页面，只显示语言切换按钮
+  const isTokenPage = pathname === "/token";
+
+  if (isTokenPage) {
+    return (
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16">
+          <div className="h-full flex items-center justify-between">
+            <div className="text-xl font-semibold bg-gradient-to-r from-gray-900 via-indigo-800 to-gray-900 bg-clip-text text-transparent">
+              {t("common.appName")}
+            </div>
+            <button
+              className="p-2 rounded-lg hover:bg-gray-50/80 transition-colors relative group"
+              onClick={() =>
+                handleLanguageChange(i18n.language === "zh" ? "en" : "zh")
+              }
+            >
+              <Globe className="w-5 h-5 text-gray-600 group-hover:text-blue-500 transition-colors" />
+              <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] text-[10px] font-medium bg-gray-100 text-gray-600 rounded-full border border-gray-200 shadow-sm px-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {i18n.language === "zh"
+                  ? t("header.language.zh")
+                  : t("header.language.en")}
+              </span>
+            </button>
+          </div>
+        </div>
+      </header>
+    );
   }
 
-  const [apiKey, setApiKey] = useState("加载中...");
+  const [apiKey, setApiKey] = useState(t("common.loading"));
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -39,7 +71,6 @@ export default function Header() {
     setAccessToken(token);
 
     if (!token) {
-      // 如果没有token，重定向到token页面
       router.push("/token");
       return;
     }
@@ -65,25 +96,25 @@ export default function Header() {
         }
       })
       .catch(() => {
-        setApiKey("加载失败");
+        setApiKey(t("common.error"));
         // 发生错误时也清除token并重定向
         localStorage.removeItem("access_token");
         router.push("/token");
       });
-  }, [router]);
+  }, [router, t]);
 
   const handleCopyApiKey = () => {
     const token = localStorage.getItem("access_token");
     if (!token) {
-      message.error("未授权，请重新登录");
+      message.error(t("header.messages.unauthorized"));
       return;
     }
-    if (apiKey === "未设置" || apiKey === "加载失败") {
-      message.error("API密钥未设置或加载失败");
+    if (apiKey === t("models.table.notSet") || apiKey === t("common.error")) {
+      message.error(t("header.messages.apiKeyNotSet"));
       return;
     }
     navigator.clipboard.writeText(apiKey);
-    message.success("API密钥已复制到剪贴板");
+    message.success(t("header.messages.apiKeyCopied"));
   };
 
   const handleLogout = () => {
@@ -94,7 +125,7 @@ export default function Header() {
   const checkUpdate = async () => {
     const token = localStorage.getItem("access_token");
     if (!token) {
-      message.error("未授权，请重新登录");
+      message.error(t("header.messages.unauthorized"));
       return;
     }
 
@@ -107,14 +138,16 @@ export default function Header() {
       const latestVersion = data.tag_name;
 
       if (!latestVersion) {
-        throw new Error("获取版本号失败");
+        throw new Error(t("header.messages.getVersionFailed"));
       }
 
       const currentVer = APP_VERSION.replace(/^v/, "");
       const latestVer = latestVersion.replace(/^v/, "");
 
       if (currentVer === latestVer) {
-        message.success(`当前已是最新版本 v${APP_VERSION}`);
+        message.success(
+          `${t("header.messages.latestVersion")} v${APP_VERSION}`
+        );
       } else {
         return new Promise((resolve) => {
           const dialog = document.createElement("div");
@@ -146,14 +179,14 @@ export default function Header() {
                         <Github className="w-4 h-4 text-gray-500" />
                       </div>
                       <DialogTitle className="text-base sm:text-lg">
-                        发现新版本
+                        {t("header.update.newVersion")}
                       </DialogTitle>
                     </div>
                   </DialogHeader>
                   <div className="flex flex-col gap-3 sm:gap-4 py-3 sm:py-4">
                     <div className="flex justify-between items-center">
                       <span className="text-sm sm:text-base text-muted-foreground">
-                        当前版本
+                        {t("header.update.currentVersion")}
                       </span>
                       <span className="font-mono text-sm sm:text-base">
                         v{APP_VERSION}
@@ -161,7 +194,7 @@ export default function Header() {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm sm:text-base text-muted-foreground">
-                        最新版本
+                        {t("header.update.latestVersion")}
                       </span>
                       <span className="font-mono text-sm sm:text-base text-primary">
                         {latestVersion}
@@ -174,13 +207,13 @@ export default function Header() {
                       onClick={handleClose}
                       className="h-8 sm:h-10 text-sm sm:text-base"
                     >
-                      暂不更新
+                      {t("header.update.skipUpdate")}
                     </Button>
                     <Button
                       onClick={handleUpdate}
                       className="h-8 sm:h-10 text-sm sm:text-base bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
-                      前往更新
+                      {t("header.update.goToUpdate")}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -192,8 +225,8 @@ export default function Header() {
         });
       }
     } catch (error) {
-      message.error("检查更新失败");
-      console.error("检查更新失败:", error);
+      message.error(t("header.messages.updateCheckFailed"));
+      console.error(t("header.messages.updateCheckFailed"), error);
     } finally {
       setIsCheckingUpdate(false);
     }
@@ -221,7 +254,7 @@ export default function Header() {
           onClick={handleCopyApiKey}
         >
           <Copy className="w-4 h-4 text-gray-500" />
-          <span>复制 API KEY</span>
+          <span>{t("header.menu.copyApiKey")}</span>
         </motion.div>
       ),
     },
@@ -234,7 +267,7 @@ export default function Header() {
           onClick={() => setIsBackupModalOpen(true)}
         >
           <Database className="w-4 h-4 text-gray-500" />
-          <span>数据迁移</span>
+          <span>{t("header.menu.dataBackup")}</span>
         </motion.div>
       ),
     },
@@ -251,7 +284,7 @@ export default function Header() {
               isCheckingUpdate ? "animate-spin" : ""
             }`}
           />
-          <span>检查更新</span>
+          <span>{t("header.menu.checkUpdate")}</span>
         </motion.div>
       ),
     },
@@ -268,7 +301,7 @@ export default function Header() {
           onClick={handleLogout}
         >
           <LogOut className="w-4 h-4 text-gray-500" />
-          <span>退出登录</span>
+          <span>{t("header.menu.logout")}</span>
         </motion.div>
       ),
     },
@@ -283,38 +316,59 @@ export default function Header() {
               href="/"
               className="text-xl font-semibold bg-gradient-to-r from-gray-900 via-indigo-800 to-gray-900 bg-clip-text text-transparent"
             >
-              OpenWebUI Monitor
+              {t("common.appName")}
             </Link>
 
-            <Dropdown
-              menu={{
-                items,
-                className: "!p-1.5 min-w-[160px]",
-              }}
-              trigger={["click"]}
-              placement="bottomRight"
-              dropdownRender={(menu) => (
-                <motion.div
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ ease: "easeOut", duration: 0.1 }}
-                  className="bg-white rounded-lg shadow-lg border border-gray-100"
-                >
-                  {menu}
-                </motion.div>
-              )}
-            >
-              <motion.button
-                className="p-2 rounded-lg hover:bg-gray-50/80 transition-colors"
-                variants={menuIconVariants}
-                initial="initial"
-                whileHover="hover"
-                transition={{ duration: 0.2 }}
+            <div className="flex items-center gap-2">
+              <button
+                className="p-2 rounded-lg hover:bg-gray-50/80 transition-colors relative group"
+                onClick={() =>
+                  handleLanguageChange(i18n.language === "zh" ? "en" : "zh")
+                }
               >
-                <Menu className="w-5 h-5 text-gray-600" />
-              </motion.button>
-            </Dropdown>
+                <Globe className="w-5 h-5 text-gray-600 group-hover:text-blue-500 transition-colors" />
+                <span
+                  className="absolute -top-1 -right-1 flex items-center justify-center
+                  min-w-[18px] h-[18px] text-[10px] font-medium bg-gray-100 
+                  text-gray-600 rounded-full border border-gray-200 
+                  shadow-sm px-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  {i18n.language === "zh"
+                    ? t("header.language.zh")
+                    : t("header.language.en")}
+                </span>
+              </button>
+
+              <Dropdown
+                menu={{
+                  items,
+                  className: "!p-1.5 min-w-[160px]",
+                }}
+                trigger={["click"]}
+                placement="bottomRight"
+                dropdownRender={(menu) => (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ ease: "easeOut", duration: 0.1 }}
+                    className="bg-white rounded-lg shadow-lg border border-gray-100"
+                  >
+                    {menu}
+                  </motion.div>
+                )}
+              >
+                <motion.button
+                  className="p-2 rounded-lg hover:bg-gray-50/80 transition-colors"
+                  variants={menuIconVariants}
+                  initial="initial"
+                  whileHover="hover"
+                  transition={{ duration: 0.2 }}
+                >
+                  <Menu className="w-5 h-5 text-gray-600" />
+                </motion.button>
+              </Dropdown>
+            </div>
           </div>
         </div>
       </header>

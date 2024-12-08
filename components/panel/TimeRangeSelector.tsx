@@ -4,7 +4,7 @@ import { useState } from "react";
 import dayjs from "dayjs";
 import { DatePicker } from "antd";
 import { Button as ShadcnButton } from "@/components/ui/button";
-
+import { useTranslation } from "react-i18next";
 export type TimeRangeType =
   | "today"
   | "week"
@@ -99,6 +99,7 @@ export default function TimeRangeSelector({
   availableTimeRange,
   onTimeRangeChange,
 }: TimeRangeSelectorProps) {
+  const { t } = useTranslation("common");
   const totalHours = dayjs(availableTimeRange.maxTime).diff(
     availableTimeRange.minTime,
     "hour"
@@ -134,7 +135,9 @@ export default function TimeRangeSelector({
     <div className="pb-8">
       <div className="w-full">
         <div className="space-y-2">
-          <span className="text-xs text-muted-foreground">时间范围</span>
+          <span className="text-xs text-muted-foreground">
+            {t("panel.timeRange.title")}
+          </span>
 
           <DatePicker.RangePicker
             showTime={{ format: "HH:00" }}
@@ -154,11 +157,14 @@ export default function TimeRangeSelector({
 
           <div className="grid grid-cols-5 gap-2">
             {[
-              { type: "today", label: "本日" },
-              { type: "week", label: "本周" },
-              { type: "month", label: "本月" },
-              { type: "30days", label: "近30天" },
-              { type: "all", label: "全部" },
+              { type: "today", label: t("panel.timeRange.timeOptions.day") },
+              { type: "week", label: t("panel.timeRange.timeOptions.week") },
+              { type: "month", label: t("panel.timeRange.timeOptions.month") },
+              {
+                type: "30days",
+                label: t("panel.timeRange.timeOptions.30Days"),
+              },
+              { type: "all", label: t("panel.timeRange.timeOptions.all") },
             ].map(({ type, label }) => (
               <ShadcnButton
                 key={type}

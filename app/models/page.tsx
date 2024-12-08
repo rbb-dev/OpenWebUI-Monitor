@@ -16,6 +16,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { TestProgress } from "../../components/models/TestProgress";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 interface ModelResponse {
   id: string;
@@ -37,6 +38,7 @@ interface Model {
 }
 
 export default function ModelsPage() {
+  const { t } = useTranslation("common");
   const [models, setModels] = useState<Model[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -219,7 +221,7 @@ export default function ModelsPage() {
         onClick={() => setEditingCell({ id: record.id, field })}
       >
         {currentValue < 0 ? (
-          <span className="text-gray-400">未设置</span>
+          <span className="text-gray-400">{t("models.table.notSet")}</span>
         ) : (
           currentValue.toFixed(2)
         )}
@@ -253,7 +255,7 @@ export default function ModelsPage() {
 
   const columns: ColumnsType<Model> = [
     {
-      title: "模型",
+      title: t("models.table.name"),
       key: "model",
       width: 200,
       render: (_, record) => (
@@ -301,7 +303,7 @@ export default function ModelsPage() {
       ),
     },
     {
-      title: "输入价格 ¥ / M tokens",
+      title: t("models.table.inputPrice"),
       key: "input_price",
       width: 150,
       dataIndex: "input_price",
@@ -310,7 +312,7 @@ export default function ModelsPage() {
       render: (_, record) => renderPriceCell("input_price", record),
     },
     {
-      title: "输出价格 ¥ / M tokens",
+      title: t("models.table.outputPrice"),
       key: "output_price",
       width: 150,
       dataIndex: "output_price",
@@ -321,8 +323,8 @@ export default function ModelsPage() {
     {
       title: (
         <span>
-          每条消息价格 ¥{" "}
-          <Tooltip title="每条消息的固定收费，如果设置为负数则按 token 计费">
+          {t("models.table.perMsgPrice")}{" "}
+          <Tooltip title={t("models.table.perMsgPriceTooltip")}>
             <InfoCircleOutlined className="text-gray-400 cursor-help" />
           </Tooltip>
         </span>
@@ -554,7 +556,7 @@ export default function ModelsPage() {
         <div className="grid grid-cols-3 gap-3">
           <div className="flex flex-col items-center">
             <span className="text-xs text-muted-foreground mb-1.5">
-              输入价格
+              {t("models.table.mobile.inputPrice")}
             </span>
             <div className="w-full flex justify-center border rounded-md px-2 py-1.5">
               {renderPriceCell("input_price", record)}
@@ -562,7 +564,7 @@ export default function ModelsPage() {
           </div>
           <div className="flex flex-col items-center">
             <span className="text-xs text-muted-foreground mb-1.5">
-              输出价格
+              {t("models.table.mobile.outputPrice")}
             </span>
             <div className="w-full flex justify-center border rounded-md px-2 py-1.5">
               {renderPriceCell("output_price", record)}
@@ -570,7 +572,7 @@ export default function ModelsPage() {
           </div>
           <div className="flex flex-col items-center">
             <span className="text-xs text-muted-foreground mb-1.5">
-              每条消息
+              {t("models.table.mobile.perMsgPrice")}
             </span>
             <div className="w-full flex justify-center border rounded-md px-2 py-1.5">
               {renderPriceCell("per_msg_price", record)}
@@ -588,10 +590,10 @@ export default function ModelsPage() {
   return (
     <div className="p-4 sm:p-6 max-w-6xl mx-auto">
       <div className="mb-8">
-        <h1 className="pt-16 text-2xl font-semibold text-gray-900">模型管理</h1>
-        <p className="mt-2 text-sm text-gray-500">
-          管理所有可用模型的价格配置。点击模型图标可进行单独测试，测试结果将显示在图标右上角。
-        </p>
+        <h1 className="pt-16 text-2xl font-semibold text-gray-900">
+          {t("models.title")}
+        </h1>
+        <p className="mt-2 text-sm text-gray-500">{t("models.description")}</p>
       </div>
 
       <AnimatePresence mode="wait">
@@ -610,7 +612,7 @@ export default function ModelsPage() {
               className="relative"
             >
               <ExperimentOutlined className="mr-2 h-4 w-4" />
-              测试全部模型
+              {t("models.testAll")}
             </Button>
           </motion.div>
         )}
@@ -632,7 +634,7 @@ export default function ModelsPage() {
               className="w-full h-9"
             >
               <DownloadOutlined className="mr-2 h-4 w-4" />
-              导出配置
+              {t("models.exportConfig")}
             </Button>
           </div>
 
@@ -657,7 +659,7 @@ export default function ModelsPage() {
                   d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
                 />
               </svg>
-              导入配置
+              {t("models.importConfig")}
             </Button>
             <input
               id="import-input"
