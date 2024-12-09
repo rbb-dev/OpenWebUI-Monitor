@@ -18,6 +18,7 @@ class Filter:
         show_balance: bool = Field(
             default=True, description="Display balance information"
         )
+        show_spend_time: bool = Field(default=True, description="Display spend time")
         show_tokens: bool = Field(default=True, description="Display token usage")
         show_tokens_per_sec: bool = Field(
             default=True, description="Display tokens per second"
@@ -145,7 +146,7 @@ class Filter:
                 stats_array.append(f"Token: {input_tokens}+{output_tokens}")
 
             # 计算耗时（如果有start_time）
-            if self.start_time:
+            if self.start_time and self.valves.show_spend_time:
                 elapsed_time = time.time() - self.start_time
                 stats_array.append(f"耗时: {elapsed_time:.2f}s")
                 
