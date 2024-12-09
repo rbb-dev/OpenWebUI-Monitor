@@ -9,6 +9,7 @@ import dayjs, { Dayjs } from "dayjs";
 import type { RangePickerProps } from "antd/es/date-picker";
 import zhCN from "antd/lib/locale/zh_CN";
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 const { RangePicker } = DatePicker;
 
@@ -32,6 +33,7 @@ interface TableParams {
 }
 
 export default function RecordsPage() {
+  const { t } = useTranslation("common");
   const [loading, setLoading] = useState(true);
   const [records, setRecords] = useState<UsageRecord[]>([]);
   const [users, setUsers] = useState<string[]>([]);
@@ -87,7 +89,7 @@ export default function RecordsPage() {
       dataIndex: "cost",
       key: "cost",
       align: "right",
-      render: (value) => `¥${Number(value).toFixed(4)}`,
+      render: (value) => `${t("common.currency")}${Number(value).toFixed(4)}`,
       sorter: true,
     },
     {
@@ -95,7 +97,7 @@ export default function RecordsPage() {
       dataIndex: "balance_after",
       key: "balance_after",
       align: "right",
-      render: (value) => `¥${Number(value).toFixed(4)}`,
+      render: (value) => `${t("common.currency")}${Number(value).toFixed(4)}`,
       sorter: true,
     },
   ];

@@ -10,6 +10,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useTranslation } from "react-i18next";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Trash2 } from "lucide-react";
 
 interface User {
   id: string;
@@ -17,6 +28,7 @@ interface User {
   name: string;
   role: string;
   balance: number;
+  deleted: boolean;
 }
 
 export default function UsersPage() {
@@ -27,6 +39,7 @@ export default function UsersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [editingKey, setEditingKey] = useState<string>("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   const fetchUsers = async (page: number) => {
     setLoading(true);
@@ -34,7 +47,11 @@ export default function UsersPage() {
       const res = await fetch(`/api/users?page=${page}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setUsers(data.users);
+
+      console.log("获取到的用户数据:", data);
+
+      const activeUsers = data.users.filter((user: User) => !user.deleted);
+      setUsers(activeUsers);
       setTotal(data.total);
     } catch (err) {
       message.error(
@@ -72,8 +89,30 @@ export default function UsersPage() {
     }
   };
 
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    try {
+      const res = await fetch(`/api/users/${userToDelete.id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error);
+      }
+
+      message.success(t("users.message.deleteSuccess"));
+      setUserToDelete(null);
+      fetchUsers(currentPage);
+    } catch (err) {
+      message.error(
+        err instanceof Error ? err.message : t("users.message.deleteError")
+      );
+    }
+  };
+
   const getColumns = (): ColumnsType<User> => {
-    // 基础列配置 - 在所有设备上都显示
     const baseColumns: ColumnsType<User> = [
       {
         title: t("users.userInfo"),
@@ -84,7 +123,12 @@ export default function UsersPage() {
             className="flex flex-col cursor-pointer py-1"
             onClick={() => setSelectedUser(record)}
           >
-            <div className="font-medium">{record.name}</div>
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{record.name}</span>
+              <span className="px-2 py-0.5 text-xs rounded-full bg-blue-50 text-blue-600">
+                {record.role}
+              </span>
+            </div>
             <div className="hidden sm:block text-xs text-muted-foreground truncate">
               {record.email}
             </div>
@@ -100,6 +144,10 @@ export default function UsersPage() {
         key: "balance",
         width: "35%",
         align: "left",
+        sorter: {
+          compare: (a, b) => a.balance - b.balance,
+          multiple: 1,
+        },
         render: (balance: number, record) => {
           const isEditing = record.id === editingKey;
           return isEditing ? (
@@ -137,25 +185,26 @@ export default function UsersPage() {
           );
         },
       },
-    ];
-
-    // 仅在桌面设备显示的额外列
-    const desktopColumns: ColumnsType<User> = [
       {
-        title: t("users.role"),
-        dataIndex: "role",
-        key: "role",
-        width: 100,
-        className: "hidden sm:table-cell",
-        render: (role) => (
-          <span className="px-2 py-1 text-xs rounded-full bg-blue-50 text-blue-600">
-            {role}
-          </span>
+        title: t("users.actions"),
+        key: "actions",
+        width: "48px",
+        align: "center",
+        render: (_, record) => (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setUserToDelete(record);
+            }}
+            className="p-2 hover:bg-destructive/10 rounded-md transition-colors"
+          >
+            <Trash2 className="w-4 h-4 text-destructive" />
+          </button>
         ),
       },
     ];
 
-    return [...baseColumns, ...desktopColumns];
+    return baseColumns;
   };
 
   return (
@@ -168,52 +217,81 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <Table
-        columns={getColumns()}
-        dataSource={users.map((user) => ({
-          ...user,
-          balance: Number(user.balance),
-        }))}
-        rowKey="id"
-        loading={loading}
-        size="middle"
-        className="bg-card text-card-foreground rounded-lg shadow-sm 
-          [&_.ant-table]:!border-b-0 
-          [&_.ant-table-container]:!rounded-lg 
-          [&_.ant-table-container]:!border-hidden
-          [&_.ant-table-cell]:!border-gray-100 
-          [&_.ant-table-thead_.ant-table-cell]:!bg-gray-50/80
-          [&_.ant-table-thead_.ant-table-cell]:!text-gray-600
-          [&_.ant-table-row:hover>*]:!bg-blue-50/50
-          [&_.ant-table-tbody_.ant-table-row]:!cursor-pointer
-          [&_.ant-table-column-sorter-up.active_.anticon]:!text-blue-500
-          [&_.ant-table-column-sorter-down.active_.anticon]:!text-blue-500
-          [&_.ant-table-filter-trigger.active]:!text-blue-500
-          [&_.ant-table-filter-dropdown]:!rounded-lg
-          [&_.ant-table-filter-dropdown]:!shadow-lg
-          [&_.ant-table-filter-dropdown]:!border-gray-100
-          [&_.ant-pagination]:!mt-4
-          [&_.ant-pagination]:!mb-0
-          [&_.ant-pagination]:!px-4
-          [&_.ant-pagination]:!pb-4"
-        pagination={{
-          total,
-          pageSize: 20,
-          current: currentPage,
-          onChange: (page) => {
-            setCurrentPage(page);
-            setEditingKey("");
-          },
-          className: "!mb-0",
-          showTotal: (total) => (
-            <span className="text-muted-foreground">
-              {t("users.total")} {total} {t("users.totalRecords")}
-            </span>
-          ),
-          size: "small",
-        }}
-        scroll={{ x: 300 }}
-      />
+      <div className="rounded-lg border bg-card shadow-sm">
+        <Table
+          columns={getColumns()}
+          dataSource={users.map((user) => ({
+            ...user,
+            balance: Number(user.balance),
+          }))}
+          rowKey="id"
+          loading={loading}
+          size="middle"
+          className="
+            [&_.ant-table]:!border-b-0 
+            [&_.ant-table-container]:!rounded-lg 
+            [&_.ant-table-container]:!border-hidden
+            [&_.ant-table-cell]:!border-0
+            [&_.ant-table-cell]:px-4
+            [&_.ant-table-cell]:py-3
+            [&_.ant-table-thead_.ant-table-cell]:!bg-muted/50
+            [&_.ant-table-thead_.ant-table-cell]:!text-muted-foreground
+            [&_.ant-table-thead_.ant-table-cell]:font-medium
+            [&_.ant-table-thead_.ant-table-cell]:text-sm
+            [&_.ant-table-row]:border-b 
+            [&_.ant-table-row]:border-border/40
+            [&_.ant-table-row:last-child]:border-0
+            [&_.ant-table-row:hover>*]:!bg-muted/60
+            [&_.ant-table-tbody_.ant-table-row]:transition-colors
+            [&_.ant-table-tbody_.ant-table-row]:!cursor-pointer
+            [&_.ant-table-column-sorter]:opacity-40
+            [&_.ant-table-column-sorter-up.active_.anticon]:!text-primary
+            [&_.ant-table-column-sorter-down.active_.anticon]:!text-primary
+            [&_.ant-table-column-sorter]:hover:opacity-100
+            [&_.ant-spin-nested-loading]:min-h-[280px]
+            [&_.ant-pagination]:border-t
+            [&_.ant-pagination]:border-border/40
+            [&_.ant-pagination-item]:rounded-md
+            [&_.ant-pagination-item]:border-border/40
+            [&_.ant-pagination-item-active]:!bg-primary/10
+            [&_.ant-pagination-item-active]:!border-primary/30
+            [&_.ant-pagination-item-active>a]:!text-primary
+            [&_.ant-pagination-prev_.ant-pagination-item-link]:rounded-md
+            [&_.ant-pagination-next_.ant-pagination-item-link]:rounded-md
+            [&_.ant-pagination-prev_.ant-pagination-item-link]:border-border/40
+            [&_.ant-pagination-next_.ant-pagination-item-link]:border-border/40
+            [&_.ant-pagination-disabled_.ant-pagination-item-link]:!bg-muted/50
+            [&_.ant-pagination-options]:hidden
+          "
+          pagination={{
+            total,
+            pageSize: 20,
+            current: currentPage,
+            onChange: (page) => {
+              setCurrentPage(page);
+              setEditingKey("");
+            },
+            className: "!mt-0 !mb-0 !px-4 !py-3",
+            showTotal: (total) => (
+              <span className="text-sm text-muted-foreground">
+                {t("users.total")} {total} {t("users.totalRecords")}
+              </span>
+            ),
+            size: "small",
+          }}
+          scroll={{ x: 300 }}
+          onChange={(pagination, filters, sorter) => {
+            if (Array.isArray(sorter)) return;
+            if (sorter.columnKey === "balance") {
+              const newUsers = [...users].sort((a, b) => {
+                const result = a.balance - b.balance;
+                return sorter.order === "ascend" ? result : -result;
+              });
+              setUsers(newUsers);
+            }
+          }}
+        />
+      </div>
 
       <Dialog
         open={!!selectedUser}
@@ -259,6 +337,35 @@ export default function UsersPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={!!userToDelete}
+        onOpenChange={(open) => !open && setUserToDelete(null)}
+      >
+        <AlertDialogContent className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-[calc(100%-2rem)] sm:max-w-[360px] p-4 sm:p-6 gap-4 rounded-lg shadow-lg">
+          <AlertDialogHeader className="gap-2">
+            <AlertDialogTitle className="text-base font-semibold">
+              {t("users.deleteConfirm.title")}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm">
+              {t("users.deleteConfirm.description", {
+                name: userToDelete?.name,
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row gap-2 sm:gap-3">
+            <AlertDialogCancel className="m-0 flex-1 text-sm h-9">
+              {t("common.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              className="m-0 flex-1 h-9 text-sm bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("common.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

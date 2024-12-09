@@ -132,7 +132,14 @@
         "error": "更新余额失败"
       },
       "fetchUsersError": "获取用户列表失败",
-      "invalidNumber": "请输入有效的数字"
+      "invalidNumber": "请输入有效的数字",
+      "deleteSuccess": "用户删除成功",
+      "deleteError": "删除用户失败"
+    },
+    "actions": "操作",
+    "deleteConfirm": {
+      "title": "确认删除用户",
+      "description": "确定要删除用户 \"{{name}}\" 吗？此操作无法撤销，用户的所有相关数据都将被删除。"
     },
     "total": "共",
     "totalRecords": "条记录"
