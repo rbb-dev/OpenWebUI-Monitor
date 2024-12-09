@@ -49,4 +49,5 @@ sudo docker compose up -d
 
 <h2>Gallery</h2>
 
-<img width="993" alt="image" src="https://github.com/user-attachments/assets/0bc0043e-c949-4935-a5ef-d0d15e5501e0">
+<img width="1040" alt="image" src="https://github.com/user-attachments/assets/b72a92a9-4d84-4a34-a273-0987a1783b47">
+
