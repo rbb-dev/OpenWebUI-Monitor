@@ -226,38 +226,6 @@ export async function initDatabase() {
   }
 }
 
-// 获取用户列表
-export async function getUsers(page: number = 1, pageSize: number = 20) {
-  let client: PoolClient | null = null;
-  try {
-    client = await pool.connect();
-    const offset = (page - 1) * pageSize;
-
-    const countResult = await client.query("SELECT COUNT(*) FROM users");
-    const total = parseInt(countResult.rows[0].count);
-
-    const result = await client.query(
-      `SELECT id, email, name, role, balance
-       FROM users
-       ORDER BY id DESC
-       LIMIT $1 OFFSET $2`,
-      [pageSize, offset]
-    );
-
-    return {
-      users: result.rows,
-      total,
-    };
-  } catch (error) {
-    console.error("Error in getUsers:", error);
-    throw error;
-  } finally {
-    if (client) {
-      client.release();
-    }
-  }
-}
-
 // 更新用户余额
 export async function updateUserBalance(userId: string, balance: number) {
   let client: PoolClient | null = null;

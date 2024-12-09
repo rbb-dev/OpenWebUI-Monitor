@@ -90,12 +90,10 @@ export async function query<T = any>(
 
   if (isVercel) {
     try {
-      console.log(`[DB Query Start] ${text.slice(0, 100)}...`);
       const result = await (client as ReturnType<typeof createClient>).query({
         text,
         values: params || [],
       });
-      console.log(`[DB Query Complete] Took ${Date.now() - startTime}ms`);
       return {
         rows: result.rows,
         rowCount: result.rowCount || 0,
@@ -112,9 +110,7 @@ export async function query<T = any>(
     let pgClient;
     try {
       pgClient = await (client as Pool).connect();
-      console.log(`[DB Query Start] ${text.slice(0, 100)}...`);
       const result = await pgClient.query(text, params);
-      console.log(`[DB Query Complete] Took ${Date.now() - startTime}ms`);
       return {
         rows: result.rows,
         rowCount: result.rowCount || 0,

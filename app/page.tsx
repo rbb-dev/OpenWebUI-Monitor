@@ -44,12 +44,12 @@ export default function HomePage() {
           setIsUpdateVisible(true);
         }
       } catch (error) {
-        console.error("检查更新失败:", error);
+        console.error(t("header.messages.updateCheckFailed"), error);
       }
     };
 
     checkUpdate();
-  }, []);
+  }, [t]);
 
   const handleUpdate = () => {
     window.open(
@@ -62,7 +62,7 @@ export default function HomePage() {
   const handleIgnore = () => {
     localStorage.setItem("ignoredVersion", latestVersion);
     setIsUpdateVisible(false);
-    message.success("已忽略此版本的更新提示");
+    message.success(t("update.ignore"));
   };
 
   return (

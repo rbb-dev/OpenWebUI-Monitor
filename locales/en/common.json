@@ -132,7 +132,14 @@
         "error": "Failed to update balance"
       },
       "fetchUsersError": "Failed to fetch user list",
-      "invalidNumber": "Please enter a valid number"
+      "invalidNumber": "Please enter a valid number",
+      "deleteSuccess": "User deleted successfully",
+      "deleteError": "Failed to delete user"
+    },
+    "actions": "Actions",
+    "deleteConfirm": {
+      "title": "Confirm Delete User",
+      "description": "Are you sure you want to delete user \"{{name}}\"? This action cannot be undone and all related data will be deleted."
     },
     "total": "Total",
     "totalRecords": "records"

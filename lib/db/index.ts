@@ -106,5 +106,9 @@ export async function updateModelPrice(
     updated_at: result.rows[0].updated_at,
   };
 }
-
-export * from "./users";
+export {
+  getUsers,
+  getOrCreateUser,
+  updateUserBalance,
+  deleteUser,
+} from "./users";

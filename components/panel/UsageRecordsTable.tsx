@@ -156,7 +156,7 @@ export default function UsageRecordsTable({
       width: 100,
       sorter: true,
       render: (_: unknown, record: UsageRecord) =>
-        `¥${Number(record.cost).toFixed(4)}`,
+        `${t("common.currency")}${Number(record.cost).toFixed(4)}`,
     },
     {
       title: t("panel.usageDetails.table.balance"),
@@ -165,7 +165,7 @@ export default function UsageRecordsTable({
       width: 100,
       sorter: true,
       render: (_: unknown, record: UsageRecord) =>
-        `¥${Number(record.balance_after).toFixed(2)}`,
+        `${t("common.currency")}${Number(record.balance_after).toFixed(2)}`,
     },
   ];
 
