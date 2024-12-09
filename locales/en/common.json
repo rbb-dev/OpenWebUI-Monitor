@@ -194,9 +194,9 @@
       "title": "Time Range",
       "timeOptions": {
         "day": "Today",
-        "week": "This Week",
-        "month": "This Month",
-        "30Days": "Last 30 Days",
+        "week": "Week",
+        "month": "Month",
+        "30Days": "30 Days",
         "all": "All"
       }
     },
