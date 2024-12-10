@@ -51,7 +51,9 @@ sudo docker compose up -d
 
 至此部署已完成！请自行发布网站到公网。如果想修改端口，请修改 `docker-compose.yml` 文件中的 `ports` 中 `:` 前面的端口数字。
 
-## 二、安装 OpenWebUI 函数插件
+## 二、安装 OpenWebUI 函数插件（二选一）
+
+### 显式显示计费信息函数
 
 1. 打开 OpenWebUI 管理员面板的 `函数` 页面，点击 `+` 创建新函数，将 [这个函数](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/functions/openwebui_monitor.py) 的代码粘贴进去并保存。
 
@@ -63,3 +65,21 @@ sudo docker compose up -d
 3. 启用函数，并点击 `…` 打开详细配置，全局启用函数
 
 <img width="1165" alt="image" src="https://github.com/user-attachments/assets/2d707df4-65c3-4bb9-a628-50db62db5488">
+
+4. 该函数会默认在每个回复消息顶部直接显示计费信息
+
+### 隐式（手动触发）显示计费信息函数[可选]
+
+若你选择隐式显示计费，则取而代之用 [这个函数](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/functions/openwebui_monitor_invisible.py) 的代码粘贴进去并保存，同样需要启用函数，并点击 `…` 打开详细配置，全局启用函数。但是要额外再安装一个 Action 函数插件
+
+* Action 函数
+
+同理，选择添加并复制[Action函数](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/functions/get_usage_button.py)的代码粘贴进去保存,启用函数，并点击 `…` 打开详细配置，全局启用函数。
+该函数会接管原先计费插件的统计信息显示选项配置
+
+* 使用
+
+![CleanShot 2024-12-10 at 13 41 08](https://github.com/user-attachments/assets/e999d022-339e-41d3-9bf9-a6f8d9877fe8)
+
+
+手动点击底部的“计费信息”按钮来显示消息，但要注意的是该方式只能显示对话最新（最底部）的消息计费信息
