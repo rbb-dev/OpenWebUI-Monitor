@@ -10,7 +10,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   DOCKERHUB_REGISTRY: docker.io
-  DOCKERHUB_IMAGE_NAME: your_dockerhub_username/your_image_name
+  DOCKERHUB_IMAGE_NAME: variantconst/openwebui-monitor
 
 jobs:
   build:
