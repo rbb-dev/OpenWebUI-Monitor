@@ -160,24 +160,69 @@ export async function deleteUser(userId: string) {
   console.log(`User with ID ${userId} marked as deleted.`, updateResult);
 }
 
-export async function getUsers(page: number = 1, pageSize: number = 20) {
+interface GetUsersOptions {
+  page?: number;
+  pageSize?: number;
+  sortField?: string | null;
+  sortOrder?: string | null;
+  search?: string | null;
+}
+
+export async function getUsers({
+  page = 1,
+  pageSize = 20,
+  sortField = null,
+  sortOrder = null,
+  search = null,
+}: GetUsersOptions = {}) {
   await ensureDeletedColumnExists();
 
   const offset = (page - 1) * pageSize;
 
+  let whereClause = "deleted = FALSE";
+  const queryParams: any[] = [];
+
+  if (search) {
+    queryParams.push(`%${search}%`, `%${search}%`);
+    whereClause += `
+      AND (
+        name ILIKE $${queryParams.length - 1} OR 
+        email ILIKE $${queryParams.length}
+      )`;
+  }
+
   const countResult = await query(
-    `SELECT COUNT(*) FROM users WHERE deleted = FALSE`
+    `SELECT COUNT(*) FROM users WHERE ${whereClause}`,
+    search ? queryParams : []
   );
   const total = parseInt(countResult.rows[0].count);
 
+  let orderClause = "created_at DESC";
+  if (search) {
+    orderClause = `
+      CASE 
+        WHEN name ILIKE $${queryParams.length + 1} THEN 1
+        WHEN name ILIKE $${queryParams.length + 2} THEN 2
+        WHEN email ILIKE $${queryParams.length + 3} THEN 3
+        ELSE 4
+      END`;
+    queryParams.push(`${search}%`, `%${search}%`, `%${search}%`);
+  } else if (sortField && sortOrder) {
+    const allowedFields = ["balance", "name", "email", "role"];
+    if (allowedFields.includes(sortField)) {
+      orderClause = `${sortField} ${sortOrder === "ascend" ? "ASC" : "DESC"}`;
+    }
+  }
+
+  queryParams.push(pageSize, offset);
   const result = await query(
     `
     SELECT id, email, name, role, balance, deleted
       FROM users
-      WHERE deleted = FALSE
-      ORDER BY created_at DESC
-      LIMIT $1 OFFSET $2`,
-    [pageSize, offset]
+      WHERE ${whereClause}
+      ORDER BY ${orderClause}
+      LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}`,
+    queryParams
   );
 
   return {

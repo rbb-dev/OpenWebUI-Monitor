@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2 } from "lucide-react";
+import { Trash2, Search } from "lucide-react";
 
 interface User {
   id: string;
@@ -40,15 +40,29 @@ export default function UsersPage() {
   const [editingKey, setEditingKey] = useState<string>("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [sortInfo, setSortInfo] = useState<{
+    field: string | null;
+    order: "ascend" | "descend" | null;
+  }>({
+    field: null,
+    order: null,
+  });
+  const [searchText, setSearchText] = useState("");
 
   const fetchUsers = async (page: number) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/users?page=${page}`);
+      let url = `/api/users?page=${page}`;
+      if (sortInfo.field && sortInfo.order) {
+        url += `&sortField=${sortInfo.field}&sortOrder=${sortInfo.order}`;
+      }
+      if (searchText) {
+        url += `&search=${encodeURIComponent(searchText)}`;
+      }
+
+      const res = await fetch(url);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-
-      console.log("获取到的用户数据:", data);
 
       const activeUsers = data.users.filter((user: User) => !user.deleted);
       setUsers(activeUsers);
@@ -64,7 +78,7 @@ export default function UsersPage() {
 
   useEffect(() => {
     fetchUsers(currentPage);
-  }, [currentPage]);
+  }, [currentPage, sortInfo, searchText]);
 
   const handleUpdateBalance = async (userId: string, newBalance: number) => {
     try {
@@ -210,10 +224,60 @@ export default function UsersPage() {
   return (
     <div className="p-4 sm:p-6 max-w-6xl mx-auto">
       <div className="pt-16 flex flex-col gap-6 mb-6 sm:mb-8">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
             {t("users.title")}
           </h1>
+          <div className="relative w-full sm:w-72">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-4 w-4 text-gray-400" />
+            </div>
+            <Input
+              placeholder={t("users.searchPlaceholder")}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="
+                w-full
+                pl-10
+                pr-4
+                py-2
+                h-10
+                bg-white
+                dark:bg-gray-900
+                border-gray-200
+                dark:border-gray-700
+                hover:border-gray-300
+                dark:hover:border-gray-600
+                focus:border-primary
+                dark:focus:border-primary
+                transition-colors
+                rounded-lg
+                shadow-sm
+                [&:not(:focus)]:hover:shadow-md
+                placeholder:text-gray-500
+                dark:placeholder:text-gray-400
+              "
+              allowClear={{
+                clearIcon: (
+                  <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+                    <svg
+                      className="h-3 w-3 text-gray-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                ),
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -282,13 +346,11 @@ export default function UsersPage() {
           scroll={{ x: 300 }}
           onChange={(pagination, filters, sorter) => {
             if (Array.isArray(sorter)) return;
-            if (sorter.columnKey === "balance") {
-              const newUsers = [...users].sort((a, b) => {
-                const result = a.balance - b.balance;
-                return sorter.order === "ascend" ? result : -result;
-              });
-              setUsers(newUsers);
-            }
+
+            setSortInfo({
+              field: sorter.columnKey as string,
+              order: sorter.order || null,
+            });
           }}
         />
       </div>

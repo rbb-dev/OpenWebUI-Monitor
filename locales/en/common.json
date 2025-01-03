@@ -142,7 +142,8 @@
       "description": "Are you sure you want to delete user \"{{name}}\"? This action cannot be undone and all related data will be deleted."
     },
     "total": "Total",
-    "totalRecords": "records"
+    "totalRecords": "records",
+    "searchPlaceholder": "Search by name or email..."
   },
 
   "records": {

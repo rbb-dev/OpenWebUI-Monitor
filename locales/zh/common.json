@@ -142,7 +142,8 @@
       "description": "确定要删除用户 \"{{name}}\" 吗？此操作无法撤销，用户的所有相关数据都将被删除。"
     },
     "total": "共",
-    "totalRecords": "条记录"
+    "totalRecords": "条记录",
+    "searchPlaceholder": "搜索用户名或邮箱..."
   },
 
   "records": {

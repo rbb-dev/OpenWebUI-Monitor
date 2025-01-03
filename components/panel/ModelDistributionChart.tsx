@@ -86,9 +86,7 @@ const getPieOption = (
                 params.color
               }"></span>
               <span class="text-sm">
-                {metric === "cost"
-                  ? t("panel.modelUsageChart.yaxis.byAmount")
-                  : t("panel.modelUsageChart.yaxis.byCount")}
+                ${metric === "cost" ? t("panel.byAmount") : t("panel.byCount")}
               </span>
               <span class="font-mono text-sm font-medium text-gray-900">
                 ${
@@ -121,10 +119,7 @@ const getPieOption = (
     },
     series: [
       {
-        name:
-          metric === "cost"
-            ? t("panel.modelUsageChart.yaxis.byAmount")
-            : t("panel.modelUsageChart.yaxis.byCount"),
+        name: metric === "cost" ? t("panel.byAmount") : t("panel.byCount"),
         type: "pie",
         radius: isSmallScreen ? ["40%", "70%"] : ["50%", "80%"],
         center: isSmallScreen ? ["50%", "45%"] : ["50%", "50%"],

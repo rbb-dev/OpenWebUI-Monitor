@@ -72,10 +72,7 @@ const getBarOption = (
     },
     yAxis: {
       type: "value",
-      name:
-        metric === "cost"
-          ? t("panel.userUsageChart.yaxis.byAmount")
-          : t("panel.userUsageChart.yaxis.byCount"),
+      name: metric === "cost" ? t("panel.byAmount") : t("panel.byCount"),
       nameTextStyle: {
         color: "#666",
         padding: isSmallScreen ? [0, 0, 8, 0] : [30, 0, 8, 0],
