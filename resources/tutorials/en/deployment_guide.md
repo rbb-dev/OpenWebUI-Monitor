@@ -53,9 +53,11 @@ sudo docker compose up -d
 
 The deployment is now complete! Publish the site to the public as needed. To modify the port, edit the ports section in the docker-compose.yml file by changing the number before the colon (`:`).
 
-## 2. Installing the OpenWebUI Function Plugin
+## 2. Installing the OpenWebUI Function Plugin (Choose One)
 
-1. Open the Functions page in the OpenWebUI Admin Panel. Click + to create a new function, then paste the code from this function script and save it.
+### Explicit Billing Information Display Function
+
+1. Open the Functions page in the OpenWebUI Admin Panel. Click + to create a new function, then paste the code from [this function](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/functions/openwebui_monitor.py) and save it.
 
 2. Fill in the configuration:
 
@@ -65,3 +67,19 @@ The deployment is now complete! Publish the site to the public as needed. To mod
 3. Enable the function and click ... to open detailed settings. Globally enable the function.
 
 <img width="1097" alt="image" src="https://github.com/user-attachments/assets/6cb5094a-5a03-4719-bc0a-11c5c871498f">
+
+4. This function will display billing information at the top of each reply message by default.
+
+### Implicit (Manually Triggered) Billing Information Display Function [Optional]
+
+If you prefer implicit billing display, use [this function](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/functions/openwebui_monitor_invisible.py) instead. Follow the same steps to enable and configure the function globally. Additionally, you'll need to install an Action function plugin.
+
+- Action Function
+
+Similarly, add a new function and paste the code from the [Action function](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/functions/get_usage_button.py), save it, enable it, and configure it globally. This function will handle the billing information display options that were previously managed by the billing plugin.
+
+- Usage
+
+![CleanShot 2024-12-10 at 13 41 08](https://github.com/user-attachments/assets/e999d022-339e-41d3-9bf9-a6f8d9877fe8)
+
+Click the "Billing Information" button at the bottom to display the message. Note that this method can only show billing information for the latest (bottom-most) message in the conversation.
