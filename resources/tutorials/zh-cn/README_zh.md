@@ -17,11 +17,11 @@
 
 ## 部署
 
-支持 Vercel 一键部署 [![Deploy on Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FVariantConst%2FOpenWebUI-Monitor&project-name=openwebui-monitor&repository-name=OpenWebUI-Monitor&env=OPENWEBUI_DOMAIN,OPENWEBUI_API_KEY,ACCESS_TOKEN,API_KEY) 和 Docker 部署。详见 [部署指南](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/tutorials/zh-cn/deployment_guide_zh.md)。
+支持 Vercel 一键部署 [![Deploy on Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FVariantConst%2FOpenWebUI-Monitor&project-name=openwebui-monitor&repository-name=openwebui-monitor&env=OPENWEBUI_DOMAIN,OPENWEBUI_API_KEY,ACCESS_TOKEN,API_KEY) 和 Docker 部署。详见 [部署指南](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/tutorials/zh-cn/deployment_guide_zh.md)。
 
 ## 更新
 
-Vercel 部署后会自动更新，如果有问题可以去 fork 的仓库手动 Sync fork。至于 Docker，拉取最新镜像后重启容器即可：
+对于 Vercel，同步 fork 并重新部署项目。对于 Docker，拉取最新镜像后重启容器即可：
 
 ```bash
 sudo docker compose pull
@@ -41,12 +41,12 @@ sudo docker compose up -d
 
 ### 可选
 
-| 变量名                     | 说明                                     | 默认值 |
-| -------------------------- | ---------------------------------------- | ------ |
-| DEFAULT_MODEL_INPUT_PRICE  | 默认模型输入价格，单位为元/百万 tokens | `60`   |
-| DEFAULT_MODEL_OUTPUT_PRICE | 默认模型输出价格，单位为元/百万 tokens | `60`   |
+| 变量名                      | 说明                                          | 默认值 |
+| --------------------------- | --------------------------------------------- | ------ |
+| DEFAULT_MODEL_INPUT_PRICE   | 默认模型输入价格，单位为元/百万 tokens        | `60`   |
+| DEFAULT_MODEL_OUTPUT_PRICE  | 默认模型输出价格，单位为元/百万 tokens        | `60`   |
 | DEFAULT_MODEL_PER_MSG_PRICE | 模型默认每条消息价格，设为负数将按 token 计费 | `-1`   |
-| INIT_BALANCE               | 用户初始余额                             | `0`    |
+| INIT_BALANCE                | 用户初始余额                                  | `0`    |
 
 <h2>Gallery</h2>
 
