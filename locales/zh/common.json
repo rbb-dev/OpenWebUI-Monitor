@@ -37,7 +37,9 @@
       "copyApiKey": "复制 API KEY",
       "dataBackup": "数据迁移",
       "checkUpdate": "检查更新",
-      "logout": "退出登录"
+      "logout": "退出登录",
+      "settings": "设置",
+      "title": "选项"
     },
     "messages": {
       "unauthorized": "未授权，请重新登录",

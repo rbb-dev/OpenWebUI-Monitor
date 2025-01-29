@@ -37,7 +37,9 @@
       "copyApiKey": "Copy API KEY",
       "dataBackup": "Data Migration",
       "checkUpdate": "Check Update",
-      "logout": "Logout"
+      "logout": "Logout",
+      "settings": "Settings",
+      "title": "Options"
     },
     "messages": {
       "unauthorized": "Unauthorized, please login again",

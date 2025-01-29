@@ -16,6 +16,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
+import { AnimatedGridPattern } from "@/components/ui/animated-grid-pattern";
+import { cn } from "@/lib/utils";
 
 export default function HomePage() {
   const { t } = useTranslation("common");
@@ -66,109 +69,199 @@ export default function HomePage() {
   };
 
   return (
-    <main className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-gray-50 via-gray-100 to-white pt-16">
-      {/* 背景装饰 */}
-      <div className="absolute top-0 left-0 w-[45rem] h-[45rem] bg-blue-50/40 rounded-full blur-3xl -z-10 animate-float" />
-      <div className="absolute bottom-0 right-0 w-[50rem] h-[50rem] bg-purple-50/30 rounded-full blur-3xl -z-10 animate-float-delay" />
+    <main className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-rose-50 via-slate-50 to-teal-50 pt-16">
+      {/* 新增动态网格背景 */}
+      <AnimatedGridPattern
+        numSquares={30}
+        maxOpacity={0.03}
+        duration={3}
+        repeatDelay={1}
+        className={cn(
+          "[mask-image:radial-gradient(1200px_circle_at_center,white,transparent)]",
+          "absolute inset-x-0 inset-y-[-30%] h-[160%] w-full skew-y-12 z-0"
+        )}
+      />
 
-      {/* 主要内容区域 */}
-      <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-between">
-        <div className="flex-1 flex items-center justify-center py-8">
-          <div className="w-full max-w-sm md:max-w-4xl mx-auto px-4 sm:px-6">
-            {/* 标题区域 */}
-            <div className="w-full space-y-6 sm:space-y-8 mb-8 sm:mb-12">
-              <div className="text-center space-y-2">
-                <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 via-indigo-800 to-gray-900 bg-clip-text text-transparent mb-2 sm:mb-3 tracking-tight">
-                  {t("common.appName")}
-                </h1>
-                <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto font-light">
-                  {t("common.description")}
-                </p>
+      {/* 装饰性背景模糊圆 */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-gradient-to-br from-rose-100/20 via-slate-100/20 to-teal-100/20 rounded-full blur-3xl opacity-40" />
+      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-pink-100/10 to-indigo-100/10 rounded-full blur-3xl opacity-30" />
+      <div className="absolute bottom-1/4 right-1/4 w-[700px] h-[700px] bg-gradient-to-br from-teal-100/10 to-slate-100/10 rounded-full blur-3xl opacity-30" />
+
+      {/* 修改主要内容容器，使用flex布局固定GitHub在底部 */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="min-h-[calc(100vh-4rem)] flex flex-col relative z-10"
+      >
+        {/* 标题区域保持不变 */}
+        <motion.div className="flex-1 flex flex-col items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full space-y-6 sm:space-y-8 mb-12 sm:mb-16 px-4"
+          >
+            <div className="text-center space-y-2">
+              <motion.h1
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 bg-clip-text text-transparent mb-2 sm:mb-3 tracking-tight"
+              >
+                {t("common.appName")}
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="text-sm sm:text-base md:text-lg text-slate-600/90 max-w-2xl mx-auto font-light"
+              >
+                {t("common.description")}
+              </motion.p>
+            </div>
+          </motion.div>
+
+          {/* 重新设计的导航区域 */}
+          <div className="w-full max-w-2xl px-4 sm:px-6">
+            <div className="relative">
+              {/* 装饰性背景 */}
+              <div className="absolute inset-0 bg-gradient-to-r from-rose-100/20 via-slate-100/20 to-teal-100/20 blur-3xl -z-10" />
+
+              {/* 新的垂直导航设计 */}
+              <div className="space-y-4">
+                {[
+                  {
+                    path: "/models",
+                    icon: <FiDatabase className="w-6 h-6" />,
+                    title: t("home.features.models.title"),
+                    desc: t("home.features.models.description"),
+                    gradient: "from-blue-500/80 to-indigo-500/80",
+                    lightColor: "bg-blue-50/50",
+                    borderColor: "border-blue-200/20",
+                    iconColor: "text-blue-500/70",
+                  },
+                  {
+                    path: "/users",
+                    icon: <FiUsers className="w-6 h-6" />,
+                    title: t("home.features.users.title"),
+                    desc: t("home.features.users.description"),
+                    gradient: "from-rose-500/80 to-pink-500/80",
+                    lightColor: "bg-rose-50/50",
+                    borderColor: "border-rose-200/20",
+                    iconColor: "text-rose-500/70",
+                  },
+                  {
+                    path: "/panel",
+                    icon: <FiBarChart2 className="w-6 h-6" />,
+                    title: t("home.features.stats.title"),
+                    desc: t("home.features.stats.description"),
+                    gradient: "from-emerald-500/80 to-teal-500/80",
+                    lightColor: "bg-emerald-50/50",
+                    borderColor: "border-emerald-200/20",
+                    iconColor: "text-emerald-500/70",
+                  },
+                ].map((item, index) => (
+                  <Link
+                    key={item.path}
+                    href={item.path}
+                    className="group block"
+                  >
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="relative bg-white rounded-2xl overflow-hidden transition-all duration-500 
+                        shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] 
+                        hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.12)]"
+                    >
+                      {/* 移除边框设计，只保留渐变背景 */}
+                      <div
+                        className={`absolute inset-0 bg-gradient-to-r ${item.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
+                      />
+
+                      {/* 内容区域 */}
+                      <div className="relative p-6">
+                        <div className="flex items-center gap-4">
+                          {/* 图标容器 - 使用投影替代边框 */}
+                          <div
+                            className={cn(
+                              "p-3 rounded-xl transition-all duration-500",
+                              item.lightColor,
+                              item.iconColor,
+                              "shadow-[0_2px_10px_-2px_rgba(0,0,0,0.05)]",
+                              "group-hover:bg-white/10 group-hover:text-white group-hover:shadow-none"
+                            )}
+                          >
+                            {item.icon}
+                          </div>
+
+                          {/* 文字内容 */}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-lg font-medium text-slate-800 group-hover:text-white transition-colors mb-1">
+                              {item.title}
+                            </h3>
+                            <p className="text-sm text-slate-600 group-hover:text-white/90 transition-colors">
+                              {item.desc}
+                            </p>
+                          </div>
+
+                          {/* 箭头 */}
+                          <div
+                            className={cn(
+                              "transform transition-all duration-300",
+                              item.iconColor,
+                              "group-hover:text-white group-hover:translate-x-1"
+                            )}
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={1.5}
+                                d="M9 5l7 7-7 7"
+                              />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </Link>
+                ))}
               </div>
             </div>
-
-            {/* 功能卡片区域 - 使用 shadcn Card 组件 */}
-            <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Link href="/models" className="block group">
-                <Card className="h-full transition-all duration-500 hover:scale-[1.02] hover:shadow-lg border-gray-100">
-                  <div className="p-6">
-                    <div className="flex items-center mb-3">
-                      <div className="p-3 bg-blue-50 rounded-xl mr-4 group-hover:bg-blue-100 transition-all duration-500">
-                        <FiDatabase className="text-xl text-blue-600" />
-                      </div>
-                      <h2 className="text-lg font-medium text-gray-900">
-                        {t("home.features.models.title")}
-                      </h2>
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      {t("home.features.models.description")}
-                    </p>
-                  </div>
-                </Card>
-              </Link>
-
-              <Link href="/users" className="block group">
-                <Card className="h-full transition-all duration-500 hover:scale-[1.02] hover:shadow-lg border-gray-100">
-                  <div className="p-6">
-                    <div className="flex items-center mb-3">
-                      <div className="p-3 bg-purple-50 rounded-xl mr-4 group-hover:bg-purple-100 transition-all duration-500">
-                        <FiUsers className="text-xl text-purple-600" />
-                      </div>
-                      <h2 className="text-lg font-medium text-gray-900">
-                        {t("home.features.users.title")}
-                      </h2>
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      {t("home.features.users.description")}
-                    </p>
-                  </div>
-                </Card>
-              </Link>
-
-              <Link href="/panel" className="block group">
-                <Card className="h-full transition-all duration-500 hover:scale-[1.02] hover:shadow-lg border-gray-100">
-                  <div className="p-6">
-                    <div className="flex items-center mb-3">
-                      <div className="p-3 bg-green-50 rounded-xl mr-4 group-hover:bg-green-100 transition-all duration-500">
-                        <FiBarChart2 className="text-xl text-green-600" />
-                      </div>
-                      <h2 className="text-lg font-medium text-gray-900">
-                        {t("home.features.stats.title")}
-                      </h2>
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      {t("home.features.stats.description")}
-                    </p>
-                  </div>
-                </Card>
-              </Link>
-            </div>
           </div>
-        </div>
+        </motion.div>
 
-        {/* GitHub 页脚 */}
-        <div className="w-full flex justify-center py-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            asChild
-            className="text-gray-400 hover:text-gray-600"
+        {/* GitHub 图标固定在底部 */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="py-8 text-center"
+        >
+          <a
+            href="https://github.com/VariantConst/OpenWebUI-Monitor"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex p-2 text-slate-400 hover:text-slate-600 transition-colors"
           >
-            <a
-              href="https://github.com/VariantConst/OpenWebUI-Monitor"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <FiGithub className="h-5 w-5" />
-            </a>
-          </Button>
-        </div>
-      </div>
+            <FiGithub className="w-6 h-6" />
+          </a>
+        </motion.div>
+      </motion.div>
 
-      {/* 更新提示框 - 简化为文本形式 */}
+      {/* 更新提示框样式修改 */}
       {isUpdateVisible && (
-        <div className="fixed bottom-4 right-4 animate-slide-up">
-          <div className="bg-gray-50/90 backdrop-blur-sm text-xs rounded-lg shadow-sm border border-gray-100/50 py-2 px-3">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed bottom-4 right-4"
+        >
+          <div className="backdrop-blur-[15px] bg-white/20 border border-white/30 rounded-xl shadow-2xl p-4">
             <div className="flex items-center gap-3 text-gray-600">
               <span>
                 {t("update.newVersion")} {latestVersion}
@@ -196,7 +289,7 @@ export default function HomePage() {
               </button>
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
     </main>
   );
