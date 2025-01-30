@@ -6,9 +6,12 @@ export async function POST(req: Request) {
     const data = await req.json();
     const user = await getOrCreateUser(data.user);
 
+    // 如果用户被拉黑,返回余额为 -1
+    const balance = user.deleted ? -1 : Number(user.balance);
+
     return NextResponse.json({
       success: true,
-      balance: Number(user.balance),
+      balance: balance,
       message: "Request successful",
     });
   } catch (error) {
