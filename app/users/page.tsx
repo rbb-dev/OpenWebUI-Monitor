@@ -48,6 +48,7 @@ export default function UsersPage() {
     order: null,
   });
   const [searchText, setSearchText] = useState("");
+  const [showBlacklist, setShowBlacklist] = useState(false);
 
   const fetchUsers = async (page: number) => {
     setLoading(true);
@@ -64,13 +65,11 @@ export default function UsersPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      const activeUsers = data.users.filter((user: User) => !user.deleted);
-      setUsers(activeUsers);
+      setUsers(data.users);
       setTotal(data.total);
     } catch (err) {
-      message.error(
-        err instanceof Error ? err.message : t("users.message.fetchUsersError")
-      );
+      console.error(err);
+      message.error(t("users.message.fetchError"));
     } finally {
       setLoading(false);
     }
@@ -108,25 +107,46 @@ export default function UsersPage() {
 
     try {
       const res = await fetch(`/api/users/${userToDelete.id}`, {
-        method: "DELETE",
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          deleted: !userToDelete.deleted,
+        }),
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error);
+        const error = await res.json();
+        throw new Error(error.message);
       }
 
-      message.success(t("users.message.deleteSuccess"));
-      setUserToDelete(null);
-      fetchUsers(currentPage);
-    } catch (err) {
-      message.error(
-        err instanceof Error ? err.message : t("users.message.deleteError")
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id === userToDelete.id
+            ? { ...user, deleted: !user.deleted }
+            : user
+        )
       );
+
+      message.success(
+        userToDelete.deleted
+          ? t("users.message.unblockSuccess")
+          : t("users.message.blockSuccess")
+      );
+    } catch (err) {
+      console.error(err);
+      message.error(
+        userToDelete.deleted
+          ? t("users.message.unblockError")
+          : t("users.message.blockError")
+      );
+    } finally {
+      setUserToDelete(null);
     }
   };
 
-  const getColumns = (): ColumnsType<User> => {
+  const getColumns = (isBlacklist: boolean = false): ColumnsType<User> => {
     const baseColumns: ColumnsType<User> = [
       {
         title: t("users.userInfo"),
@@ -212,7 +232,35 @@ export default function UsersPage() {
             }}
             className="p-2 hover:bg-destructive/10 rounded-md transition-colors"
           >
-            <Trash2 className="w-4 h-4 text-destructive" />
+            {isBlacklist ? (
+              <svg
+                className="w-4 h-4 text-primary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
+                />
+              </svg>
+            ) : (
+              <svg
+                className="w-4 h-4 text-destructive"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                />
+              </svg>
+            )}
           </button>
         ),
       },
@@ -222,110 +270,108 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
-      <div className="pt-16 flex flex-col gap-6 mb-6 sm:mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
-            {t("users.title")}
-          </h1>
-          <div className="relative w-full sm:w-72">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-gray-400" />
-            </div>
-            <Input
-              placeholder={t("users.searchPlaceholder")}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              className="
-                w-full
-                pl-10
-                pr-4
-                py-2
-                h-10
-                bg-white
-                dark:bg-gray-900
-                border-gray-200
-                dark:border-gray-700
-                hover:border-gray-300
-                dark:hover:border-gray-600
-                focus:border-primary
-                dark:focus:border-primary
-                transition-colors
-                rounded-lg
-                shadow-sm
-                [&:not(:focus)]:hover:shadow-md
-                placeholder:text-gray-500
-                dark:placeholder:text-gray-400
-              "
-              allowClear={{
-                clearIcon: (
-                  <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
-                    <svg
-                      className="h-3 w-3 text-gray-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                ),
-              }}
-            />
-          </div>
-        </div>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24 space-y-8">
+      <div className="space-y-4">
+        <h1 className="text-3xl font-bold tracking-tight">
+          {t("users.title")}
+        </h1>
+        <p className="text-muted-foreground">{t("users.description")}</p>
       </div>
 
-      <div className="rounded-lg border bg-card shadow-sm">
+      <div className="relative w-full sm:w-72">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search className="h-4 w-4 text-muted-foreground/70" />
+        </div>
+        <Input
+          placeholder={t("users.searchPlaceholder")}
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          className="
+            w-full
+            pl-10
+            pr-4
+            py-2
+            h-10
+            bg-card
+            border-border/40
+            hover:border-border/60
+            focus:border-primary/30
+            focus:ring-2
+            focus:ring-primary/20
+            transition-all
+            duration-200
+            rounded-lg
+            shadow-sm
+            hover:shadow
+            focus:shadow-md
+            placeholder:text-muted-foreground/60
+          "
+          allowClear={{
+            clearIcon: (
+              <button className="p-1 hover:bg-muted/60 rounded-full transition-colors">
+                <svg
+                  className="h-3 w-3 text-muted-foreground/70"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            ),
+          }}
+        />
+      </div>
+
+      <div className="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden">
         <Table
           columns={getColumns()}
-          dataSource={users.map((user) => ({
-            ...user,
-            balance: Number(user.balance),
-          }))}
+          dataSource={users
+            .filter((user) => !user.deleted)
+            .map((user) => ({
+              key: user.id,
+              ...user,
+              balance: Number(user.balance),
+            }))}
           rowKey="id"
           loading={loading}
           size="middle"
           className="
             [&_.ant-table]:!border-b-0 
-            [&_.ant-table-container]:!rounded-lg 
+            [&_.ant-table-container]:!rounded-xl 
             [&_.ant-table-container]:!border-hidden
-            [&_.ant-table-cell]:!border-0
-            [&_.ant-table-cell]:px-4
-            [&_.ant-table-cell]:py-3
-            [&_.ant-table-thead_.ant-table-cell]:!bg-muted/50
+            [&_.ant-table-cell]:!border-border/40
+            [&_.ant-table-thead_.ant-table-cell]:!bg-muted/30
             [&_.ant-table-thead_.ant-table-cell]:!text-muted-foreground
-            [&_.ant-table-thead_.ant-table-cell]:font-medium
-            [&_.ant-table-thead_.ant-table-cell]:text-sm
-            [&_.ant-table-row]:border-b 
-            [&_.ant-table-row]:border-border/40
-            [&_.ant-table-row:last-child]:border-0
+            [&_.ant-table-thead_.ant-table-cell]:!font-medium
+            [&_.ant-table-thead_.ant-table-cell]:!text-sm
+            [&_.ant-table-thead]:!border-b
+            [&_.ant-table-thead]:border-border/40
+            [&_.ant-table-row]:!transition-colors
             [&_.ant-table-row:hover>*]:!bg-muted/60
-            [&_.ant-table-tbody_.ant-table-row]:transition-colors
             [&_.ant-table-tbody_.ant-table-row]:!cursor-pointer
-            [&_.ant-table-column-sorter]:opacity-40
-            [&_.ant-table-column-sorter-up.active_.anticon]:!text-primary
-            [&_.ant-table-column-sorter-down.active_.anticon]:!text-primary
-            [&_.ant-table-column-sorter]:hover:opacity-100
-            [&_.ant-spin-nested-loading]:min-h-[280px]
-            [&_.ant-pagination]:border-t
+            [&_.ant-table-tbody_.ant-table-cell]:!py-4
+            [&_.ant-table-row:last-child>td]:!border-b-0
+            [&_.ant-table-cell:first-child]:!pl-6
+            [&_.ant-table-cell:last-child]:!pr-6
+            [&_.ant-pagination]:!px-6
+            [&_.ant-pagination]:!py-4
+            [&_.ant-pagination]:!border-t
             [&_.ant-pagination]:border-border/40
-            [&_.ant-pagination-item]:rounded-md
-            [&_.ant-pagination-item]:border-border/40
+            [&_.ant-pagination-item]:!rounded-lg
+            [&_.ant-pagination-item]:!border-border/40
             [&_.ant-pagination-item-active]:!bg-primary/10
             [&_.ant-pagination-item-active]:!border-primary/30
             [&_.ant-pagination-item-active>a]:!text-primary
-            [&_.ant-pagination-prev_.ant-pagination-item-link]:rounded-md
-            [&_.ant-pagination-next_.ant-pagination-item-link]:rounded-md
-            [&_.ant-pagination-prev_.ant-pagination-item-link]:border-border/40
-            [&_.ant-pagination-next_.ant-pagination-item-link]:border-border/40
-            [&_.ant-pagination-disabled_.ant-pagination-item-link]:!bg-muted/50
-            [&_.ant-pagination-options]:hidden
+            [&_.ant-pagination-prev_.ant-pagination-item-link]:!rounded-lg
+            [&_.ant-pagination-next_.ant-pagination-item-link]:!rounded-lg
+            [&_.ant-pagination-prev_.ant-pagination-item-link]:!border-border/40
+            [&_.ant-pagination-next_.ant-pagination-item-link]:!border-border/40
           "
           pagination={{
             total,
@@ -335,18 +381,15 @@ export default function UsersPage() {
               setCurrentPage(page);
               setEditingKey("");
             },
-            className: "!mt-0 !mb-0 !px-4 !py-3",
             showTotal: (total) => (
               <span className="text-sm text-muted-foreground">
                 {t("users.total")} {total} {t("users.totalRecords")}
               </span>
             ),
-            size: "small",
           }}
-          scroll={{ x: 300 }}
+          scroll={{ x: 500 }}
           onChange={(pagination, filters, sorter) => {
             if (Array.isArray(sorter)) return;
-
             setSortInfo({
               field: sorter.columnKey as string,
               order: sorter.order || null,
@@ -355,30 +398,102 @@ export default function UsersPage() {
         />
       </div>
 
+      <div className="space-y-4">
+        <button
+          onClick={() => setShowBlacklist(!showBlacklist)}
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <svg
+            className={`w-4 h-4 transition-transform ${
+              showBlacklist ? "rotate-180" : ""
+            }`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+          {t("users.blacklist.title")} (
+          {users.filter((user) => user.deleted).length})
+        </button>
+
+        {showBlacklist && (
+          <div className="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden">
+            <Table
+              columns={getColumns(true)}
+              dataSource={users
+                .filter((user) => user.deleted)
+                .map((user) => ({
+                  key: user.id,
+                  ...user,
+                  balance: Number(user.balance),
+                }))}
+              rowKey="id"
+              pagination={false}
+              className="
+                [&_.ant-table]:!border-b-0 
+                [&_.ant-table-container]:!rounded-xl 
+                [&_.ant-table-container]:!border-hidden
+                [&_.ant-table-cell]:!border-border/40
+                [&_.ant-table-thead_.ant-table-cell]:!bg-muted/30
+                [&_.ant-table-thead_.ant-table-cell]:!text-muted-foreground
+                [&_.ant-table-thead_.ant-table-cell]:!font-medium
+                [&_.ant-table-thead_.ant-table-cell]:!text-sm
+                [&_.ant-table-thead]:!border-b
+                [&_.ant-table-thead]:border-border/40
+                [&_.ant-table-row]:!transition-colors
+                [&_.ant-table-row:hover>*]:!bg-muted/60
+                [&_.ant-table-tbody_.ant-table-row]:!cursor-pointer
+                [&_.ant-table-tbody_.ant-table-cell]:!py-4
+                [&_.ant-table-row:last-child>td]:!border-b-0
+                [&_.ant-table-cell:first-child]:!pl-6
+                [&_.ant-table-cell:last-child]:!pr-6
+              "
+            />
+          </div>
+        )}
+      </div>
+
       <Dialog
         open={!!selectedUser}
         onOpenChange={(open) => !open && setSelectedUser(null)}
       >
-        <DialogContent className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-[calc(100%-2rem)] sm:w-full sm:max-w-[425px] rounded-lg">
+        <DialogContent
+          className="
+          sm:max-w-[425px]
+          rounded-xl
+          border-border/40
+          shadow-lg
+          p-6
+          gap-6
+        "
+        >
           <DialogHeader>
-            <DialogTitle>{t("users.userDetails")}</DialogTitle>
+            <DialogTitle className="text-xl font-semibold tracking-tight">
+              {t("users.userDetails")}
+            </DialogTitle>
           </DialogHeader>
           {selectedUser && (
-            <div className="grid gap-4 py-2">
+            <div className="grid gap-6">
               <div className="space-y-2">
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground/80">
                   {t("users.nickname")}
                 </div>
                 <div className="font-medium">{selectedUser.name}</div>
               </div>
               <div className="space-y-2">
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground/80">
                   {t("users.email")}
                 </div>
                 <div className="break-all">{selectedUser.email}</div>
               </div>
               <div className="space-y-2">
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground/80">
                   {t("users.id")}
                 </div>
                 <div className="font-mono text-sm break-all">
@@ -386,11 +501,23 @@ export default function UsersPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground/80">
                   {t("users.role")}
                 </div>
                 <div>
-                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary/10 text-primary">
+                  <span
+                    className="
+                    inline-flex
+                    items-center
+                    rounded-full
+                    px-2.5
+                    py-0.5
+                    text-xs
+                    font-medium
+                    bg-primary/10
+                    text-primary
+                  "
+                  >
                     {selectedUser.role}
                   </span>
                 </div>
@@ -404,26 +531,44 @@ export default function UsersPage() {
         open={!!userToDelete}
         onOpenChange={(open) => !open && setUserToDelete(null)}
       >
-        <AlertDialogContent className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-[calc(100%-2rem)] sm:max-w-[360px] p-4 sm:p-6 gap-4 rounded-lg shadow-lg">
+        <AlertDialogContent className="sm:max-w-[360px] rounded-xl border-border/40 shadow-lg p-6 gap-6">
           <AlertDialogHeader className="gap-2">
-            <AlertDialogTitle className="text-base font-semibold">
-              {t("users.deleteConfirm.title")}
+            <AlertDialogTitle className="text-lg font-semibold tracking-tight">
+              {userToDelete?.deleted
+                ? t("users.blacklist.unblockConfirm.title")
+                : t("users.blacklist.blockConfirm.title")}
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm">
-              {t("users.deleteConfirm.description", {
-                name: userToDelete?.name,
-              })}
+            <AlertDialogDescription className="text-muted-foreground">
+              {userToDelete?.deleted
+                ? t("users.blacklist.unblockConfirm.description", {
+                    name: userToDelete?.name,
+                  })
+                : t("users.blacklist.blockConfirm.description", {
+                    name: userToDelete?.name,
+                  })}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-row gap-2 sm:gap-3">
-            <AlertDialogCancel className="m-0 flex-1 text-sm h-9">
+          <AlertDialogFooter className="flex-row gap-3">
+            <AlertDialogCancel className="flex-1 h-10 rounded-lg border-border/40 hover:bg-muted/60 transition-colors">
               {t("common.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteUser}
-              className="m-0 flex-1 h-9 text-sm bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className={`
+                flex-1
+                h-10
+                rounded-lg
+                transition-colors
+                ${
+                  userToDelete?.deleted
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                }
+              `}
             >
-              {t("common.delete")}
+              {userToDelete?.deleted
+                ? t("users.blacklist.unblock")
+                : t("users.blacklist.block")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

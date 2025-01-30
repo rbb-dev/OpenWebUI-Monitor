@@ -143,7 +143,12 @@
       "fetchUsersError": "Failed to fetch user list",
       "invalidNumber": "Please enter a valid number",
       "deleteSuccess": "User deleted successfully",
-      "deleteError": "Failed to delete user"
+      "deleteError": "Failed to delete user",
+      "blockSuccess": "User has been blocked successfully",
+      "blockError": "Failed to block user",
+      "unblockSuccess": "User has been unblocked successfully",
+      "unblockError": "Failed to unblock user",
+      "fetchError": "Failed to fetch user list"
     },
     "actions": "Actions",
     "deleteConfirm": {
@@ -152,7 +157,20 @@
     },
     "total": "Total",
     "totalRecords": "records",
-    "searchPlaceholder": "Search by name or email..."
+    "searchPlaceholder": "Search by name or email...",
+    "blacklist": {
+      "title": "Blacklisted Users",
+      "block": "Block",
+      "unblock": "Unblock",
+      "blockConfirm": {
+        "title": "Confirm Block User",
+        "description": "Are you sure you want to block user \"{{name}}\"? They will not be able to use the service after being blocked."
+      },
+      "unblockConfirm": {
+        "title": "Confirm Unblock User",
+        "description": "Are you sure you want to unblock user \"{{name}}\"? They will be able to use the service again after being unblocked."
+      }
+    }
   },
 
   "records": {
