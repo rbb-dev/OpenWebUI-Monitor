@@ -114,7 +114,9 @@
         "outputPrice": "输出价格",
         "perMsgPrice": "每条消息"
       },
-      "perMsgPriceTooltip": "每条消息的固定收费，如果设置为负数则按 token 计费"
+      "perMsgPriceTooltip": "每条消息的固定收费，如果设置为负数则按 token 计费",
+      "priceOverriddenByPerMsg": "已被每条消息价格覆盖",
+      "enterPrice": "输入价格"
     },
     "testing": "测试中",
     "testComplete": "测试完成",

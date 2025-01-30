@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Table, Input, message, Tooltip } from "antd";
 import {
   DownloadOutlined,
@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { cva } from "class-variance-authority";
 import { Progress } from "antd";
+import { toast, Toaster } from "sonner";
 
 interface ModelResponse {
   id: string;
@@ -235,6 +236,182 @@ const TestProgressPanel = ({
   );
 };
 
+// 修改 PriceEditCell 组件
+const PriceEditCell = ({
+  value,
+  isEditing,
+  onEdit,
+  onSubmit,
+  t,
+  disabled = false,
+  onCancel,
+}: {
+  value: number;
+  isEditing: boolean;
+  onEdit: () => void;
+  onSubmit: (value: number) => Promise<void>;
+  t: (key: string) => string;
+  disabled?: boolean;
+  onCancel: () => void;
+}) => {
+  const originalValue = value >= 0 ? value.toFixed(2) : "";
+  const [inputValue, setInputValue] = useState(originalValue);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // 重置输入值
+  useEffect(() => {
+    if (isEditing) {
+      setInputValue(originalValue);
+    }
+  }, [isEditing, originalValue]);
+
+  // 点击外部处理
+  useEffect(() => {
+    if (isEditing) {
+      const handleClickOutside = (e: MouseEvent) => {
+        const target = e.target as HTMLElement;
+        if (!target.closest(".price-edit-input")) {
+          onCancel();
+        }
+      };
+
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [isEditing, onCancel]);
+
+  const handleSubmit = useCallback(async () => {
+    if (inputValue && inputValue !== originalValue) {
+      const numValue = Number(inputValue);
+      if (!isNaN(numValue)) {
+        setIsSaving(true);
+        try {
+          await onSubmit(numValue);
+        } finally {
+          setIsSaving(false);
+        }
+      }
+    } else {
+      onCancel();
+    }
+  }, [inputValue, originalValue, onSubmit, onCancel]);
+
+  return (
+    <div className={`relative ${disabled ? "opacity-50" : ""}`}>
+      {isEditing ? (
+        <div className="relative price-edit-input flex items-center gap-1.5">
+          <Input
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            className="
+              !w-[calc(100%-32px)]
+              !border
+              !border-slate-200
+              focus:!border-slate-300
+              !bg-white
+              !shadow-sm
+              hover:!shadow
+              focus:!shadow-md
+              !px-2
+              !py-1
+              !h-7
+              flex-1
+              !rounded-lg
+              !text-slate-600
+              !text-sm
+              !font-medium
+              placeholder:!text-slate-400/70
+              transition-all
+              duration-200
+              focus:!ring-2
+              focus:!ring-slate-200/50
+              focus:!ring-offset-0
+            "
+            placeholder={t("models.table.enterPrice")}
+            onPressEnter={handleSubmit}
+            autoFocus
+            disabled={isSaving}
+          />
+          <Button
+            size="sm"
+            variant="ghost"
+            className={`
+              h-7 w-7
+              flex-shrink-0
+              bg-gradient-to-r from-slate-500/80 to-slate-600/80
+              hover:from-slate-600 hover:to-slate-700
+              text-white/90
+              shadow-sm
+              rounded-lg
+              transition-all
+              duration-200
+              hover:scale-105
+              active:scale-95
+              p-0
+              flex
+              items-center
+              justify-center
+              ${isSaving ? "cursor-not-allowed opacity-70" : ""}
+            `}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleSubmit();
+            }}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <div className="w-3 h-3 rounded-full border-2 border-white/90 border-t-transparent animate-spin" />
+            ) : (
+              <CheckOutlined className="text-xs" />
+            )}
+          </Button>
+        </div>
+      ) : (
+        <div
+          onClick={disabled ? undefined : onEdit}
+          className={`
+            group
+            px-2
+            py-1
+            rounded-lg
+            transition-colors
+            duration-200
+            ${
+              disabled
+                ? "cursor-not-allowed line-through"
+                : "cursor-pointer hover:bg-primary/5"
+            }
+          `}
+        >
+          <span
+            className={`
+              font-medium
+              text-sm
+              transition-colors
+              duration-200
+              ${
+                disabled
+                  ? "text-muted-foreground/60"
+                  : "text-primary/80 group-hover:text-primary"
+              }
+            `}
+          >
+            {value < 0 ? (
+              <span className="text-muted-foreground/60">
+                {t("models.table.notSet")}
+              </span>
+            ) : (
+              value.toFixed(2)
+            )}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function ModelsPage() {
   const { t } = useTranslation("common");
   const [models, setModels] = useState<Model[]>([]);
@@ -308,7 +485,7 @@ export default function ModelsPage() {
     id: string,
     field: "input_price" | "output_price" | "per_msg_price",
     value: number
-  ) => {
+  ): Promise<void> => {
     try {
       const model = models.find((m) => m.id === id);
       if (!model) return;
@@ -363,79 +540,18 @@ export default function ModelsPage() {
               : model
           )
         );
-        message.success(t("error.model.priceUpdateSuccess"));
+        toast.success(t("error.model.priceUpdateSuccess"));
       } else {
         throw new Error(
           data.results[0]?.error || t("error.model.priceUpdateFail")
         );
       }
-
-      setEditingCell(null);
     } catch (err) {
-      message.error(
+      toast.error(
         err instanceof Error ? err.message : t("error.model.priceUpdateFail")
       );
-      setEditingCell(null);
+      throw err; // 重新抛出错误以便调用者处理
     }
-  };
-
-  const renderPriceCell = (
-    field: "input_price" | "output_price" | "per_msg_price",
-    record: Model
-  ) => {
-    const isEditing =
-      editingCell?.id === record.id && editingCell?.field === field;
-    const currentValue = Number(record[field]);
-
-    return isEditing ? (
-      <Input
-        defaultValue={currentValue.toFixed(2)}
-        className="w-28 sm:w-36"
-        onPressEnter={(e: React.KeyboardEvent<HTMLInputElement>) => {
-          const numValue = Number(e.currentTarget.value);
-          if (
-            field === "per_msg_price"
-              ? isFinite(numValue)
-              : isFinite(numValue) && numValue >= 0
-          ) {
-            handlePriceUpdate(record.id, field, numValue);
-          } else {
-            message.error(
-              field === "per_msg_price"
-                ? t("models.table.invalidNumber")
-                : t("models.table.nonePositiveNumber")
-            );
-            setEditingCell(null);
-          }
-        }}
-        onBlur={(e) => {
-          const value = e.target.value;
-          const numValue = Number(value);
-          if (
-            value &&
-            !isNaN(numValue) &&
-            (field === "per_msg_price" ? isFinite(numValue) : numValue >= 0) &&
-            numValue !== currentValue
-          ) {
-            handlePriceUpdate(record.id, field, numValue);
-          } else {
-            setEditingCell(null);
-          }
-        }}
-        autoFocus
-      />
-    ) : (
-      <div
-        className="cursor-pointer font-medium text-blue-600"
-        onClick={() => setEditingCell({ id: record.id, field })}
-      >
-        {currentValue < 0 ? (
-          <span className="text-gray-400">{t("models.table.notSet")}</span>
-        ) : (
-          currentValue.toFixed(2)
-        )}
-      </div>
-    );
   };
 
   const handleTestSingleModel = async (model: Model) => {
@@ -721,79 +837,147 @@ export default function ModelsPage() {
     }
   };
 
-  // 添加自定义渲染的卡片组件
+  // 修改表格样式
+  const tableClassName = `
+    [&_.ant-table]:!border-b-0 
+    [&_.ant-table-container]:!rounded-xl 
+    [&_.ant-table-container]:!border-hidden
+    [&_.ant-table-cell]:!border-border/40
+    [&_.ant-table-thead_.ant-table-cell]:!bg-muted/30
+    [&_.ant-table-thead_.ant-table-cell]:!text-muted-foreground
+    [&_.ant-table-thead_.ant-table-cell]:!font-medium
+    [&_.ant-table-thead_.ant-table-cell]:!text-sm
+    [&_.ant-table-thead]:!border-b
+    [&_.ant-table-thead]:border-border/40
+    [&_.ant-table-row]:!transition-colors
+    [&_.ant-table-row:hover>*]:!bg-muted/60
+    [&_.ant-table-tbody_.ant-table-row]:!cursor-pointer
+    [&_.ant-table-tbody_.ant-table-cell]:!py-4
+    [&_.ant-table-row:last-child>td]:!border-b-0
+    [&_.ant-table-cell:first-child]:!pl-6
+    [&_.ant-table-cell:last-child]:!pr-6
+  `;
+
+  // 修改移动端卡片组件
   const MobileCard = ({ record }: { record: Model }) => {
+    const isPerMsgEnabled = record.per_msg_price >= 0;
+
     return (
-      <div className="p-6 bg-card rounded-lg border shadow-sm space-y-4">
-        <div className="flex items-center gap-4">
+      <div
+        className="p-4 sm:p-6 bg-card rounded-xl border border-border/40 
+        shadow-sm hover:shadow-md transition-all duration-200 space-y-4"
+      >
+        <div className="flex items-center gap-3">
           <div
-            className="relative cursor-pointer"
+            className="relative cursor-pointer group shrink-0"
             onClick={() => handleTestSingleModel(record)}
           >
-            {record.imageUrl && (
-              <Image
-                src={record.imageUrl}
-                alt={record.name}
-                width={48}
-                height={48}
-                className="rounded-full object-cover"
-              />
-            )}
+            <div className="relative">
+              {record.imageUrl && (
+                <Image
+                  src={record.imageUrl}
+                  alt={record.name}
+                  width={40}
+                  height={40}
+                  className="rounded-xl object-cover transition-transform group-hover:scale-105"
+                />
+              )}
+              <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-black/5"></div>
+            </div>
             {record.testStatus && (
-              <div className="absolute -top-1 -right-1">
-                {record.testStatus === "testing" && (
-                  <div className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center">
-                    <div className="w-3 h-3 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
-                  </div>
-                )}
-                {record.testStatus === "success" && (
-                  <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
-                    <CheckOutlined className="text-[10px] text-green-500" />
-                  </div>
-                )}
-                {record.testStatus === "error" && (
-                  <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
-                    <CloseOutlined className="text-[10px] text-red-500" />
-                  </div>
-                )}
+              <div className="absolute -top-1 -right-1 z-10">
+                <TestStatusIndicator status={record.testStatus} />
               </div>
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold truncate">{record.name}</h3>
-            <p className="text-sm text-muted-foreground truncate">
+            <h3 className="text-base font-semibold tracking-tight truncate">
+              {record.name}
+            </h3>
+            <p className="text-xs text-muted-foreground/80 truncate font-mono">
               {record.id}
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <span className="text-sm text-muted-foreground block">
-              {t("models.table.mobile.inputPrice")}
-            </span>
-            <div className="p-2 rounded-md bg-muted/50 text-center">
-              {renderPriceCell("input_price", record)}
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
+          {[
+            {
+              label: t("models.table.mobile.inputPrice"),
+              field: "input_price" as const,
+              disabled: isPerMsgEnabled,
+            },
+            {
+              label: t("models.table.mobile.outputPrice"),
+              field: "output_price" as const,
+              disabled: isPerMsgEnabled,
+            },
+            {
+              label: t("models.table.mobile.perMsgPrice"),
+              field: "per_msg_price" as const,
+              disabled: false,
+            },
+          ].map(({ label, field, disabled }) => (
+            <div
+              key={field}
+              className={`space-y-1.5 ${disabled ? "opacity-50" : ""}`}
+            >
+              <span className="text-xs text-muted-foreground/80 block truncate">
+                {label}
+                {disabled && (
+                  <Tooltip title={t("models.table.priceOverriddenByPerMsg")}>
+                    <InfoCircleOutlined className="ml-1 text-muted-foreground/60" />
+                  </Tooltip>
+                )}
+              </span>
+              {renderPriceCell(field, record)}
             </div>
-          </div>
-          <div className="space-y-2">
-            <span className="text-sm text-muted-foreground block">
-              {t("models.table.mobile.outputPrice")}
-            </span>
-            <div className="p-2 rounded-md bg-muted/50 text-center">
-              {renderPriceCell("output_price", record)}
-            </div>
-          </div>
-          <div className="space-y-2">
-            <span className="text-sm text-muted-foreground block">
-              {t("models.table.mobile.perMsgPrice")}
-            </span>
-            <div className="p-2 rounded-md bg-muted/50 text-center">
-              {renderPriceCell("per_msg_price", record)}
-            </div>
-          </div>
+          ))}
         </div>
       </div>
+    );
+  };
+
+  // 将 renderPriceCell 移回组件内部
+  const renderPriceCell = (
+    field: "input_price" | "output_price" | "per_msg_price",
+    record: Model
+  ) => {
+    const isEditing =
+      editingCell?.id === record.id && editingCell?.field === field;
+    const currentValue = Number(record[field]);
+    const isDisabled = field !== "per_msg_price" && record.per_msg_price >= 0;
+
+    return (
+      <PriceEditCell
+        value={currentValue}
+        isEditing={isEditing}
+        onEdit={() => setEditingCell({ id: record.id, field })}
+        onSubmit={async (value) => {
+          if (
+            field === "per_msg_price"
+              ? isFinite(value)
+              : isFinite(value) && value >= 0
+          ) {
+            try {
+              await handlePriceUpdate(record.id, field, value);
+              setEditingCell(null);
+            } catch {
+              // 错误已经在 handlePriceUpdate 中处理
+            }
+          } else {
+            toast.error(
+              field === "per_msg_price"
+                ? t("models.table.invalidNumber")
+                : t("models.table.nonePositiveNumber")
+            );
+            setEditingCell(null);
+          }
+        }}
+        t={t}
+        disabled={isDisabled}
+        onCancel={() => setEditingCell(null)}
+      />
     );
   };
 
@@ -802,7 +986,16 @@ export default function ModelsPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24 space-y-6 sm:space-y-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24 space-y-8">
+      {/* 添加 Toaster 组件 */}
+      <Toaster
+        richColors
+        position="top-center"
+        theme="light"
+        expand
+        duration={1500}
+      />
+
       {/* 页面标题部分 */}
       <div className="space-y-4">
         <h1 className="text-3xl font-bold tracking-tight">
@@ -886,33 +1079,27 @@ export default function ModelsPage() {
       />
 
       {/* 桌面端表格视图 */}
-      <div className="hidden sm:block rounded-lg border bg-card shadow-sm">
-        <Table
-          columns={columns}
-          dataSource={models}
-          rowKey="id"
-          loading={loading}
-          pagination={false}
-          size="middle"
-          className="[&_.ant-table]:!border-b-0 
-            [&_.ant-table-container]:!rounded-lg 
-            [&_.ant-table-container]:!border-hidden
-            [&_.ant-table-cell]:!border-border
-            [&_.ant-table-thead_.ant-table-cell]:!bg-muted/50
-            [&_.ant-table-thead_.ant-table-cell]:!text-muted-foreground
-            [&_.ant-table-thead_.ant-table-cell]:!font-medium
-            [&_.ant-table-row:hover>*]:!bg-muted/50
-            [&_.ant-table-tbody_.ant-table-row]:!cursor-pointer
-            [&_.ant-table-tbody_.ant-table-cell]:!py-4"
-          scroll={{ x: 500 }}
-        />
+      <div className="hidden sm:block">
+        <div className="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden">
+          <Table
+            columns={columns}
+            dataSource={models}
+            rowKey="id"
+            loading={loading}
+            pagination={false}
+            size="middle"
+            className={tableClassName}
+            scroll={{ x: 500 }}
+            rowClassName={() => "group"}
+          />
+        </div>
       </div>
 
       {/* 移动端卡片视图 */}
-      <div className="sm:hidden space-y-4">
+      <div className="sm:hidden">
         {loading ? (
-          <div className="flex justify-center py-8">
-            <div className="w-6 h-6 border-2 border-primary/20 border-t-primary animate-spin rounded-full"></div>
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 border-3 border-primary/20 border-t-primary animate-spin rounded-full"></div>
           </div>
         ) : (
           <div className="grid gap-4">

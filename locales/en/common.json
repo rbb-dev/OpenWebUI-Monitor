@@ -114,7 +114,9 @@
         "outputPrice": "Output Price",
         "perMsgPrice": "Per Message"
       },
-      "perMsgPriceTooltip": "Set a negative value to charge by tokens instead of per message"
+      "perMsgPriceTooltip": "Set a negative value to charge by tokens instead of per message",
+      "enterPrice": "Enter price",
+      "priceOverriddenByPerMsg": "Overridden by per message price"
     },
     "testing": "Testing",
     "testComplete": "Test Complete",
