@@ -183,6 +183,7 @@
 
   "records": {
     "title": "使用记录",
+    "description": "查看所有用户的模型使用记录，包括使用时间、消耗的 tokens 和费用等详细信息。",
     "export": "导出记录",
     "dateRange": "日期范围",
     "columns": {
@@ -190,7 +191,8 @@
       "model": "模型",
       "tokens": "Tokens",
       "cost": "费用",
-      "time": "时间"
+      "time": "时间",
+      "balance": "余额"
     }
   },
 
@@ -258,6 +260,12 @@
         "cost": "费用",
         "balance": "余额"
       }
+    },
+    "description": "查看模型使用情况、用户消费数据和详细使用记录。",
+    "overview": {
+      "totalModels": "使用模型数",
+      "totalUsers": "活跃用户数",
+      "totalCost": "总消费金额"
     }
   },
   "error": {

@@ -1,14 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Table, Button, message, DatePicker, Space } from "antd";
+import { Table, DatePicker, Space } from "antd";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import type { FilterValue, SorterResult } from "antd/es/table/interface";
-import { DownloadOutlined } from "@ant-design/icons";
+import {
+  DownloadOutlined,
+  CalendarOutlined,
+  TableOutlined,
+} from "@ant-design/icons";
 import type { RangePickerProps } from "antd/es/date-picker";
 import zhCN from "antd/lib/locale/zh_CN";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
+import { toast, Toaster } from "sonner";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 const { RangePicker } = DatePicker;
 
@@ -47,56 +55,78 @@ export default function RecordsPage() {
 
   const columns: ColumnsType<UsageRecord> = [
     {
-      title: "User",
+      title: t("records.columns.user"),
       dataIndex: "nickname",
       key: "nickname",
       filters: users.map((user) => ({ text: user, value: user })),
       filterMode: "tree",
       filterSearch: true,
+      width: 200,
+      render: (text) => <div className="font-medium">{text}</div>,
     },
     {
-      title: "Time",
+      title: t("records.columns.time"),
       dataIndex: "use_time",
       key: "use_time",
-      render: (text) => new Date(text).toLocaleString(),
+      render: (text) => (
+        <div className="text-muted-foreground">
+          {new Date(text).toLocaleString()}
+        </div>
+      ),
       sorter: true,
+      width: 180,
     },
     {
-      title: "Model",
+      title: t("records.columns.model"),
       dataIndex: "model_name",
       key: "model_name",
       filters: models.map((model) => ({ text: model, value: model })),
       filterMode: "tree",
       filterSearch: true,
+      width: 200,
     },
     {
-      title: "Input tokens",
+      title: t("records.columns.tokens"),
       dataIndex: "input_tokens",
       key: "input_tokens",
       align: "right",
       sorter: true,
+      width: 120,
+      render: (input, record) => (
+        <div className="space-y-1">
+          <div className="text-xs text-muted-foreground">输入: {input}</div>
+          <div className="text-xs text-muted-foreground">
+            输出: {record.output_tokens}
+          </div>
+        </div>
+      ),
     },
     {
-      title: "Output tokens",
-      dataIndex: "output_tokens",
-      key: "output_tokens",
-      align: "right",
-      sorter: true,
-    },
-    {
-      title: "Cost",
+      title: t("records.columns.cost"),
       dataIndex: "cost",
       key: "cost",
       align: "right",
-      render: (value) => `${t("common.currency")}${Number(value).toFixed(4)}`,
+      width: 120,
+      render: (value) => (
+        <div className="font-medium text-primary">
+          {t("common.currency")}
+          {Number(value).toFixed(4)}
+        </div>
+      ),
       sorter: true,
     },
     {
-      title: "Balance",
+      title: t("records.columns.balance"),
       dataIndex: "balance_after",
       key: "balance_after",
       align: "right",
-      render: (value) => `${t("common.currency")}${Number(value).toFixed(4)}`,
+      width: 120,
+      render: (value) => (
+        <div className="font-medium">
+          {t("common.currency")}
+          {Number(value).toFixed(4)}
+        </div>
+      ),
       sorter: true,
     },
   ];
@@ -151,7 +181,7 @@ export default function RecordsPage() {
       setUsers(data.users as string[]);
       setModels(data.models as string[]);
     } catch (error) {
-      message.error(t("error.panel.fetchUsageDataFail"));
+      toast.error(t("error.panel.fetchUsageDataFail"));
     } finally {
       setLoading(false);
     }
@@ -196,49 +226,107 @@ export default function RecordsPage() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      message.error(t("error.model.failToExport"));
+      toast.error(t("error.model.failToExport"));
     }
   };
 
-  return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-4">
-          t("error.records.usageRecord")
-        </h1>
-        <div className="flex justify-between items-center mb-4">
-          <Space size="middle">
-            <RangePicker
-              locale={zhCN.DatePicker}
-              onChange={(dates) => {
-                const newParams = {
-                  ...tableParams,
-                  dateRange: dates,
-                  pagination: { ...tableParams.pagination, current: 1 },
-                };
-                setTableParams(newParams);
-                fetchRecords(newParams);
-              }}
-            />
-          </Space>
-          <Button
-            type="primary"
-            icon={<DownloadOutlined />}
-            onClick={handleExport}
-          >
-            t("error.records.exportRecord")
-          </Button>
-        </div>
-      </div>
+  // 修改表格样式
+  const tableClassName = `
+    [&_.ant-table]:!border-b-0 
+    [&_.ant-table-container]:!rounded-xl 
+    [&_.ant-table-container]:!border-hidden
+    [&_.ant-table-cell]:!border-border/40
+    [&_.ant-table-thead_.ant-table-cell]:!bg-muted/30
+    [&_.ant-table-thead_.ant-table-cell]:!text-muted-foreground
+    [&_.ant-table-thead_.ant-table-cell]:!font-medium
+    [&_.ant-table-thead_.ant-table-cell]:!text-sm
+    [&_.ant-table-thead]:!border-b
+    [&_.ant-table-thead]:border-border/40
+    [&_.ant-table-row]:!transition-colors
+    [&_.ant-table-row:hover>*]:!bg-muted/60
+    [&_.ant-table-tbody_.ant-table-row]:!cursor-pointer
+    [&_.ant-table-tbody_.ant-table-cell]:!py-4
+    [&_.ant-table-row:last-child>td]:!border-b-0
+    [&_.ant-table-cell:first-child]:!pl-6
+    [&_.ant-table-cell:last-child]:!pr-6
+  `;
 
-      <Table
-        columns={columns}
-        dataSource={records}
-        rowKey="id"
-        pagination={tableParams.pagination}
-        loading={loading}
-        onChange={handleTableChange}
+  return (
+    <>
+      <Toaster
+        richColors
+        position="top-center"
+        theme="light"
+        expand
+        duration={1500}
       />
-    </div>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24 space-y-8">
+        <div className="space-y-4">
+          <h1 className="text-3xl font-bold tracking-tight">
+            {t("records.title")}
+          </h1>
+          <p className="text-muted-foreground">{t("records.description")}</p>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Card className="p-6">
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <CalendarOutlined className="text-primary" />
+                  <span className="font-medium">{t("records.dateRange")}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <RangePicker
+                    locale={zhCN.DatePicker}
+                    className="!w-full sm:!w-auto"
+                    onChange={(dates) => {
+                      const newParams = {
+                        ...tableParams,
+                        dateRange: dates,
+                        pagination: { ...tableParams.pagination, current: 1 },
+                      };
+                      setTableParams(newParams);
+                      fetchRecords(newParams);
+                    }}
+                  />
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    onClick={handleExport}
+                  >
+                    <DownloadOutlined />
+                    {t("records.export")}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <Table
+                  columns={columns}
+                  dataSource={records}
+                  rowKey="id"
+                  pagination={{
+                    ...tableParams.pagination,
+                    className: "!justify-end",
+                    showTotal: (total) =>
+                      `${t("common.total")} ${total} ${t("common.count")}`,
+                  }}
+                  loading={loading}
+                  onChange={handleTableChange}
+                  className={tableClassName}
+                  scroll={{ x: 800 }}
+                />
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+      </div>
+    </>
   );
 }

@@ -183,6 +183,7 @@
 
   "records": {
     "title": "Usage Records",
+    "description": "View detailed model usage records for all users, including usage time, tokens consumed, and costs.",
     "export": "Export Records",
     "dateRange": "Date Range",
     "columns": {
@@ -190,7 +191,8 @@
       "model": "Model",
       "tokens": "Tokens",
       "cost": "Cost",
-      "time": "Time"
+      "time": "Time",
+      "balance": "Balance"
     }
   },
 
@@ -258,6 +260,12 @@
         "cost": "Cost",
         "balance": "Balance"
       }
+    },
+    "description": "View model usage, user consumption data and detailed usage records.",
+    "overview": {
+      "totalModels": "Models Used",
+      "totalUsers": "Active Users",
+      "totalCost": "Total Cost"
     }
   },
   "error": {
