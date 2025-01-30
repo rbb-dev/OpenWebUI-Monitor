@@ -115,7 +115,12 @@
         "perMsgPrice": "Per Message"
       },
       "perMsgPriceTooltip": "Set a negative value to charge by tokens instead of per message"
-    }
+    },
+    "testing": "Testing",
+    "testComplete": "Test Complete",
+    "testingModels": "Testing Models",
+    "testSuccess": "Success",
+    "testFailed": "Failed"
   },
 
   "users": {

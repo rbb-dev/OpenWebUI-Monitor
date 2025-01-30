@@ -94,13 +94,13 @@ export async function updateUserBalance(
 ): Promise<number> {
   await ensureUserTableExists();
 
-  console.log("正在更新用户余额:", { userId, cost });
+  console.log("Updating user balance:", { userId, cost });
 
   const currentBalance = await query(
     `SELECT balance FROM users WHERE id = $1`,
     [userId]
   );
-  console.log("当前余额:", currentBalance.rows[0]?.balance);
+  console.log("Current balance:", currentBalance.rows[0]?.balance);
 
   const result = await query(
     `
@@ -115,11 +115,11 @@ export async function updateUserBalance(
   );
 
   if (result.rows.length === 0) {
-    throw new Error("用户不存在");
+    throw new Error("User not found");
   }
 
   const newBalance = Number(result.rows[0].balance);
-  console.log("余额更新完成:", {
+  console.log("Balance updated:", {
     userId,
     cost: cost.toFixed(6),
     oldBalance: currentBalance.rows[0]?.balance,

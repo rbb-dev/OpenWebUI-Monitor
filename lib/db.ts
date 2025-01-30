@@ -206,7 +206,7 @@ export async function updateModelPrice(
     }
     return null;
   } catch (error) {
-    console.error(`更新模型 ${id} 价格失败:`, error);
+    console.error(`Failed to update ${id} price:`, error);
     throw error;
   } finally {
     if (client) {

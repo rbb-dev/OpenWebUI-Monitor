@@ -115,7 +115,12 @@
         "perMsgPrice": "每条消息"
       },
       "perMsgPriceTooltip": "每条消息的固定收费，如果设置为负数则按 token 计费"
-    }
+    },
+    "testing": "测试中",
+    "testComplete": "测试完成",
+    "testingModels": "正在测试模型",
+    "testSuccess": "测试成功",
+    "testFailed": "测试失败"
   },
 
   "users": {

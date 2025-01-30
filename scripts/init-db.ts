@@ -3,9 +3,9 @@ import { ensureTablesExist } from "../lib/db";
 async function init() {
   try {
     await ensureTablesExist();
-    console.log("数据库初始化成功");
+    console.log("Database initialized successfully");
   } catch (error) {
-    console.error("数据库初始化失败:", error);
+    console.error("Database initialization failed:", error);
     process.exit(1);
   }
 }
