@@ -9,7 +9,7 @@ export async function GET() {
   if (!token || token !== expectedToken) {
     return NextResponse.json(
       {
-        apiKey: "未授权",
+        apiKey: "Unauthorized",
         status: 401,
       },
       { status: 401 }
@@ -17,7 +17,7 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    apiKey: process.env.API_KEY || "未设置",
+    apiKey: process.env.API_KEY || "Unconfigured",
     status: 200,
   });
 }

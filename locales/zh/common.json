@@ -43,8 +43,8 @@
     },
     "messages": {
       "unauthorized": "未授权，请重新登录",
-      "apiKeyNotSet": "API密钥未设置或加载失败",
-      "apiKeyCopied": "API密钥已复制到剪贴板",
+      "apiKeyNotSet": "API 密钥未设置或加载失败",
+      "apiKeyCopied": "API 密钥已复制到剪贴板",
       "updateCheckFailed": "检查更新失败",
       "latestVersion": "当前已是最新版本",
       "getVersionFailed": "获取版本号失败"
@@ -225,6 +225,35 @@
         "cost": "费用",
         "balance": "余额"
       }
+    }
+  },
+  "error": {
+    "model": {
+      "failToFetchModels": "获取模型失败",
+      "unknownError": "未知错误",
+      "failToFetchApiKey": "获取 API KEY 失败",
+      "ApiKeyNotConfigured": "API KEY 未配置",
+      "ApiKeyNotFetched": "API KEY 未获取",
+      "nonePositiveNumber": "请输入有效的正数",
+      "invalidNumber": "请输入有效的数字",
+      "priceUpdateFail": "更新价格失败",
+      "priceUpdateSuccess": "更新价格成功",
+      "invalidImportFormat": "导入的数据格式不正确",
+      "batchPriceUpdateFail": "批量更新价格失败",
+      "serverResponse": "服务器返回的更新结果",
+      "updateSuccess": "成功更新",
+      "numberOfModelPrice": "个模型的价格",
+      "failToImport": "导入失败",
+      "failToExport": "导出失败",
+      "failToTest": "测试失败",
+      "failToTestWithoutApiKey": "API Key 未获取，无法进行测试"
+    },
+    "panel": {
+      "fetchUsageDataFail": "获取使用数据失败"
+    },
+    "records": {
+      "usageRecord": "使用记录",
+      "exportRecord": "导出记录"
     }
   }
 }

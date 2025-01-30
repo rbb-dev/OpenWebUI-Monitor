@@ -9,7 +9,7 @@ export async function DELETE(
     await deleteUser(params.id);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("删除用户失败:", error);
-    return NextResponse.json({ error: "删除用户失败" }, { status: 500 });
+    console.error("Fail to delete user:", error);
+    return NextResponse.json({ error: "Fail to delete user" }, { status: 500 });
   }
 }

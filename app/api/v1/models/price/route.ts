@@ -11,13 +11,16 @@ interface PriceUpdate {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
-    console.log("收到的原始请求数据:", data);
+    console.log("Raw data received:", data);
 
     // 从对象中提取模型数组
     const updates = data.updates || data;
     if (!Array.isArray(updates)) {
-      console.error("无效的数据格式 - 期望数组:", updates);
-      return NextResponse.json({ error: "无效的数据格式" }, { status: 400 });
+      console.error("Invalid data format - expected array:", updates);
+      return NextResponse.json(
+        { error: "Invalid data format" },
+        { status: 400 }
+      );
     }
 
     // 验证并转换数据格式
@@ -38,20 +41,22 @@ export async function POST(request: NextRequest) {
           !isValidPrice(update.output_price) ||
           !isValidPrice(update.per_msg_price)
         ) {
-          console.log("跳过无效数据:", update);
+          console.log("Skipping invalid data:", update);
           return false;
         }
         return true;
       });
 
-    console.log("处理后的更新数据:", validUpdates);
-    console.log(`成功验证 ${validUpdates.length} 个模型的价格更新请求`);
+    console.log("Update data after processing:", validUpdates);
+    console.log(
+      `Successfully verified price updating requests of ${validUpdates.length} models`
+    );
 
     // 执行批量更新并收集结果
     const results = await Promise.all(
       validUpdates.map(async (update: PriceUpdate) => {
         try {
-          console.log("正在处理模型更新:", {
+          console.log("Updating model prices:", {
             id: update.id,
             input_price: update.input_price,
             output_price: update.output_price,
@@ -65,7 +70,7 @@ export async function POST(request: NextRequest) {
             update.per_msg_price
           );
 
-          console.log("更新结果:", {
+          console.log("Update results:", {
             id: update.id,
             success: !!result,
             result,
@@ -77,30 +82,30 @@ export async function POST(request: NextRequest) {
             data: result,
           };
         } catch (error) {
-          console.error("更新失败:", {
+          console.error("Fail to update:", {
             id: update.id,
-            error: error instanceof Error ? error.message : "未知错误",
+            error: error instanceof Error ? error.message : "Unknown error",
           });
           return {
             id: update.id,
             success: false,
-            error: error instanceof Error ? error.message : "未知错误",
+            error: error instanceof Error ? error.message : "Unknown error",
           };
         }
       })
     );
 
     const successCount = results.filter((r) => r.success).length;
-    console.log(`成功更新 ${successCount} 个模型的价格`);
+    console.log(`Successfully updated prices of ${successCount} models`);
 
     return NextResponse.json({
       success: true,
-      message: `成功更新 ${successCount} 个模型的价格`,
+      message: `Successfully updated prices of ${successCount} models`,
       results,
     });
   } catch (error) {
-    console.error("批量更新失败:", error);
-    return NextResponse.json({ error: "批量更新失败" }, { status: 500 });
+    console.error("Batch update failed:", error);
+    return NextResponse.json({ error: "Batch update failed" }, { status: 500 });
   }
 }
 

@@ -7,7 +7,7 @@ export async function POST(req: Request) {
     if (!modelId) {
       return NextResponse.json({
         success: false,
-        message: "模型ID不能为空",
+        message: "Model ID cannot be empty",
       });
     }
 
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     if (!domain || !apiKey) {
       return NextResponse.json({
         success: false,
-        message: "环境变量未正确配置",
+        message: "Environment variables not configured correctly",
       });
     }
 
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
     } catch (e) {
       return NextResponse.json({
         success: false,
-        message: `解析响应失败: ${responseText}`,
+        message: `Fail to resolve response: ${responseText}`,
       });
     }
 
@@ -57,26 +57,26 @@ export async function POST(req: Request) {
         success: false,
         message:
           data.error ||
-          `API请求失败: ${response.status} ${response.statusText}`,
+          `API request failed: ${response.status} ${response.statusText}`,
       });
     }
 
     if (!data.choices?.[0]?.message?.content) {
       return NextResponse.json({
         success: false,
-        message: "响应格式不正确",
+        message: "Invalid response format",
       });
     }
 
     return NextResponse.json({
       success: true,
-      message: "测试成功",
+      message: "Test successful",
       response: data.choices[0].message.content,
     });
   } catch (error) {
     return NextResponse.json({
       success: false,
-      message: error instanceof Error ? error.message : "未知错误",
+      message: error instanceof Error ? error.message : "Unknown error",
     });
   }
 }

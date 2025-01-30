@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Table, Button, message, DatePicker, Select, Space } from "antd";
+import { Table, Button, message, DatePicker, Space } from "antd";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import type { FilterValue, SorterResult } from "antd/es/table/interface";
 import { DownloadOutlined } from "@ant-design/icons";
-import dayjs, { Dayjs } from "dayjs";
 import type { RangePickerProps } from "antd/es/date-picker";
 import zhCN from "antd/lib/locale/zh_CN";
 import React from "react";
@@ -48,7 +47,7 @@ export default function RecordsPage() {
 
   const columns: ColumnsType<UsageRecord> = [
     {
-      title: "用户",
+      title: "User",
       dataIndex: "nickname",
       key: "nickname",
       filters: users.map((user) => ({ text: user, value: user })),
@@ -56,14 +55,14 @@ export default function RecordsPage() {
       filterSearch: true,
     },
     {
-      title: "使用时间",
+      title: "Time",
       dataIndex: "use_time",
       key: "use_time",
       render: (text) => new Date(text).toLocaleString(),
       sorter: true,
     },
     {
-      title: "模型",
+      title: "Model",
       dataIndex: "model_name",
       key: "model_name",
       filters: models.map((model) => ({ text: model, value: model })),
@@ -71,21 +70,21 @@ export default function RecordsPage() {
       filterSearch: true,
     },
     {
-      title: "输入tokens",
+      title: "Input tokens",
       dataIndex: "input_tokens",
       key: "input_tokens",
       align: "right",
       sorter: true,
     },
     {
-      title: "输出tokens",
+      title: "Output tokens",
       dataIndex: "output_tokens",
       key: "output_tokens",
       align: "right",
       sorter: true,
     },
     {
-      title: "消耗金额",
+      title: "Cost",
       dataIndex: "cost",
       key: "cost",
       align: "right",
@@ -93,7 +92,7 @@ export default function RecordsPage() {
       sorter: true,
     },
     {
-      title: "剩余余额",
+      title: "Balance",
       dataIndex: "balance_after",
       key: "balance_after",
       align: "right",
@@ -152,7 +151,7 @@ export default function RecordsPage() {
       setUsers(data.users as string[]);
       setModels(data.models as string[]);
     } catch (error) {
-      message.error("获取记录失败");
+      message.error(t("error.panel.fetchUsageDataFail"));
     } finally {
       setLoading(false);
     }
@@ -197,14 +196,16 @@ export default function RecordsPage() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      message.error("导出失败");
+      message.error(t("error.model.failToExport"));
     }
   };
 
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-4">使用记录</h1>
+        <h1 className="text-2xl font-bold mb-4">
+          t("error.records.usageRecord")
+        </h1>
         <div className="flex justify-between items-center mb-4">
           <Space size="middle">
             <RangePicker
@@ -225,7 +226,7 @@ export default function RecordsPage() {
             icon={<DownloadOutlined />}
             onClick={handleExport}
           >
-            导出记录
+            t("error.records.exportRecord")
           </Button>
         </div>
       </div>

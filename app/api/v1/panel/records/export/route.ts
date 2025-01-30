@@ -22,13 +22,13 @@ export async function GET() {
 
     // 生成 CSV 内容
     const csvHeaders = [
-      "用户",
-      "使用时间",
-      "模型",
-      "输入tokens",
-      "输出tokens",
-      "消耗金额",
-      "剩余余额",
+      "User",
+      "Time",
+      "Model",
+      "Input tokens",
+      "Output tokens",
+      "Cost",
+      "Balance",
     ];
     const rows = records.rows.map((record) => [
       record.nickname,
@@ -57,8 +57,11 @@ export async function GET() {
       headers: responseHeaders,
     });
   } catch (error) {
-    console.error("导出记录失败:", error);
-    return NextResponse.json({ error: "导出记录失败" }, { status: 500 });
+    console.error("Fail to export records:", error);
+    return NextResponse.json(
+      { error: "Fail to export records" },
+      { status: 500 }
+    );
   } finally {
     if (client) {
       client.release();

@@ -226,5 +226,34 @@
         "balance": "Balance"
       }
     }
+  },
+  "error": {
+    "model": {
+      "failToFetchModels": "Failed to fetch models",
+      "unknownError": "Unknown error",
+      "failToFetchApiKey": "Failed to fetch API KEY",
+      "ApiKeyNotConfigured": "API KEY not configured",
+      "ApiKeyNotFetched": "API KEY not fetched",
+      "nonePositiveNumber": "Please enter a valid positive number",
+      "invalidNumber": "Please enter a valid number",
+      "priceUpdateFail": "Failed to update price",
+      "priceUpdateSuccess": "Price update successful",
+      "invalidImportFormat": "Invalid import data format",
+      "batchPriceUpdateFail": "Batch price update failed",
+      "serverResponse": "Server response update result",
+      "updateSuccess": "Update successful",
+      "numberOfModelPrice": "model(s) price",
+      "failToImport": "Import failed",
+      "failToExport": "Export failed",
+      "failToTest": "Test failed",
+      "failToTestWithoutApiKey": "API Key not fetched, unable to test"
+    },
+    "panel": {
+      "fetchUsageDataFail": "Failed to fetch usage data"
+    },
+    "records": {
+      "usageRecord": "Usage record",
+      "exportRecord": "Export record"
+    }
   }
 }

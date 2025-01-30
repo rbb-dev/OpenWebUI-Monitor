@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Table, Input, message, Tooltip, Upload, Space } from "antd";
+import { Table, Input, message, Tooltip } from "antd";
 import {
   DownloadOutlined,
-  ArrowLeftOutlined,
   ExperimentOutlined,
   CheckOutlined,
   CloseOutlined,
@@ -12,7 +11,6 @@ import {
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import Image from "next/image";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { TestProgress } from "../../components/models/TestProgress";
 import { motion, AnimatePresence } from "framer-motion";
@@ -56,7 +54,7 @@ export default function ModelsPage() {
       try {
         const response = await fetch("/api/v1/models");
         if (!response.ok) {
-          throw new Error("获取模型失败");
+          throw new Error(t("error.model.failToFetchModels"));
         }
         const data = (await response.json()) as ModelResponse[];
         setModels(
@@ -68,7 +66,9 @@ export default function ModelsPage() {
           }))
         );
       } catch (err) {
-        setError(err instanceof Error ? err.message : "未知错误");
+        setError(
+          err instanceof Error ? err.message : t("error.model.unknownError")
+        );
       } finally {
         setLoading(false);
       }
@@ -82,17 +82,21 @@ export default function ModelsPage() {
       try {
         const response = await fetch("/api/config/key");
         if (!response.ok) {
-          throw new Error(`获取 API Key 失败: ${response.status}`);
+          throw new Error(
+            `${t("error.model.failToFetchApiKey")}: ${response.status}`
+          );
         }
         const data = await response.json();
         if (!data.apiKey) {
-          throw new Error("API Key 未配置");
+          throw new Error(t("error.model.ApiKeyNotConfigured"));
         }
         setApiKey(data.apiKey);
       } catch (error) {
-        console.error("获取 API Key 失败:", error);
+        console.error(t("error.model.failToFetchApiKey"), error);
         message.error(
-          error instanceof Error ? error.message : "获取 API Key 失败"
+          error instanceof Error
+            ? error.message
+            : t("error.model.failToFetchApiKey")
         );
       }
     };
@@ -114,10 +118,10 @@ export default function ModelsPage() {
         field !== "per_msg_price" &&
         (!isFinite(validValue) || validValue < 0)
       ) {
-        throw new Error("请输入有效的正数");
+        throw new Error(t("error.model.nonePositiveNumber"));
       }
       if (field === "per_msg_price" && !isFinite(validValue)) {
-        throw new Error("请输入有效的数字");
+        throw new Error(t("error.model.invalidNumber"));
       }
 
       const input_price =
@@ -143,7 +147,8 @@ export default function ModelsPage() {
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "更新价格失败");
+      if (!response.ok)
+        throw new Error(data.error || t("error.model.priceUpdateFail"));
 
       if (data.results && data.results[0]?.success) {
         setModels((prevModels) =>
@@ -158,14 +163,18 @@ export default function ModelsPage() {
               : model
           )
         );
-        message.success("价格更新成功");
+        message.success(t("error.model.priceUpdateSuccess"));
       } else {
-        throw new Error(data.results[0]?.error || "更新价格失败");
+        throw new Error(
+          data.results[0]?.error || t("error.model.priceUpdateFail")
+        );
       }
 
       setEditingCell(null);
     } catch (err) {
-      message.error(err instanceof Error ? err.message : "更新价格失败");
+      message.error(
+        err instanceof Error ? err.message : t("error.model.priceUpdateFail")
+      );
       setEditingCell(null);
     }
   };
@@ -193,8 +202,8 @@ export default function ModelsPage() {
           } else {
             message.error(
               field === "per_msg_price"
-                ? "请输入有效的数字"
-                : "请输入有效的正数"
+                ? t("models.table.invalidNumber")
+                : t("models.table.nonePositiveNumber")
             );
             setEditingCell(null);
           }
@@ -366,7 +375,7 @@ export default function ModelsPage() {
         const importedData = JSON.parse(e.target?.result as string);
 
         if (!Array.isArray(importedData)) {
-          throw new Error("导入的数据格式不正确");
+          throw new Error(t("error.model.invalidImportFormat"));
         }
 
         const validUpdates = importedData.filter((item) =>
@@ -382,11 +391,11 @@ export default function ModelsPage() {
         });
 
         if (!response.ok) {
-          throw new Error("批量更新价格失败");
+          throw new Error(t("error.model.batchPriceUpdateFail"));
         }
 
         const data = await response.json();
-        console.log("服务器返回的更新结果:", data);
+        console.log(t("error.model.serverResponse"), data);
 
         if (data.results) {
           setModels((prevModels) =>
@@ -408,13 +417,15 @@ export default function ModelsPage() {
         }
 
         message.success(
-          `成功更新 ${
+          `${t("error.model.updateSuccess")} ${
             data.results.filter((r: any) => r.success).length
-          } 个模型的价格`
+          } ${t("error.model.numberOfModelPrice")}`
         );
       } catch (err) {
-        console.error("导入失败:", err);
-        message.error(err instanceof Error ? err.message : "导入失败");
+        console.error(t("error.model.failToImport"), err);
+        message.error(
+          err instanceof Error ? err.message : t("error.model.failToImport")
+        );
       }
     };
     reader.readAsText(file);
@@ -432,7 +443,7 @@ export default function ModelsPage() {
       return {
         id: model.id,
         success: false,
-        error: "API Key 未获取",
+        error: t("error.model.ApiKeyNotFetched"),
       };
     }
 
@@ -456,7 +467,7 @@ export default function ModelsPage() {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || "测试失败");
+        throw new Error(data.error || t("error.model.failToTest"));
       }
 
       return {
@@ -468,14 +479,17 @@ export default function ModelsPage() {
       return {
         id: model.id,
         success: false,
-        error: error instanceof Error ? error.message : "未知错误",
+        error:
+          error instanceof Error
+            ? error.message
+            : t("error.model.unknownError"),
       };
     }
   };
 
   const handleTestModels = async () => {
     if (!apiKey) {
-      message.error("API Key 未获取，无法进行测试");
+      message.error(t("error.model.failToTestWithoutApiKey"));
       return;
     }
 
@@ -500,8 +514,8 @@ export default function ModelsPage() {
       await Promise.all(testPromises);
       setIsTestComplete(true);
     } catch (error) {
-      console.error("测试过程出错:", error);
-      message.error("测试过程出错");
+      console.error(t("error.model.failToTest"), error);
+      message.error(t("error.model.failToTest"));
     } finally {
       setTesting(false);
     }

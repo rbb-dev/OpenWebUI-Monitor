@@ -10,7 +10,7 @@ export async function POST(req: Request) {
 
     // 验证数据格式
     if (!data.version || !data.data) {
-      throw new Error("无效的导入数据格式");
+      throw new Error("Invalid import data format");
     }
 
     // 获取数据库连接
@@ -73,18 +73,19 @@ export async function POST(req: Request) {
 
       return NextResponse.json({
         success: true,
-        message: "数据导入成功",
+        message: "Data import successful",
       });
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;
     }
   } catch (error) {
-    console.error("导入数据库失败:", error);
+    console.error("Fail to import database:", error);
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "导入数据库失败",
+        error:
+          error instanceof Error ? error.message : "Fail to import database",
       },
       { status: 500 }
     );

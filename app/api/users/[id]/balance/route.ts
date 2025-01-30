@@ -10,7 +10,10 @@ export async function PUT(
     const userId = params.id;
 
     if (typeof balance !== "number") {
-      return NextResponse.json({ error: "余额必须是数字" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Balance must be positive" },
+        { status: 400 }
+      );
     }
 
     const result = await query(
@@ -22,12 +25,18 @@ export async function PUT(
     );
 
     if (result.rows.length === 0) {
-      return NextResponse.json({ error: "用户不存在" }, { status: 404 });
+      return NextResponse.json(
+        { error: "User does not exist" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json(result.rows[0]);
   } catch (error) {
-    console.error("更新用户余额失败:", error);
-    return NextResponse.json({ error: "更新用户余额失败" }, { status: 500 });
+    console.error("Fail to update user balance:", error);
+    return NextResponse.json(
+      { error: "Fail to update user balance" },
+      { status: 500 }
+    );
   }
 }

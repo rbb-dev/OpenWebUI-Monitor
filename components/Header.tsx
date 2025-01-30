@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Dropdown, Modal, message } from "antd";
+import { Dropdown, Modal } from "antd";
+import { toast, Toaster } from "sonner";
 import type { MenuProps } from "antd";
 import {
   Copy,
@@ -119,11 +120,11 @@ export default function Header() {
   const handleCopyApiKey = () => {
     const token = localStorage.getItem("access_token");
     if (!token) {
-      message.error(t("header.messages.unauthorized"));
+      toast.error(t("header.messages.unauthorized"));
       return;
     }
     navigator.clipboard.writeText(apiKey);
-    message.success(t("header.messages.apiKeyCopied"));
+    toast.success(t("header.messages.apiKeyCopied"));
   };
 
   const handleLogout = () => {
@@ -134,7 +135,7 @@ export default function Header() {
   const checkUpdate = async () => {
     const token = localStorage.getItem("access_token");
     if (!token) {
-      message.error(t("header.messages.unauthorized"));
+      toast.error(t("header.messages.unauthorized"));
       return;
     }
 
@@ -154,9 +155,7 @@ export default function Header() {
       const latestVer = latestVersion.replace(/^v/, "");
 
       if (currentVer === latestVer) {
-        message.success(
-          `${t("header.messages.latestVersion")} v${APP_VERSION}`
-        );
+        toast.success(`${t("header.messages.latestVersion")} v${APP_VERSION}`);
       } else {
         return new Promise((resolve) => {
           const dialog = document.createElement("div");
@@ -234,7 +233,7 @@ export default function Header() {
         });
       }
     } catch (error) {
-      message.error(t("header.messages.updateCheckFailed"));
+      toast.error(t("header.messages.updateCheckFailed"));
       console.error(t("header.messages.updateCheckFailed"), error);
     } finally {
       setIsCheckingUpdate(false);
@@ -346,6 +345,13 @@ export default function Header() {
 
   return (
     <>
+      <Toaster
+        richColors
+        position="top-center"
+        theme="light"
+        expand
+        duration={1500}
+      />
       <motion.header
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -443,14 +449,14 @@ export default function Header() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 h-full bg-white z-50 w-full max-w-[320px] overflow-hidden shadow-lg border-l border-gray-100"
+              className="fixed top-0 right-0 h-full bg-white z-50 w-full max-w-[320px] md:top-[calc(4rem+0.5rem)] md:h-auto md:mr-6 md:rounded-xl md:border md:shadow-lg md:max-h-[calc(100vh-5rem)] overflow-hidden shadow-lg border-l border-gray-100"
             >
               {/* 内容容器 */}
               <div className="relative h-full flex flex-col">
                 {/* 顶部栏 */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-100">
                   <h2 className="text-lg font-semibold text-gray-800">
-                    {t("header.menu.title")}
+                    {t("header.menu.settings")}
                   </h2>
                   <button
                     onClick={() => setIsMenuOpen(false)}
@@ -463,7 +469,7 @@ export default function Header() {
                 {/* 菜单项列表 */}
                 <div className="flex-1 overflow-y-auto p-2">
                   <div className="space-y-1">
-                    {/* 导航项 */}
+                    {/* 导航项 - 仅在移动端显示 */}
                     <div className="md:hidden space-y-1">
                       {navigationItems.map((item) => (
                         <button
@@ -482,54 +488,23 @@ export default function Header() {
                       ))}
                     </div>
 
-                    {/* 设置组 */}
-                    <div className="border-t border-gray-100 pt-2">
-                      <button
-                        onClick={() =>
-                          setIsSettingsExpanded(!isSettingsExpanded)
-                        }
-                        className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Settings className="w-5 h-5 text-gray-500" />
-                          <span className="text-sm font-medium text-gray-700">
-                            {t("header.menu.settings")}
+                    {/* 设置选项 - 直接显示所有选项 */}
+                    <div className="border-t border-gray-100 pt-2 md:border-t-0 md:pt-0">
+                      {settingsItems.map((item) => (
+                        <button
+                          key={item.label}
+                          onClick={() => {
+                            setIsMenuOpen(false);
+                            item.onClick();
+                          }}
+                          className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 hover:text-gray-900"
+                        >
+                          <span className="text-gray-500">{item.icon}</span>
+                          <span className="text-sm font-medium">
+                            {item.label}
                           </span>
-                        </div>
-                        <ChevronDown
-                          className={`w-4 h-4 text-gray-400 transition-transform ${
-                            isSettingsExpanded ? "rotate-180" : ""
-                          }`}
-                        />
-                      </button>
-
-                      {/* 设置项列表 */}
-                      <AnimatePresence>
-                        {isSettingsExpanded && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="space-y-1 overflow-hidden pl-9"
-                          >
-                            {settingsItems.map((item) => (
-                              <button
-                                key={item.label}
-                                onClick={() => {
-                                  setIsMenuOpen(false);
-                                  item.onClick();
-                                }}
-                                className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-gray-50 transition-colors text-gray-600 hover:text-gray-900"
-                              >
-                                <span className="text-gray-400">
-                                  {item.icon}
-                                </span>
-                                <span className="text-sm">{item.label}</span>
-                              </button>
-                            ))}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>

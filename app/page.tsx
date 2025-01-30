@@ -3,18 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FiDatabase, FiUsers, FiBarChart2, FiGithub } from "react-icons/fi";
-import { GithubOutlined, CloseOutlined } from "@ant-design/icons";
+import { CloseOutlined } from "@ant-design/icons";
 import { APP_VERSION } from "@/lib/version";
 import { message } from "antd";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { AnimatedGridPattern } from "@/components/ui/animated-grid-pattern";

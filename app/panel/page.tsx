@@ -131,7 +131,7 @@ export default function PanelPage() {
         });
       }
     } catch (error) {
-      console.error("获取使用数据失败:", error);
+      console.error(t("error.panel.fetchUsageDataFail"), error);
     } finally {
       setLoading(false);
     }
@@ -173,7 +173,7 @@ export default function PanelPage() {
         },
       });
     } catch (error) {
-      message.error("获取记录失败");
+      message.error(t("error.panel.fetchUsageDataFail"));
     } finally {
       setTableLoading(false);
     }

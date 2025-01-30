@@ -83,7 +83,7 @@ export async function POST(req: Request) {
     // 获取模型价格
     const modelPrice = await getModelPrice(modelId);
     if (!modelPrice) {
-      throw new Error(`未找到模型 ${modelId} 的价格信息`);
+      throw new Error(`Fail to fetch price info of model ${modelId}`);
     }
 
     // 计算 tokens
@@ -113,7 +113,7 @@ export async function POST(req: Request) {
       // 如果设置了每条消息的固定价格，直接使用
       totalCost = Number(modelPrice.per_msg_price);
       console.log(
-        `使用固定价格计费: ${totalCost} (每条消息价格: ${modelPrice.per_msg_price})`
+        `Using fixed pricing: ${totalCost} (${modelPrice.per_msg_price} per message)`
       );
     } else {
       // 否则按 token 数量计算价格
@@ -132,7 +132,7 @@ export async function POST(req: Request) {
     );
 
     if (userResult.rows.length === 0) {
-      throw new Error("用户不存在");
+      throw new Error("User does not exist");
     }
 
     const newBalance = Number(userResult.rows[0].balance);
@@ -164,7 +164,7 @@ export async function POST(req: Request) {
         outputTokens,
         totalCost,
         newBalance,
-        message: "请求成功",
+        message: "Request successful",
       })
     );
 
@@ -174,7 +174,7 @@ export async function POST(req: Request) {
       outputTokens,
       totalCost,
       newBalance,
-      message: "请求成功",
+      message: "Request successful",
     });
   } catch (error) {
     await query("ROLLBACK");
@@ -182,7 +182,8 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "处理请求时发生错误",
+        error:
+          error instanceof Error ? error.message : "Error processing request",
         error_type: error instanceof Error ? error.name : "UNKNOWN_ERROR",
       },
       { status: 500 }

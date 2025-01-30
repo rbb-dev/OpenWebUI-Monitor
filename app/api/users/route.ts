@@ -18,7 +18,10 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("获取用户列表失败:", error);
-    return NextResponse.json({ error: "获取用户列表失败" }, { status: 500 });
+    console.error("Fail to fetch user list:", error);
+    return NextResponse.json(
+      { error: "Fail to fetch user list" },
+      { status: 500 }
+    );
   }
 }

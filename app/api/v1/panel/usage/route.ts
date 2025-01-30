@@ -66,7 +66,10 @@ export async function GET(request: Request) {
 
     return NextResponse.json(formattedData);
   } catch (error) {
-    console.error("获取使用统计失败:", error);
-    return NextResponse.json({ error: "获取使用统计失败" }, { status: 500 });
+    console.error("Fail to fetch usage records:", error);
+    return NextResponse.json(
+      { error: "Fail to fetch usage records" },
+      { status: 500 }
+    );
   }
 }

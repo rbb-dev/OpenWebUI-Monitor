@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { ensureTablesExist, getOrCreateModelPrice } from "@/lib/db";
-import { ModelPrice } from "@/lib/db";
 
 interface ModelInfo {
   id: string;
@@ -36,7 +35,7 @@ export async function GET() {
 
     const domain = process.env.OPENWEBUI_DOMAIN;
     if (!domain) {
-      throw new Error("OPENWEBUI_DOMAIN 环境变量未设置");
+      throw new Error("OPENWEBUI_DOMAIN environment variable is not set.");
     }
 
     // 规范化 API URL

@@ -43,8 +43,11 @@ export async function GET() {
       headers,
     });
   } catch (error) {
-    console.error("导出数据库失败:", error);
-    return NextResponse.json({ error: "导出数据库失败" }, { status: 500 });
+    console.error("Fail to export database:", error);
+    return NextResponse.json(
+      { error: "Fail to export database" },
+      { status: 500 }
+    );
   } finally {
     if (client) {
       client.release();
