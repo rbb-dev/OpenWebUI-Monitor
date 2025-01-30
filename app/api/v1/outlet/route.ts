@@ -61,81 +61,62 @@ async function getModelPrice(modelId: string): Promise<ModelPrice | null> {
 }
 
 export async function POST(req: Request) {
-  const client = (await getClient()) as DbClient;
-  let pgClient: DbClient | null = null;
-
   try {
-    // 获取专用的事务客户端
-    if (isVercel) {
-      pgClient = client;
-    } else {
-      pgClient = await (client as Pool).connect();
-    }
+    const body = await req.json();
+    const { userId, userName, modelId, inputTokens, outputTokens } = body;
 
-    const data = await req.json();
-    const modelId = data.body.model;
-    const userId = data.user.id;
-    const userName = data.user.name || "Unknown User";
-
-    // 开启事务
+    // 开始事务
     await query("BEGIN");
 
-    // 获取模型价格
-    const modelPrice = await getModelPrice(modelId);
-    if (!modelPrice) {
-      throw new Error(`Fail to fetch price info of model ${modelId}`);
-    }
-
-    // 计算 tokens
-    const lastMessage = data.body.messages[data.body.messages.length - 1];
-
-    let inputTokens: number;
-    let outputTokens: number;
-    if (
-      lastMessage.info &&
-      lastMessage.info.prompt_tokens &&
-      lastMessage.info.completion_tokens
-    ) {
-      inputTokens = lastMessage.info.prompt_tokens;
-      outputTokens = lastMessage.info.completion_tokens;
-    } else {
-      outputTokens = encode(lastMessage.content).length;
-      const totalTokens = data.body.messages.reduce(
-        (sum: number, msg: Message) => sum + encode(msg.content).length,
-        0
-      );
-      inputTokens = totalTokens - outputTokens;
-    }
-
-    // 计算成本
-    let totalCost: number;
-    if (modelPrice.per_msg_price >= 0) {
-      // 如果设置了每条消息的固定价格，直接使用
-      totalCost = Number(modelPrice.per_msg_price);
-      console.log(
-        `Using fixed pricing: ${totalCost} (${modelPrice.per_msg_price} per message)`
-      );
-    } else {
-      // 否则按 token 数量计算价格
-      const inputCost = (inputTokens / 1_000_000) * modelPrice.input_price;
-      const outputCost = (outputTokens / 1_000_000) * modelPrice.output_price;
-      totalCost = inputCost + outputCost;
-    }
-
-    // 获取并更新用户余额
-    const userResult = await query(
-      `UPDATE users 
-       SET balance = balance - $1
-       WHERE id = $2
-       RETURNING balance`,
-      [totalCost, userId]
-    );
+    // 首先检查用户是否被拉黑
+    const userResult = await query(`SELECT deleted FROM users WHERE id = $1`, [
+      userId,
+    ]);
 
     if (userResult.rows.length === 0) {
       throw new Error("User does not exist");
     }
 
-    const newBalance = Number(userResult.rows[0].balance);
+    if (userResult.rows[0].deleted) {
+      throw new Error("User is blocked");
+    }
+
+    // 获取模型价格
+    const modelResult = await query(
+      `SELECT input_price, output_price, per_msg_price FROM model_prices WHERE model_id = $1`,
+      [modelId]
+    );
+
+    if (modelResult.rows.length === 0) {
+      throw new Error("Model price not found");
+    }
+
+    const modelPrice = modelResult.rows[0];
+
+    // 计算成本
+    let totalCost: number;
+    if (modelPrice.per_msg_price >= 0) {
+      totalCost = Number(modelPrice.per_msg_price);
+    } else {
+      const inputCost = (inputTokens / 1_000_000) * modelPrice.input_price;
+      const outputCost = (outputTokens / 1_000_000) * modelPrice.output_price;
+      totalCost = inputCost + outputCost;
+    }
+
+    // 更新用户余额
+    const balanceResult = await query(
+      `UPDATE users 
+       SET balance = balance - $1
+       WHERE id = $2 AND NOT deleted
+       RETURNING balance`,
+      [totalCost, userId]
+    );
+
+    if (balanceResult.rows.length === 0) {
+      throw new Error("Failed to update user balance or user is blocked");
+    }
+
+    const newBalance = Number(balanceResult.rows[0].balance);
 
     // 记录使用情况
     await query(
@@ -157,41 +138,28 @@ export async function POST(req: Request) {
 
     await query("COMMIT");
 
-    console.log(
-      JSON.stringify({
-        success: true,
-        inputTokens,
-        outputTokens,
-        totalCost,
-        newBalance,
-        message: "Request successful",
-      })
-    );
-
     return NextResponse.json({
       success: true,
-      inputTokens,
-      outputTokens,
-      totalCost,
-      newBalance,
-      message: "Request successful",
+      balance: newBalance,
+      cost: totalCost,
     });
   } catch (error) {
     await query("ROLLBACK");
-    console.error("Outlet error:", error);
+    console.error("Failed to process request:", error);
+
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    const status = errorMessage === "User is blocked" ? 403 : 500;
+
     return NextResponse.json(
       {
-        success: false,
-        error:
-          error instanceof Error ? error.message : "Error processing request",
-        error_type: error instanceof Error ? error.name : "UNKNOWN_ERROR",
+        error: errorMessage,
+        code:
+          errorMessage === "User is blocked"
+            ? "USER_BLOCKED"
+            : "INTERNAL_ERROR",
       },
-      { status: 500 }
+      { status }
     );
-  } finally {
-    // 只在非 Vercel 环境下释放连接
-    if (!isVercel && pgClient && "release" in pgClient) {
-      pgClient.release();
-    }
   }
 }
