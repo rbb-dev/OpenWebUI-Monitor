@@ -9,11 +9,10 @@ export async function GET(req: NextRequest) {
     const sortField = searchParams.get("sortField");
     const sortOrder = searchParams.get("sortOrder");
     const search = searchParams.get("search");
-
-    const offset = (page - 1) * pageSize;
+    const deleted = searchParams.get("deleted") === "true";
 
     // 构建查询条件
-    const conditions = [];
+    const conditions = [`deleted = ${deleted}`];
     const params = [];
     let paramIndex = 1;
 
@@ -25,13 +24,7 @@ export async function GET(req: NextRequest) {
       paramIndex++;
     }
 
-    const whereClause =
-      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-
-    // 构建排序
-    const orderClause = sortField
-      ? `ORDER BY ${sortField} ${sortOrder === "descend" ? "DESC" : "ASC"}`
-      : "ORDER BY created_at DESC";
+    const whereClause = `WHERE ${conditions.join(" AND ")}`;
 
     // 获取总记录数
     const countResult = await query(
@@ -45,9 +38,13 @@ export async function GET(req: NextRequest) {
       `SELECT id, email, name, role, balance, deleted, created_at 
        FROM users 
        ${whereClause} 
-       ${orderClause} 
+       ${
+         sortField
+           ? `ORDER BY ${sortField} ${sortOrder === "descend" ? "DESC" : "ASC"}`
+           : "ORDER BY created_at DESC"
+       }
        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
-      [...params, pageSize, offset]
+      [...params, pageSize, (page - 1) * pageSize]
     );
 
     return NextResponse.json({

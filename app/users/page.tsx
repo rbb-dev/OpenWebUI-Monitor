@@ -31,9 +31,43 @@ interface User {
   deleted: boolean;
 }
 
+const TABLE_STYLES = `
+  [&_.ant-table]:!border-b-0 
+  [&_.ant-table-container]:!rounded-xl 
+  [&_.ant-table-container]:!border-hidden
+  [&_.ant-table-cell]:!border-border/40
+  [&_.ant-table-thead_.ant-table-cell]:!bg-muted/30
+  [&_.ant-table-thead_.ant-table-cell]:!text-muted-foreground
+  [&_.ant-table-thead_.ant-table-cell]:!font-medium
+  [&_.ant-table-thead_.ant-table-cell]:!text-sm
+  [&_.ant-table-thead]:!border-b
+  [&_.ant-table-thead]:border-border/40
+  [&_.ant-table-row]:!transition-colors
+  [&_.ant-table-row:hover>*]:!bg-muted/60
+  [&_.ant-table-tbody_.ant-table-row]:!cursor-pointer
+  [&_.ant-table-tbody_.ant-table-cell]:!py-4
+  [&_.ant-table-row:last-child>td]:!border-b-0
+  [&_.ant-table-cell:first-child]:!pl-6
+  [&_.ant-table-cell:last-child]:!pr-6
+  [&_.ant-pagination]:!px-6
+  [&_.ant-pagination]:!py-4
+  [&_.ant-pagination]:!border-t
+  [&_.ant-pagination]:border-border/40
+  [&_.ant-pagination-item]:!rounded-lg
+  [&_.ant-pagination-item]:!border-border/40
+  [&_.ant-pagination-item-active]:!bg-primary/10
+  [&_.ant-pagination-item-active]:!border-primary/30
+  [&_.ant-pagination-item-active>a]:!text-primary
+  [&_.ant-pagination-prev_.ant-pagination-item-link]:!rounded-lg
+  [&_.ant-pagination-next_.ant-pagination-item-link]:!rounded-lg
+  [&_.ant-pagination-prev_.ant-pagination-item-link]:!border-border/40
+  [&_.ant-pagination-next_.ant-pagination-item-link]:!border-border/40
+`;
+
 export default function UsersPage() {
   const { t } = useTranslation("common");
   const [users, setUsers] = useState<User[]>([]);
+  const [blacklistUsers, setBlacklistUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -49,11 +83,13 @@ export default function UsersPage() {
   });
   const [searchText, setSearchText] = useState("");
   const [showBlacklist, setShowBlacklist] = useState(false);
+  const [blacklistCurrentPage, setBlacklistCurrentPage] = useState(1);
+  const [blacklistTotal, setBlacklistTotal] = useState(0);
 
-  const fetchUsers = async (page: number) => {
+  const fetchUsers = async (page: number, isBlacklist: boolean = false) => {
     setLoading(true);
     try {
-      let url = `/api/users?page=${page}`;
+      let url = `/api/users?page=${page}&deleted=${isBlacklist}`;
       if (sortInfo.field && sortInfo.order) {
         url += `&sortField=${sortInfo.field}&sortOrder=${sortInfo.order}`;
       }
@@ -65,8 +101,13 @@ export default function UsersPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      setUsers(data.users);
-      setTotal(data.total);
+      if (isBlacklist) {
+        setBlacklistUsers(data.users);
+        setBlacklistTotal(data.total);
+      } else {
+        setUsers(data.users);
+        setTotal(data.total);
+      }
     } catch (err) {
       console.error(err);
       message.error(t("users.message.fetchError"));
@@ -75,9 +116,27 @@ export default function UsersPage() {
     }
   };
 
+  const fetchBlacklistTotal = async () => {
+    try {
+      const res = await fetch(`/api/users?page=1&deleted=true&pageSize=1`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setBlacklistTotal(data.total);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
-    fetchUsers(currentPage);
+    fetchUsers(currentPage, false);
+    fetchBlacklistTotal();
   }, [currentPage, sortInfo, searchText]);
+
+  useEffect(() => {
+    if (showBlacklist) {
+      fetchUsers(blacklistCurrentPage, true);
+    }
+  }, [blacklistCurrentPage, showBlacklist, sortInfo, searchText]);
 
   const handleUpdateBalance = async (userId: string, newBalance: number) => {
     try {
@@ -92,7 +151,7 @@ export default function UsersPage() {
 
       message.success(t("users.message.updateBalance.success"));
       setEditingKey("");
-      fetchUsers(currentPage);
+      fetchUsers(currentPage, false);
     } catch (err) {
       message.error(
         err instanceof Error
@@ -121,13 +180,31 @@ export default function UsersPage() {
         throw new Error(error.message);
       }
 
-      setUsers((prev) =>
-        prev.map((user) =>
-          user.id === userToDelete.id
-            ? { ...user, deleted: !user.deleted }
-            : user
-        )
-      );
+      if (!userToDelete.deleted) {
+        const newTotal = total - 1;
+        const maxPage = Math.ceil(newTotal / 20);
+        if (currentPage > maxPage && maxPage > 0) {
+          setCurrentPage(maxPage);
+        } else {
+          fetchUsers(currentPage, false);
+        }
+        setBlacklistTotal((prev) => prev + 1);
+      } else {
+        const newBlacklistTotal = blacklistTotal - 1;
+        const maxBlacklistPage = Math.ceil(newBlacklistTotal / 20);
+        if (blacklistCurrentPage > maxBlacklistPage && maxBlacklistPage > 0) {
+          setBlacklistCurrentPage(maxBlacklistPage);
+        } else {
+          fetchUsers(blacklistCurrentPage, true);
+        }
+        setBlacklistTotal((prev) => prev - 1);
+      }
+
+      if (userToDelete.deleted) {
+        fetchUsers(currentPage, false);
+      } else if (showBlacklist) {
+        fetchUsers(blacklistCurrentPage, true);
+      }
 
       message.success(
         userToDelete.deleted
@@ -340,39 +417,7 @@ export default function UsersPage() {
             }))}
           rowKey="id"
           loading={loading}
-          size="middle"
-          className="
-            [&_.ant-table]:!border-b-0 
-            [&_.ant-table-container]:!rounded-xl 
-            [&_.ant-table-container]:!border-hidden
-            [&_.ant-table-cell]:!border-border/40
-            [&_.ant-table-thead_.ant-table-cell]:!bg-muted/30
-            [&_.ant-table-thead_.ant-table-cell]:!text-muted-foreground
-            [&_.ant-table-thead_.ant-table-cell]:!font-medium
-            [&_.ant-table-thead_.ant-table-cell]:!text-sm
-            [&_.ant-table-thead]:!border-b
-            [&_.ant-table-thead]:border-border/40
-            [&_.ant-table-row]:!transition-colors
-            [&_.ant-table-row:hover>*]:!bg-muted/60
-            [&_.ant-table-tbody_.ant-table-row]:!cursor-pointer
-            [&_.ant-table-tbody_.ant-table-cell]:!py-4
-            [&_.ant-table-row:last-child>td]:!border-b-0
-            [&_.ant-table-cell:first-child]:!pl-6
-            [&_.ant-table-cell:last-child]:!pr-6
-            [&_.ant-pagination]:!px-6
-            [&_.ant-pagination]:!py-4
-            [&_.ant-pagination]:!border-t
-            [&_.ant-pagination]:border-border/40
-            [&_.ant-pagination-item]:!rounded-lg
-            [&_.ant-pagination-item]:!border-border/40
-            [&_.ant-pagination-item-active]:!bg-primary/10
-            [&_.ant-pagination-item-active]:!border-primary/30
-            [&_.ant-pagination-item-active>a]:!text-primary
-            [&_.ant-pagination-prev_.ant-pagination-item-link]:!rounded-lg
-            [&_.ant-pagination-next_.ant-pagination-item-link]:!rounded-lg
-            [&_.ant-pagination-prev_.ant-pagination-item-link]:!border-border/40
-            [&_.ant-pagination-next_.ant-pagination-item-link]:!border-border/40
-          "
+          className={TABLE_STYLES}
           pagination={{
             total,
             pageSize: 20,
@@ -418,42 +463,34 @@ export default function UsersPage() {
               d="M19 9l-7 7-7-7"
             />
           </svg>
-          {t("users.blacklist.title")} (
-          {users.filter((user) => user.deleted).length})
+          {t("users.blacklist.title")} ({blacklistTotal})
         </button>
 
         {showBlacklist && (
           <div className="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden">
             <Table
               columns={getColumns(true)}
-              dataSource={users
-                .filter((user) => user.deleted)
-                .map((user) => ({
-                  key: user.id,
-                  ...user,
-                  balance: Number(user.balance),
-                }))}
+              dataSource={blacklistUsers.map((user) => ({
+                key: user.id,
+                ...user,
+                balance: Number(user.balance),
+              }))}
               rowKey="id"
-              pagination={false}
-              className="
-                [&_.ant-table]:!border-b-0 
-                [&_.ant-table-container]:!rounded-xl 
-                [&_.ant-table-container]:!border-hidden
-                [&_.ant-table-cell]:!border-border/40
-                [&_.ant-table-thead_.ant-table-cell]:!bg-muted/30
-                [&_.ant-table-thead_.ant-table-cell]:!text-muted-foreground
-                [&_.ant-table-thead_.ant-table-cell]:!font-medium
-                [&_.ant-table-thead_.ant-table-cell]:!text-sm
-                [&_.ant-table-thead]:!border-b
-                [&_.ant-table-thead]:border-border/40
-                [&_.ant-table-row]:!transition-colors
-                [&_.ant-table-row:hover>*]:!bg-muted/60
-                [&_.ant-table-tbody_.ant-table-row]:!cursor-pointer
-                [&_.ant-table-tbody_.ant-table-cell]:!py-4
-                [&_.ant-table-row:last-child>td]:!border-b-0
-                [&_.ant-table-cell:first-child]:!pl-6
-                [&_.ant-table-cell:last-child]:!pr-6
-              "
+              className={TABLE_STYLES}
+              pagination={{
+                total: blacklistTotal,
+                pageSize: 20,
+                current: blacklistCurrentPage,
+                onChange: (page) => {
+                  setBlacklistCurrentPage(page);
+                  setEditingKey("");
+                },
+                showTotal: (total) => (
+                  <span className="text-sm text-muted-foreground">
+                    {t("users.total")} {total} {t("users.totalRecords")}
+                  </span>
+                ),
+              }}
             />
           </div>
         )}
