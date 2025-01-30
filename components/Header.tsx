@@ -449,18 +449,18 @@ export default function Header() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 h-full bg-white z-50 w-full max-w-[320px] md:top-[calc(4rem+0.5rem)] md:h-auto md:mr-6 md:rounded-xl md:border md:shadow-lg md:max-h-[calc(100vh-5rem)] overflow-hidden shadow-lg border-l border-gray-100"
+              className="fixed top-0 right-0 h-full bg-white/95 backdrop-blur-xl z-50 w-full max-w-[480px] md:top-[calc(4rem+0.5rem)] md:h-auto md:mr-6 md:rounded-2xl md:border md:shadow-xl md:max-h-[calc(100vh-5rem)] overflow-hidden shadow-lg border-l border-gray-100/50"
             >
               {/* 内容容器 */}
               <div className="relative h-full flex flex-col">
                 {/* 顶部栏 */}
-                <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                  <h2 className="text-lg font-semibold text-gray-800">
+                <div className="flex items-center justify-between p-4 border-b border-gray-100/50">
+                  <h2 className="text-lg font-medium bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
                     {t("header.menu.settings")}
                   </h2>
                   <button
                     onClick={() => setIsMenuOpen(false)}
-                    className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-gray-100/80 transition-all duration-200"
                   >
                     <X className="w-5 h-5 text-gray-500" />
                   </button>
@@ -471,39 +471,58 @@ export default function Header() {
                   <div className="space-y-1">
                     {/* 导航项 - 仅在移动端显示 */}
                     <div className="md:hidden space-y-1">
-                      {navigationItems.map((item) => (
-                        <button
+                      {navigationItems.map((item, index) => (
+                        <motion.button
                           key={item.path}
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.05 }}
                           onClick={() => {
                             setIsMenuOpen(false);
                             router.push(item.path);
                           }}
-                          className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 hover:text-gray-900"
+                          className="w-full group"
                         >
-                          <span className="text-gray-500">{item.icon}</span>
-                          <span className="text-sm font-medium">
-                            {item.label}
-                          </span>
-                        </button>
+                          <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-gradient-to-r hover:from-gray-50/50 hover:to-gray-100/50 transition-all duration-300">
+                            <span
+                              className={`${item.hoverColor} transition-colors duration-300`}
+                            >
+                              {item.icon}
+                            </span>
+                            <span className="text-sm font-medium text-gray-600 group-hover:text-gray-900 transition-colors duration-300">
+                              {item.label}
+                            </span>
+                          </div>
+                        </motion.button>
                       ))}
                     </div>
 
                     {/* 设置选项 - 直接显示所有选项 */}
-                    <div className="border-t border-gray-100 pt-2 md:border-t-0 md:pt-0">
-                      {settingsItems.map((item) => (
-                        <button
+                    <div className="border-t border-gray-100/50 pt-2 md:border-t-0 md:pt-0">
+                      {settingsItems.map((item, index) => (
+                        <motion.button
                           key={item.label}
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{
+                            delay:
+                              (index + navigationItems.length * 0.05) * 0.05,
+                          }}
                           onClick={() => {
                             setIsMenuOpen(false);
                             item.onClick();
                           }}
-                          className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 hover:text-gray-900"
+                          className="w-full group"
                         >
-                          <span className="text-gray-500">{item.icon}</span>
-                          <span className="text-sm font-medium">
-                            {item.label}
-                          </span>
-                        </button>
+                          <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-gradient-to-r hover:from-gray-50/50 hover:to-gray-100/50 transition-all duration-300">
+                            <span className="text-gray-500 group-hover:text-gray-900 transition-colors duration-300">
+                              {item.icon}
+                            </span>
+                            <span className="text-sm font-medium text-gray-600 group-hover:text-gray-900 transition-colors duration-300">
+                              {item.label}
+                            </span>
+                          </div>
+                        </motion.button>
                       ))}
                     </div>
                   </div>

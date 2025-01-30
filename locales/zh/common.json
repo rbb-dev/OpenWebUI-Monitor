@@ -127,6 +127,7 @@
 
   "users": {
     "title": "用户管理",
+    "description": "管理所有用户的账户信息和余额。您可以查看用户详情、调整余额或将用户加入黑名单。",
     "userInfo": "用户信息",
     "balance": "余额",
     "id": "ID",
@@ -157,7 +158,9 @@
     },
     "total": "共",
     "totalRecords": "条记录",
+    "search": "搜索",
     "searchPlaceholder": "搜索用户名或邮箱...",
+    "pressEnter": "按回车键搜索",
     "blacklist": {
       "title": "已拉黑用户",
       "block": "拉黑",
@@ -170,6 +173,11 @@
         "title": "确认解除拉黑",
         "description": "确定要解除对用户 \"{{name}}\" 的拉黑吗？解除后该用户将可以继续使用服务。"
       }
+    },
+    "noResults": {
+      "title": "未找到用户",
+      "default": "暂无用户数据显示。",
+      "withFilter": "未找到与 \"{{filter}}\" 匹配的用户。"
     }
   },
 

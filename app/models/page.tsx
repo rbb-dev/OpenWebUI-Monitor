@@ -19,6 +19,7 @@ import { useTranslation } from "react-i18next";
 import { cva } from "class-variance-authority";
 import { Progress } from "antd";
 import { toast, Toaster } from "sonner";
+import { EditableCell } from "@/components/editable-cell";
 
 interface ModelResponse {
   id: string;
@@ -233,182 +234,6 @@ const TestProgressPanel = ({
         </motion.div>
       )}
     </AnimatePresence>
-  );
-};
-
-// 修改 PriceEditCell 组件
-const PriceEditCell = ({
-  value,
-  isEditing,
-  onEdit,
-  onSubmit,
-  t,
-  disabled = false,
-  onCancel,
-}: {
-  value: number;
-  isEditing: boolean;
-  onEdit: () => void;
-  onSubmit: (value: number) => Promise<void>;
-  t: (key: string) => string;
-  disabled?: boolean;
-  onCancel: () => void;
-}) => {
-  const originalValue = value >= 0 ? value.toFixed(2) : "";
-  const [inputValue, setInputValue] = useState(originalValue);
-  const [isSaving, setIsSaving] = useState(false);
-
-  // 重置输入值
-  useEffect(() => {
-    if (isEditing) {
-      setInputValue(originalValue);
-    }
-  }, [isEditing, originalValue]);
-
-  // 点击外部处理
-  useEffect(() => {
-    if (isEditing) {
-      const handleClickOutside = (e: MouseEvent) => {
-        const target = e.target as HTMLElement;
-        if (!target.closest(".price-edit-input")) {
-          onCancel();
-        }
-      };
-
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }
-  }, [isEditing, onCancel]);
-
-  const handleSubmit = useCallback(async () => {
-    if (inputValue && inputValue !== originalValue) {
-      const numValue = Number(inputValue);
-      if (!isNaN(numValue)) {
-        setIsSaving(true);
-        try {
-          await onSubmit(numValue);
-        } finally {
-          setIsSaving(false);
-        }
-      }
-    } else {
-      onCancel();
-    }
-  }, [inputValue, originalValue, onSubmit, onCancel]);
-
-  return (
-    <div className={`relative ${disabled ? "opacity-50" : ""}`}>
-      {isEditing ? (
-        <div className="relative price-edit-input flex items-center gap-1.5">
-          <Input
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            className="
-              !w-[calc(100%-32px)]
-              !border
-              !border-slate-200
-              focus:!border-slate-300
-              !bg-white
-              !shadow-sm
-              hover:!shadow
-              focus:!shadow-md
-              !px-2
-              !py-1
-              !h-7
-              flex-1
-              !rounded-lg
-              !text-slate-600
-              !text-sm
-              !font-medium
-              placeholder:!text-slate-400/70
-              transition-all
-              duration-200
-              focus:!ring-2
-              focus:!ring-slate-200/50
-              focus:!ring-offset-0
-            "
-            placeholder={t("models.table.enterPrice")}
-            onPressEnter={handleSubmit}
-            autoFocus
-            disabled={isSaving}
-          />
-          <Button
-            size="sm"
-            variant="ghost"
-            className={`
-              h-7 w-7
-              flex-shrink-0
-              bg-gradient-to-r from-slate-500/80 to-slate-600/80
-              hover:from-slate-600 hover:to-slate-700
-              text-white/90
-              shadow-sm
-              rounded-lg
-              transition-all
-              duration-200
-              hover:scale-105
-              active:scale-95
-              p-0
-              flex
-              items-center
-              justify-center
-              ${isSaving ? "cursor-not-allowed opacity-70" : ""}
-            `}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleSubmit();
-            }}
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <div className="w-3 h-3 rounded-full border-2 border-white/90 border-t-transparent animate-spin" />
-            ) : (
-              <CheckOutlined className="text-xs" />
-            )}
-          </Button>
-        </div>
-      ) : (
-        <div
-          onClick={disabled ? undefined : onEdit}
-          className={`
-            group
-            px-2
-            py-1
-            rounded-lg
-            transition-colors
-            duration-200
-            ${
-              disabled
-                ? "cursor-not-allowed line-through"
-                : "cursor-pointer hover:bg-primary/5"
-            }
-          `}
-        >
-          <span
-            className={`
-              font-medium
-              text-sm
-              transition-colors
-              duration-200
-              ${
-                disabled
-                  ? "text-muted-foreground/60"
-                  : "text-primary/80 group-hover:text-primary"
-              }
-            `}
-          >
-            {value < 0 ? (
-              <span className="text-muted-foreground/60">
-                {t("models.table.notSet")}
-              </span>
-            ) : (
-              value.toFixed(2)
-            )}
-          </span>
-        </div>
-      )}
-    </div>
   );
 };
 
@@ -949,34 +774,35 @@ export default function ModelsPage() {
     const isDisabled = field !== "per_msg_price" && record.per_msg_price >= 0;
 
     return (
-      <PriceEditCell
+      <EditableCell
         value={currentValue}
         isEditing={isEditing}
         onEdit={() => setEditingCell({ id: record.id, field })}
         onSubmit={async (value) => {
-          if (
-            field === "per_msg_price"
-              ? isFinite(value)
-              : isFinite(value) && value >= 0
-          ) {
-            try {
-              await handlePriceUpdate(record.id, field, value);
-              setEditingCell(null);
-            } catch {
-              // 错误已经在 handlePriceUpdate 中处理
-            }
-          } else {
-            toast.error(
-              field === "per_msg_price"
-                ? t("models.table.invalidNumber")
-                : t("models.table.nonePositiveNumber")
-            );
+          try {
+            await handlePriceUpdate(record.id, field, value);
             setEditingCell(null);
+          } catch {
+            // 错误已经在 handlePriceUpdate 中处理
           }
         }}
         t={t}
         disabled={isDisabled}
         onCancel={() => setEditingCell(null)}
+        tooltipText={
+          isDisabled ? t("models.table.priceOverriddenByPerMsg") : undefined
+        }
+        placeholder={t("models.table.enterPrice")}
+        validateValue={(value) => ({
+          isValid:
+            field === "per_msg_price"
+              ? isFinite(value)
+              : isFinite(value) && value >= 0,
+          errorMessage:
+            field === "per_msg_price"
+              ? t("models.table.invalidNumber")
+              : t("models.table.nonePositiveNumber"),
+        })}
       />
     );
   };

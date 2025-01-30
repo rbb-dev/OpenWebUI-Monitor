@@ -30,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body>
+        <div id="modal-root" className="relative z-[100]" />
         <I18nProvider>
           <AuthCheck>
             <Header />

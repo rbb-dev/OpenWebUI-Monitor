@@ -127,6 +127,7 @@
 
   "users": {
     "title": "User Management",
+    "description": "Manage user accounts and balances. You can view user details, adjust balances, or blacklist users.",
     "userInfo": "User Info",
     "balance": "Balance",
     "id": "ID",
@@ -157,7 +158,9 @@
     },
     "total": "Total",
     "totalRecords": "records",
+    "search": "Search",
     "searchPlaceholder": "Search by name or email...",
+    "pressEnter": "Press Enter to search",
     "blacklist": {
       "title": "Blacklisted Users",
       "block": "Block",
@@ -170,6 +173,11 @@
         "title": "Confirm Unblock User",
         "description": "Are you sure you want to unblock user \"{{name}}\"? They will be able to use the service again after being unblocked."
       }
+    },
+    "noResults": {
+      "title": "No users found",
+      "default": "There are no users to display at the moment.",
+      "withFilter": "No users found matching \"{{filter}}\"."
     }
   },
 
