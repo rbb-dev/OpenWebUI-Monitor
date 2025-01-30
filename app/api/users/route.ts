@@ -40,9 +40,16 @@ export async function GET(req: NextRequest) {
     );
     const total = parseInt(countResult.rows[0].count);
 
-    // 获取分页数据
+    // 获取分页数据，使用 CASE WHEN 来处理已拉黑用户的余额
     const result = await query(
-      `SELECT id, email, name, role, balance, deleted, created_at 
+      `SELECT 
+        id, 
+        email, 
+        name, 
+        role, 
+        CASE WHEN deleted = true THEN -1 ELSE balance END as balance,
+        deleted, 
+        created_at 
        FROM users 
        ${whereClause} 
        ${orderClause} 
