@@ -16,7 +16,8 @@
     "total": "总计",
     "prev": "上一页",
     "next": "下一页",
-    "page": "页"
+    "page": "页",
+    "notSet": "未设置"
   },
 
   "auth": {

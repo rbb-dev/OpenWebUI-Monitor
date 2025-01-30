@@ -16,7 +16,8 @@
     "total": "Total",
     "prev": "Previous",
     "next": "Next",
-    "page": "Page"
+    "page": "Page",
+    "notSet": "Not Set"
   },
 
   "auth": {
