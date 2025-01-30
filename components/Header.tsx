@@ -443,95 +443,65 @@ export default function Header() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 h-full bg-white z-50 w-full max-w-[640px] overflow-hidden shadow-2xl"
+              className="fixed top-0 right-0 h-full bg-white z-50 w-full max-w-[320px] overflow-hidden shadow-lg border-l border-gray-100"
             >
-              {/* 渐变背景装饰 */}
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-gray-50" />
-
-              {/* 模糊圆形装饰 */}
-              <div className="absolute top-1/4 right-1/4 w-[300px] h-[300px] bg-gradient-to-br from-blue-100/20 to-purple-100/20 rounded-full blur-3xl" />
-              <div className="absolute bottom-1/4 left-1/4 w-[300px] h-[300px] bg-gradient-to-br from-rose-100/20 to-orange-100/20 rounded-full blur-3xl" />
-
               {/* 内容容器 */}
               <div className="relative h-full flex flex-col">
                 {/* 顶部栏 */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                  <motion.h2
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-xl font-semibold text-gray-800"
-                  >
+                  <h2 className="text-lg font-semibold text-gray-800">
                     {t("header.menu.title")}
-                  </motion.h2>
-                  <motion.button
-                    initial={{ opacity: 0, rotate: -90 }}
-                    animate={{ opacity: 1, rotate: 0 }}
+                  </h2>
+                  <button
                     onClick={() => setIsMenuOpen(false)}
-                    className="p-2 rounded-xl hover:bg-gray-100/80 transition-colors"
+                    className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
                   >
                     <X className="w-5 h-5 text-gray-500" />
-                  </motion.button>
+                  </button>
                 </div>
 
                 {/* 菜单项列表 */}
-                <div className="flex-1 overflow-y-auto px-4 py-6">
-                  <div className="grid gap-3 max-w-3xl mx-auto">
-                    {/* 在小屏幕上显示导航项 */}
-                    <div className="md:hidden space-y-3">
-                      {navigationItems.map((item, index) => (
-                        <motion.button
+                <div className="flex-1 overflow-y-auto p-2">
+                  <div className="space-y-1">
+                    {/* 导航项 */}
+                    <div className="md:hidden space-y-1">
+                      {navigationItems.map((item) => (
+                        <button
                           key={item.path}
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.1 + index * 0.1 }}
                           onClick={() => {
                             setIsMenuOpen(false);
                             router.push(item.path);
                           }}
-                          className="w-full group relative"
+                          className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 hover:text-gray-900"
                         >
-                          <div
-                            className={`absolute inset-0 bg-gradient-to-r ${item.color} rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
-                          />
-                          <div className="relative flex items-center gap-4 p-4 rounded-xl bg-white/50 hover:bg-transparent transition-colors duration-300 backdrop-blur-sm">
-                            <span className="p-3 rounded-xl bg-white shadow-sm text-gray-600 group-hover:text-gray-700 transition-colors">
-                              {item.icon}
-                            </span>
-                            <span className="text-base font-medium text-gray-600 group-hover:text-gray-900 transition-colors">
-                              {item.label}
-                            </span>
-                          </div>
-                        </motion.button>
+                          <span className="text-gray-500">{item.icon}</span>
+                          <span className="text-sm font-medium">
+                            {item.label}
+                          </span>
+                        </button>
                       ))}
                     </div>
 
                     {/* 设置组 */}
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="space-y-3"
-                    >
-                      {/* 设置标题按钮 */}
-                      <motion.button
+                    <div className="border-t border-gray-100 pt-2">
+                      <button
                         onClick={() =>
                           setIsSettingsExpanded(!isSettingsExpanded)
                         }
-                        className="w-full flex items-center justify-between p-4 rounded-xl bg-gray-50/80 hover:bg-gray-100/80 transition-colors"
+                        className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
                       >
                         <div className="flex items-center gap-3">
-                          <span className="p-2 rounded-lg bg-white shadow-sm">
-                            <Settings className="w-5 h-5 text-gray-600" />
-                          </span>
-                          <span className="text-base font-medium text-gray-800">
+                          <Settings className="w-5 h-5 text-gray-500" />
+                          <span className="text-sm font-medium text-gray-700">
                             {t("header.menu.settings")}
                           </span>
                         </div>
                         <ChevronDown
-                          className={`w-5 h-5 text-gray-500 transition-transform duration-300 ${
+                          className={`w-4 h-4 text-gray-400 transition-transform ${
                             isSettingsExpanded ? "rotate-180" : ""
                           }`}
                         />
-                      </motion.button>
+                      </button>
 
                       {/* 设置项列表 */}
                       <AnimatePresence>
@@ -540,37 +510,27 @@ export default function Header() {
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            className="space-y-2 overflow-hidden pl-4"
+                            className="space-y-1 overflow-hidden pl-9"
                           >
-                            {settingsItems.map((item, index) => (
-                              <motion.button
-                                key={index}
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: 0.1 + index * 0.1 }}
+                            {settingsItems.map((item) => (
+                              <button
+                                key={item.label}
                                 onClick={() => {
                                   setIsMenuOpen(false);
                                   item.onClick();
                                 }}
-                                className="w-full group relative"
+                                className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-gray-50 transition-colors text-gray-600 hover:text-gray-900"
                               >
-                                <div
-                                  className={`absolute inset-0 bg-gradient-to-r ${item.color} rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
-                                />
-                                <div className="relative flex items-center gap-4 p-4 rounded-xl bg-white/50 hover:bg-transparent transition-colors duration-300 backdrop-blur-sm">
-                                  <span className="p-3 rounded-xl bg-white shadow-sm text-gray-600 group-hover:text-gray-700 transition-colors">
-                                    {item.icon}
-                                  </span>
-                                  <span className="text-base font-medium text-gray-600 group-hover:text-gray-900 transition-colors">
-                                    {item.label}
-                                  </span>
-                                </div>
-                              </motion.button>
+                                <span className="text-gray-400">
+                                  {item.icon}
+                                </span>
+                                <span className="text-sm">{item.label}</span>
+                              </button>
                             ))}
                           </motion.div>
                         )}
                       </AnimatePresence>
-                    </motion.div>
+                    </div>
                   </div>
                 </div>
               </div>
