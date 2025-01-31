@@ -240,43 +240,40 @@ export default function PanelPage() {
       />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24 space-y-8">
-        <div className="space-y-4">
+        <div className="space-y-4 pt-8">
           <h1 className="text-3xl font-bold tracking-tight">
             {t("panel.title")}
           </h1>
           <p className="text-muted-foreground">{t("panel.description")}</p>
         </div>
 
-        <Card className="p-6">
-          <TimeRangeSelector
-            timeRange={timeRange}
-            timeRangeType={timeRangeType}
-            availableTimeRange={availableTimeRange}
-            onTimeRangeChange={handleTimeRangeChange}
-          />
-        </Card>
+        <TimeRangeSelector
+          timeRange={timeRange}
+          timeRangeType={timeRangeType}
+          availableTimeRange={availableTimeRange}
+          onTimeRangeChange={handleTimeRangeChange}
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
+            className="py-6 bg-card text-card-foreground"
           >
-            <Card className="p-6 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <PieChartOutlined className="text-xl text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    {t("panel.modelUsage.title")}
-                  </h3>
-                  <p className="text-2xl font-semibold">
-                    {loading ? "-" : usageData.models.length}
-                  </p>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary/10 flex items-center justify-center">
+                <PieChartOutlined className="text-xl text-primary" />
               </div>
-            </Card>
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  {t("panel.modelUsage.title")}
+                </h3>
+                <p className="text-2xl font-semibold">
+                  {loading ? "-" : usageData.models.length}
+                </p>
+              </div>
+            </div>
           </motion.div>
         </div>
 
@@ -284,71 +281,52 @@ export default function PanelPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
+          className="py-6 bg-card text-card-foreground"
         >
-          <Card className="p-6">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
-                  <PieChartOutlined className="text-primary" />
-                  {t("panel.modelUsage.title")}
-                </h2>
-              </div>
-              <ModelDistributionChart
-                loading={loading}
-                models={usageData.models}
-                metric={pieMetric}
-                onMetricChange={setPieMetric}
-              />
-            </div>
-          </Card>
+          <ModelDistributionChart
+            loading={loading}
+            models={usageData.models}
+            metric={pieMetric}
+            onMetricChange={setPieMetric}
+          />
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
+          className="py-6 bg-card text-card-foreground"
         >
-          <Card className="p-6">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
-                  <BarChartOutlined className="text-primary" />
-                  {t("panel.userUsageChart.title")}
-                </h2>
-              </div>
-              <UserRankingChart
-                loading={loading}
-                users={usageData.users}
-                metric={barMetric}
-                onMetricChange={setBarMetric}
-              />
-            </div>
-          </Card>
+          <UserRankingChart
+            loading={loading}
+            users={usageData.users}
+            metric={barMetric}
+            onMetricChange={setBarMetric}
+          />
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
+          className="py-6 bg-card text-card-foreground"
         >
-          <Card className="p-6">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
-                  <TableOutlined className="text-primary" />
-                  {t("panel.usageDetails.title")}
-                </h2>
-              </div>
-              <UsageRecordsTable
-                loading={tableLoading}
-                records={records}
-                tableParams={tableParams}
-                models={usageData.models}
-                users={usageData.users}
-                onTableChange={handleTableChange}
-              />
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
+                <TableOutlined className="text-primary" />
+                {t("panel.usageDetails.title")}
+              </h2>
             </div>
-          </Card>
+            <UsageRecordsTable
+              loading={tableLoading}
+              records={records}
+              tableParams={tableParams}
+              models={usageData.models}
+              users={usageData.users}
+              onTableChange={handleTableChange}
+            />
+          </div>
         </motion.div>
       </div>
     </>

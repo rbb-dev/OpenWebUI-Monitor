@@ -239,3 +239,40 @@ body {
     margin-right: 0;
   }
 }
+
+/* 自定义日期选择器样式 */
+.custom-date-picker {
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--background));
+}
+
+.custom-date-picker .ant-picker-panel {
+  background-color: hsl(var(--background));
+}
+
+.custom-date-picker
+  .ant-picker-cell-in-view.ant-picker-cell-selected
+  .ant-picker-cell-inner {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.custom-date-picker
+  .ant-picker-cell-in-view.ant-picker-cell-today
+  .ant-picker-cell-inner::before {
+  border-color: hsl(var(--primary));
+}
+
+.custom-date-picker
+  .ant-picker-time-panel-column
+  > li.ant-picker-time-panel-cell-selected
+  .ant-picker-time-panel-cell-inner {
+  background-color: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+}
+
+.custom-date-picker .ant-picker-ranges {
+  border-top: 1px solid hsl(var(--border));
+}

@@ -2,9 +2,28 @@
 
 import { useState } from "react";
 import dayjs from "dayjs";
-import { DatePicker } from "antd";
-import { Button as ShadcnButton } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  Sun,
+  CalendarDays,
+  CalendarRange,
+  CalendarClock,
+  CalendarCheck,
+} from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { zhCN } from "date-fns/locale";
+
 export type TimeRangeType =
   | "today"
   | "week"
@@ -99,91 +118,235 @@ export default function TimeRangeSelector({
   availableTimeRange,
   onTimeRangeChange,
 }: TimeRangeSelectorProps) {
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
+  const [isCustomOpen, setIsCustomOpen] = useState(false);
+  const [startOpen, setStartOpen] = useState(false);
+  const [endOpen, setEndOpen] = useState(false);
+
   const totalHours = dayjs(availableTimeRange.maxTime).diff(
     availableTimeRange.minTime,
     "hour"
   );
 
-  const startTime = dayjs(availableTimeRange.minTime).add(
-    (timeRange[0] * totalHours) / 100,
-    "hour"
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    dayjs(availableTimeRange.minTime)
+      .add((timeRange[0] * totalHours) / 100, "hour")
+      .startOf("day")
+      .toDate()
   );
-  const endTime = dayjs(availableTimeRange.minTime).add(
-    (timeRange[1] * totalHours) / 100,
-    "hour"
+  const [endDate, setEndDate] = useState<Date | undefined>(
+    dayjs(availableTimeRange.minTime)
+      .add((timeRange[1] * totalHours) / 100, "hour")
+      .endOf("day")
+      .toDate()
   );
 
-  const handleTimeChange = (dates: [dayjs.Dayjs, dayjs.Dayjs] | null) => {
-    if (!dates) return;
-    const [start, end] = dates;
+  const timeOptions = [
+    {
+      id: "today",
+      type: "today" as TimeRangeType,
+      label: t("panel.timeRange.timeOptions.day"),
+      icon: Sun,
+    },
+    {
+      id: "week",
+      type: "week" as TimeRangeType,
+      label: t("panel.timeRange.timeOptions.week"),
+      icon: CalendarDays,
+    },
+    {
+      id: "month",
+      type: "month" as TimeRangeType,
+      label: t("panel.timeRange.timeOptions.month"),
+      icon: CalendarRange,
+    },
+    {
+      id: "30days",
+      type: "30days" as TimeRangeType,
+      label: t("panel.timeRange.timeOptions.30Days"),
+      icon: CalendarClock,
+    },
+    {
+      id: "all",
+      type: "all" as TimeRangeType,
+      label: t("panel.timeRange.timeOptions.all"),
+      icon: CalendarCheck,
+    },
+  ];
+
+  const handleDateChange = (start?: Date, end?: Date) => {
+    if (!start || !end) return;
 
     const startPercentage = Math.max(
       0,
-      (start.diff(availableTimeRange.minTime, "hour") / totalHours) * 100
+      (dayjs(start).startOf("day").diff(availableTimeRange.minTime, "hour") /
+        totalHours) *
+        100
     );
     const endPercentage = Math.min(
       100,
-      (end.diff(availableTimeRange.minTime, "hour") / totalHours) * 100
+      (dayjs(end).endOf("day").diff(availableTimeRange.minTime, "hour") /
+        totalHours) *
+        100
     );
 
-    const newType = checkTimeRangeType(start, end, availableTimeRange);
-    onTimeRangeChange([startPercentage, endPercentage], newType);
+    onTimeRangeChange([startPercentage, endPercentage], "custom");
+  };
+
+  const formatDate = (date?: Date) => {
+    if (!date) return t("panel.timeRange.selectDate");
+    return format(date, "yyyy-MM-dd", {
+      locale: i18n.language === "zh" ? zhCN : undefined,
+    });
   };
 
   return (
-    <div className="pb-8">
-      <div className="w-full">
-        <div className="space-y-2">
-          <span className="text-xs text-muted-foreground">
-            {t("panel.timeRange.title")}
-          </span>
+    <div className="space-y-6">
+      <div className="flex items-center gap-2 text-lg font-medium">
+        <Clock className="w-5 h-5 text-primary" />
+        <h3>{t("panel.timeRange.title")}</h3>
+      </div>
 
-          <DatePicker.RangePicker
-            showTime={{ format: "HH:00" }}
-            format="YYYY-MM-DD HH:00"
-            value={[startTime, endTime]}
-            onChange={(dates) =>
-              handleTimeChange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)
-            }
-            disabledDate={(current) => {
-              return (
-                current < dayjs(availableTimeRange.minTime) ||
-                current > dayjs(availableTimeRange.maxTime)
-              );
-            }}
-            className="w-full"
-          />
-
-          <div className="grid grid-cols-5 gap-2">
-            {[
-              { type: "today", label: t("panel.timeRange.timeOptions.day") },
-              { type: "week", label: t("panel.timeRange.timeOptions.week") },
-              { type: "month", label: t("panel.timeRange.timeOptions.month") },
-              {
-                type: "30days",
-                label: t("panel.timeRange.timeOptions.30Days"),
-              },
-              { type: "all", label: t("panel.timeRange.timeOptions.all") },
-            ].map(({ type, label }) => (
-              <ShadcnButton
-                key={type}
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+          {timeOptions.map(({ id, type, label, icon: Icon }) => (
+            <motion.div
+              key={id}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Button
                 variant={timeRangeType === type ? "default" : "outline"}
-                size="sm"
-                className="w-full transition-all duration-300 hover:scale-105"
+                className="w-full h-full min-h-[52px] flex flex-col gap-1.5 items-center justify-center"
                 onClick={() => {
-                  const newRange = calculateTimeRange(
-                    type as TimeRangeType,
-                    availableTimeRange
-                  );
-                  onTimeRangeChange(newRange, type as TimeRangeType);
+                  const newRange = calculateTimeRange(type, availableTimeRange);
+                  onTimeRangeChange(newRange, type);
+                  setIsCustomOpen(false);
                 }}
               >
-                {label}
-              </ShadcnButton>
-            ))}
-          </div>
+                <Icon className="w-4 h-4" />
+                <span className="text-sm">{label}</span>
+              </Button>
+            </motion.div>
+          ))}
+
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button
+              variant={timeRangeType === "custom" ? "default" : "outline"}
+              className="w-full h-full min-h-[52px] flex flex-col gap-1.5 items-center justify-center"
+              onClick={() => setIsCustomOpen(!isCustomOpen)}
+            >
+              <CalendarIcon className="w-4 h-4" />
+              <span className="text-sm">
+                {t("panel.timeRange.timeOptions.custom")}
+              </span>
+            </Button>
+          </motion.div>
         </div>
+
+        <AnimatePresence>
+          {isCustomOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="space-y-3"
+            >
+              <div className="text-sm text-muted-foreground">
+                {t("panel.timeRange.customRange")}
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Popover open={startOpen} onOpenChange={setStartOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="secondary"
+                      className={cn(
+                        "justify-start text-left font-normal w-full sm:w-[240px]",
+                        !startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formatDate(startDate)}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={(date) => {
+                        if (date) {
+                          const newDate = dayjs(date).startOf("day").toDate();
+                          setStartDate(newDate);
+                          if (endDate) {
+                            handleDateChange(newDate, endDate);
+                          }
+                          setStartOpen(false);
+                        }
+                      }}
+                      disabled={(date) =>
+                        date <
+                          dayjs(availableTimeRange.minTime)
+                            .startOf("day")
+                            .toDate() ||
+                        date >
+                          (endDate ||
+                            dayjs(availableTimeRange.maxTime)
+                              .endOf("day")
+                              .toDate())
+                      }
+                      initialFocus
+                      locale={i18n.language === "zh" ? zhCN : undefined}
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                <Popover open={endOpen} onOpenChange={setEndOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="secondary"
+                      className={cn(
+                        "justify-start text-left font-normal w-full sm:w-[240px]",
+                        !endDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formatDate(endDate)}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={(date) => {
+                        if (date) {
+                          const newDate = dayjs(date).endOf("day").toDate();
+                          setEndDate(newDate);
+                          if (startDate) {
+                            handleDateChange(startDate, newDate);
+                          }
+                          setEndOpen(false);
+                        }
+                      }}
+                      disabled={(date) =>
+                        date <
+                          (startDate ||
+                            dayjs(availableTimeRange.minTime)
+                              .startOf("day")
+                              .toDate()) ||
+                        date >
+                          dayjs(availableTimeRange.maxTime)
+                            .endOf("day")
+                            .toDate()
+                      }
+                      initialFocus
+                      locale={i18n.language === "zh" ? zhCN : undefined}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

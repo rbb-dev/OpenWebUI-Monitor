@@ -7,8 +7,9 @@ import { Card as ShadcnCard } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MetricSwitch } from "@/components/ui/metric-switch";
+import { MetricToggle } from "@/components/ui/metric-toggle";
 import { useTranslation } from "react-i18next";
+import { PieChartOutlined } from "@ant-design/icons";
 
 interface ModelUsage {
   model_name: string;
@@ -66,15 +67,16 @@ const getPieOption = (
 
   return {
     tooltip: {
-      show: isSmallScreen,
+      show: true,
       trigger: "item",
-      backgroundColor: "rgba(255, 255, 255, 0.95)",
-      borderColor: "#eee",
+      backgroundColor: "rgba(255, 255, 255, 0.98)",
+      borderColor: "rgba(0, 0, 0, 0.05)",
       borderWidth: 1,
-      padding: [12, 16],
+      padding: [14, 18],
       textStyle: {
-        color: "#666",
+        color: "#333",
         fontSize: 13,
+        lineHeight: 20,
       },
       formatter: (params: any) => {
         const percentage = ((params.value / total) * 100).toFixed(1);
@@ -103,17 +105,23 @@ const getPieOption = (
         `;
       },
       extraCssText:
-        "box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); border-radius: 6px;",
+        "box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); border-radius: 8px;",
     },
     legend: {
-      show: isSmallScreen,
+      show: true,
       orient: "horizontal",
-      bottom: 30,
+      bottom: isSmallScreen ? 20 : 10,
       type: "scroll",
-      itemWidth: 15,
-      itemHeight: 15,
+      itemWidth: 16,
+      itemHeight: 16,
+      itemGap: 20,
       textStyle: {
-        fontSize: 12,
+        fontSize: 13,
+        color: "#555",
+        padding: [0, 0, 0, 4],
+      },
+      pageIconSize: 12,
+      pageTextStyle: {
         color: "#666",
       },
     },
@@ -121,19 +129,21 @@ const getPieOption = (
       {
         name: metric === "cost" ? t("panel.byAmount") : t("panel.byCount"),
         type: "pie",
-        radius: isSmallScreen ? ["40%", "70%"] : ["50%", "80%"],
-        center: isSmallScreen ? ["50%", "45%"] : ["50%", "50%"],
+        radius: isSmallScreen ? ["35%", "65%"] : ["45%", "75%"],
+        center: ["50%", "45%"],
         avoidLabelOverlap: false,
         itemStyle: {
-          borderRadius: 10,
-          shadowBlur: 4,
+          borderRadius: 6,
+          borderWidth: 2,
+          borderColor: "#fff",
+          shadowBlur: 8,
           shadowColor: "rgba(0, 0, 0, 0.1)",
         },
         label: {
           show: !isSmallScreen,
           position: "outside",
           alignTo: "labelLine",
-          margin: 4,
+          margin: 6,
           formatter: (params: any) => {
             const percentage = ((params.value / total) * 100).toFixed(1);
             return [
@@ -148,24 +158,26 @@ const getPieOption = (
           },
           rich: {
             name: {
-              fontSize: 12,
-              color: "#666",
-              padding: [0, 0, 2, 0],
+              fontSize: 13,
+              color: "#444",
+              padding: [0, 0, 3, 0],
               fontWeight: 500,
               width: 120,
               overflow: "break",
             },
             value: {
-              fontSize: 11,
-              color: "#333",
-              padding: [2, 0],
+              fontSize: 12,
+              color: "#666",
+              padding: [3, 0],
+              fontFamily: "monospace",
             },
             per: {
-              fontSize: 11,
-              color: "#999",
+              fontSize: 12,
+              color: "#888",
+              padding: [2, 0, 0, 0],
             },
           },
-          lineHeight: 14,
+          lineHeight: 16,
         },
         labelLayout: {
           hideOverlap: true,
@@ -173,23 +185,23 @@ const getPieOption = (
         },
         labelLine: {
           show: !isSmallScreen,
-          length: 25,
-          length2: 15,
-          minTurnAngle: 60,
-          maxSurfaceAngle: 60,
-          smooth: 0.2,
+          length: 20,
+          length2: 20,
+          minTurnAngle: 90,
+          maxSurfaceAngle: 90,
+          smooth: true,
         },
         data: sortedData,
         zlevel: 0,
         padAngle: 2,
         emphasis: {
-          scale: false,
-          scaleSize: 10,
+          scale: true,
+          scaleSize: 8,
           focus: "self",
           itemStyle: {
-            shadowBlur: 10,
+            shadowBlur: 16,
             shadowOffsetX: 0,
-            shadowColor: "rgba(0, 0, 0, 0.2)",
+            shadowColor: "rgba(0, 0, 0, 0.15)",
           },
           label: {
             show: !isSmallScreen,
@@ -210,7 +222,7 @@ const getPieOption = (
       {
         type: "text",
         left: "center",
-        top: isSmallScreen ? "40%" : "middle",
+        top: "43%",
         style: {
           text:
             metric === "cost"
@@ -219,10 +231,12 @@ const getPieOption = (
                 )}`
               : `${t("common.total")}\n${total}${t("common.count")}`,
           textAlign: "center",
-          fontSize: 14,
-          fontWeight: "bold",
+          fontSize: 15,
+          fontWeight: "500",
+          lineHeight: 22,
+          fill: "#333",
         },
-        zlevel: 1,
+        zlevel: 2,
       },
     ],
     animation: true,
@@ -253,20 +267,21 @@ export default function ModelDistributionChart({
   }, [metric, models, t]);
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-2 sm:mb-6 gap-2">
-        <h2 className="text-2xl font-semibold tracking-tight">
-          {t("panel.modelUsage.title")}
-        </h2>
-        <MetricSwitch value={metric} onChange={onMetricChange} />
+    <ShadcnCard className="p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div className="flex items-center gap-2.5 text-lg font-medium">
+          <PieChartOutlined className="w-5 h-5 text-primary/90" />
+          <h2 className="text-gray-800">{t("panel.modelUsage.title")}</h2>
+        </div>
+        <MetricToggle value={metric} onChange={onMetricChange} />
       </div>
 
       {loading ? (
         <div className="h-[350px] sm:h-[450px] flex items-center justify-center">
-          <Skeleton className="w-full h-full" />
+          <Skeleton className="w-full h-full rounded-lg" />
         </div>
       ) : (
-        <div className="h-[350px] sm:h-[450px]">
+        <div className="h-[350px] sm:h-[450px] transition-all duration-300">
           <ReactECharts
             option={getPieOption(models, metric, t)}
             style={{ height: "100%", width: "100%" }}
@@ -274,6 +289,6 @@ export default function ModelDistributionChart({
           />
         </div>
       )}
-    </div>
+    </ShadcnCard>
   );
 }

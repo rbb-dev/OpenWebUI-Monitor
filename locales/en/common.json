@@ -236,8 +236,12 @@
         "week": "Week",
         "month": "Month",
         "30Days": "30 Days",
-        "all": "All"
-      }
+        "all": "All",
+        "custom": "Custom"
+      },
+      "customRange": "Custom Range",
+      "selectTimeRange": "Select Time Range",
+      "selectDate": "Select Date"
     },
     "modelUsage": {
       "title": "Model Usage",

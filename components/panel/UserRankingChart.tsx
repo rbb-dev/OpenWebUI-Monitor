@@ -1,11 +1,14 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import { Spin } from "antd";
+import { Spin, Skeleton } from "antd";
 import ReactECharts from "echarts-for-react";
 import type { ECharts } from "echarts";
-import { MetricSwitch } from "@/components/ui/metric-switch";
+import { MetricToggle } from "@/components/ui/metric-toggle";
 import { useTranslation } from "react-i18next";
+import { BarChartOutlined } from "@ant-design/icons";
+import { Card as ShadcnCard } from "@/components/ui/card";
+
 interface UserUsage {
   nickname: string;
   total_cost: number;
@@ -35,29 +38,74 @@ const getBarOption = (
 
   return {
     tooltip: {
-      show: false,
+      show: true,
+      trigger: "axis",
+      backgroundColor: "rgba(255, 255, 255, 0.98)",
+      borderColor: "rgba(0, 0, 0, 0.05)",
+      borderWidth: 1,
+      padding: [14, 18],
+      textStyle: {
+        color: "#333",
+        fontSize: 13,
+        lineHeight: 20,
+      },
+      axisPointer: {
+        type: "shadow",
+        shadowStyle: {
+          color: "rgba(0, 0, 0, 0.03)",
+        },
+      },
+      formatter: (params: any) => {
+        const data = params[0];
+        return `
+          <div class="flex flex-col gap-1.5">
+            <div class="font-medium text-gray-800">${data.name}</div>
+            <div class="flex items-center gap-2">
+              <span class="inline-block w-2 h-2 rounded-full" style="background-color: ${
+                data.color
+              }"></span>
+              <span class="text-sm">
+                ${metric === "cost" ? t("panel.byAmount") : t("panel.byCount")}
+              </span>
+              <span class="font-mono text-sm font-medium text-gray-900">
+                ${
+                  metric === "cost"
+                    ? `${t("common.currency")}${data.value.toFixed(2)}`
+                    : `${data.value} ${t("common.count")}`
+                }
+              </span>
+            </div>
+          </div>
+        `;
+      },
+      extraCssText:
+        "box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); border-radius: 8px;",
     },
     grid: {
-      top: isSmallScreen ? "12%" : "8%",
-      bottom: "12%",
-      left: "3%",
-      right: "3%",
+      top: isSmallScreen ? "8%" : "4%",
+      bottom: isSmallScreen ? "2%" : "1%",
+      left: "4%",
+      right: "4%",
       containLabel: true,
     },
     xAxis: {
       type: "category",
       data: columnData.map((item) =>
-        item.nickname.length > 15
-          ? item.nickname.slice(0, 12) + "..."
+        item.nickname.length > 12
+          ? item.nickname.slice(0, 10) + "..."
           : item.nickname
       ),
       axisLabel: {
         inside: false,
-        color: "#666",
+        color: "#555",
         fontSize: 12,
-        rotate: 45,
-        interval: "auto",
+        rotate: 35,
+        interval: 0,
         hideOverlap: true,
+        padding: [0, 0, 0, 0],
+        verticalAlign: "middle",
+        align: "right",
+        margin: 8,
       },
       axisTick: {
         show: false,
@@ -65,44 +113,48 @@ const getBarOption = (
       axisLine: {
         show: true,
         lineStyle: {
-          color: "#ddd",
+          color: "#eee",
+          width: 2,
         },
       },
       z: 10,
     },
     yAxis: {
       type: "value",
-      name: metric === "cost" ? t("panel.byAmount") : t("panel.byCount"),
+      name: "",
       nameTextStyle: {
         color: "#666",
-        padding: isSmallScreen ? [0, 0, 8, 0] : [30, 0, 8, 0],
+        fontSize: 13,
+        padding: [0, 0, 0, 0],
       },
       axisLine: {
         show: true,
         lineStyle: {
-          color: "#ddd",
+          color: "#eee",
+          width: 2,
         },
       },
       axisTick: {
         show: true,
         lineStyle: {
-          color: "#ddd",
+          color: "#eee",
         },
       },
       splitLine: {
         show: true,
         lineStyle: {
           color: "#f5f5f5",
-          type: "dashed",
+          width: 2,
         },
       },
       axisLabel: {
-        color: "#999",
+        color: "#666",
+        fontSize: 12,
         formatter: (value: number) => {
           if (metric === "cost") {
-            return `${t("common.currency")}${value.toFixed(1)}`;
+            return `¥${value.toFixed(1)}`;
           }
-          return value;
+          return `${value}次`;
         },
       },
     },
@@ -110,7 +162,7 @@ const getBarOption = (
       {
         type: "inside",
         start: 0,
-        end: Math.min(100, Math.max(100 * (15 / columnData.length), 30)),
+        end: Math.min(100, Math.max(100 * (15 / columnData.length), 40)),
         zoomLock: true,
         moveOnMouseMove: true,
       },
@@ -128,15 +180,15 @@ const getBarOption = (
             colorStops: [
               {
                 offset: 0,
-                color: "#8BA3C7",
+                color: "rgba(99, 133, 255, 0.85)",
               },
               {
                 offset: 1,
-                color: "#4A6288",
+                color: "rgba(99, 133, 255, 0.4)",
               },
             ],
           },
-          borderRadius: [6, 6, 0, 0],
+          borderRadius: [8, 8, 0, 0],
         },
         emphasis: {
           itemStyle: {
@@ -149,40 +201,43 @@ const getBarOption = (
               colorStops: [
                 {
                   offset: 0,
-                  color: "#7691B8",
+                  color: "rgba(99, 133, 255, 0.95)",
                 },
                 {
                   offset: 1,
-                  color: "#385278",
+                  color: "rgba(99, 133, 255, 0.5)",
                 },
               ],
             },
+            shadowBlur: 10,
+            shadowColor: "rgba(99, 133, 255, 0.2)",
           },
         },
-        barWidth: "60%",
+        barWidth: "35%",
         data: columnData.map((item) => item.value),
         showBackground: true,
         backgroundStyle: {
-          color: "rgba(180, 180, 180, 0.1)",
-          borderRadius: [6, 6, 0, 0],
+          color: "rgba(180, 180, 180, 0.08)",
+          borderRadius: [8, 8, 0, 0],
         },
         label: {
           show: !isSmallScreen,
           position: "top",
           formatter: (params: any) => {
             return metric === "cost"
-              ? `${t("common.currency")}${params.value.toFixed(2)}`
+              ? `${params.value.toFixed(2)}`
               : `${params.value}`;
           },
           fontSize: 11,
           color: "#666",
-          distance: 6,
+          distance: 2,
+          fontFamily: "monospace",
         },
       },
     ],
     animation: true,
-    animationDuration: 1500,
-    animationEasing: "elasticOut" as const,
+    animationDuration: 800,
+    animationEasing: "cubicOut" as const,
   };
 };
 
@@ -239,20 +294,21 @@ export default function UserRankingChart({
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6 gap-2">
-        <h2 className="text-2xl font-semibold tracking-tight">
-          {t("panel.userUsageChart.title")}
-        </h2>
-        <MetricSwitch value={metric} onChange={onMetricChange} />
+    <ShadcnCard className="p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div className="flex items-center gap-2.5 text-lg font-medium">
+          <BarChartOutlined className="w-5 h-5 text-primary/90" />
+          <h2 className="text-gray-800">{t("panel.userUsageChart.title")}</h2>
+        </div>
+        <MetricToggle value={metric} onChange={onMetricChange} />
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center sm:h-[600px] h-[400px]">
-          <Spin size="large" />
+        <div className="flex justify-center items-center h-[350px] sm:h-[450px]">
+          <Skeleton className="w-full h-full rounded-lg" />
         </div>
       ) : (
-        <div className="sm:h-[650px] h-[400px]">
+        <div className="h-[350px] sm:h-[450px] transition-all duration-300">
           <ReactECharts
             option={getBarOption(users, metric, t)}
             style={{ height: "100%", width: "100%" }}
@@ -261,6 +317,6 @@ export default function UserRankingChart({
           />
         </div>
       )}
-    </div>
+    </ShadcnCard>
   );
 }
