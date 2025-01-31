@@ -1,4 +1,6 @@
 <div align="center">
+  
+![](https://github.com/user-attachments/assets/fb90a4cc-2e54-495c-87ca-34c1a54bf2c8)
 
 # OpenWebUI Monitor
 
