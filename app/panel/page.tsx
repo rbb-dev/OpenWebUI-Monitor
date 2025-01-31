@@ -109,25 +109,55 @@ export default function PanelPage() {
       const currentRange = newTimeRange || timeRange;
       const isFullRange = currentRange[0] === 0 && currentRange[1] === 100;
 
+      const totalHours = dayjs(availableTimeRange.maxTime).diff(
+        availableTimeRange.minTime,
+        "hour"
+      );
+
       let url = `/api/v1/panel/usage?t=${Date.now()}`;
 
-      if (!isFullRange) {
-        const totalHours = dayjs(availableTimeRange.maxTime).diff(
-          availableTimeRange.minTime,
-          "hour"
-        );
-
+      if (timeRangeType === "custom") {
         const startTime = dayjs(availableTimeRange.minTime)
           .add((currentRange[0] * totalHours) / 100, "hour")
-          .startOf("hour")
+          .startOf("day")
           .toISOString();
 
         const endTime = dayjs(availableTimeRange.minTime)
           .add((currentRange[1] * totalHours) / 100, "hour")
-          .endOf("hour")
+          .endOf("day")
           .toISOString();
 
         url += `&startTime=${startTime}&endTime=${endTime}`;
+        setAvailableTimeRange({
+          minTime: new Date(startTime),
+          maxTime: new Date(endTime),
+        });
+      } else if (!isFullRange) {
+        let startTime: string;
+        const endTime = dayjs().toISOString();
+
+        switch (timeRangeType) {
+          case "today":
+            startTime = dayjs().startOf("day").toISOString();
+            break;
+          case "week":
+            startTime = dayjs().startOf("week").toISOString();
+            break;
+          case "month":
+            startTime = dayjs().startOf("month").toISOString();
+            break;
+          case "30days":
+            startTime = dayjs().subtract(30, "day").toISOString();
+            break;
+          default:
+            startTime = dayjs(availableTimeRange.minTime).toISOString();
+        }
+
+        url += `&startTime=${startTime}&endTime=${endTime}`;
+        setAvailableTimeRange({
+          minTime: new Date(startTime),
+          maxTime: new Date(endTime),
+        });
       }
 
       const response = await fetch(url);

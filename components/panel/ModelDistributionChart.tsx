@@ -278,16 +278,18 @@ export default function ModelDistributionChart({
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 pointer-events-none" />
 
         <div className="relative p-6 space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center rounded-xl shrink-0">
-              <PieChartOutlined className="text-xl text-primary" />
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center rounded-xl shrink-0">
+                <PieChartOutlined className="text-xl text-primary" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-2xl font-semibold bg-gradient-to-br from-foreground to-foreground/80 bg-clip-text text-transparent">
+                  {t("panel.modelUsage.title")}
+                </h3>
+              </div>
             </div>
-            <div className="space-y-1">
-              <h3 className="text-2xl font-semibold bg-gradient-to-br from-foreground to-foreground/80 bg-clip-text text-transparent">
-                {t("panel.modelUsage.title")}
-              </h3>
-            </div>
-            <div className="ml-auto">
+            <div className="sm:ml-auto">
               <MetricToggle value={metric} onChange={onMetricChange} />
             </div>
           </div>

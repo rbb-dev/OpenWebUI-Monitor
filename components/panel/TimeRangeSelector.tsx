@@ -234,7 +234,12 @@ export default function TimeRangeSelector({
             <Button
               variant={timeRangeType === "custom" ? "default" : "outline"}
               className="w-full h-full min-h-[52px] flex flex-col gap-1.5 items-center justify-center"
-              onClick={() => setIsCustomOpen(!isCustomOpen)}
+              onClick={() => {
+                setIsCustomOpen(!isCustomOpen);
+                if (!isCustomOpen) {
+                  onTimeRangeChange(timeRange, "custom");
+                }
+              }}
             >
               <CalendarIcon className="w-4 h-4" />
               <span className="text-sm">
@@ -284,15 +289,7 @@ export default function TimeRangeSelector({
                         }
                       }}
                       disabled={(date) =>
-                        date <
-                          dayjs(availableTimeRange.minTime)
-                            .startOf("day")
-                            .toDate() ||
-                        date >
-                          (endDate ||
-                            dayjs(availableTimeRange.maxTime)
-                              .endOf("day")
-                              .toDate())
+                        endDate ? dayjs(date).isAfter(endDate, "day") : false
                       }
                       initialFocus
                       locale={i18n.language === "zh" ? zhCN : undefined}
@@ -328,15 +325,9 @@ export default function TimeRangeSelector({
                         }
                       }}
                       disabled={(date) =>
-                        date <
-                          (startDate ||
-                            dayjs(availableTimeRange.minTime)
-                              .startOf("day")
-                              .toDate()) ||
-                        date >
-                          dayjs(availableTimeRange.maxTime)
-                            .endOf("day")
-                            .toDate()
+                        startDate
+                          ? dayjs(date).isBefore(startDate, "day")
+                          : false
                       }
                       initialFocus
                       locale={i18n.language === "zh" ? zhCN : undefined}

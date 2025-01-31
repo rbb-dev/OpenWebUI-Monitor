@@ -250,33 +250,33 @@ export default function HomePage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="fixed bottom-4 right-4 z-50"
+          className="fixed bottom-4 right-4 z-50 w-auto max-w-[calc(100%-2rem)]"
         >
-          <div className="bg-white rounded-xl shadow-2xl p-4 border border-gray-200">
-            <div className="flex items-center gap-3 text-gray-600">
-              <span>
+          <div className="bg-white rounded-lg shadow-2xl p-3 border border-gray-200 w-fit">
+            <div className="flex items-center gap-2 text-gray-600 text-sm">
+              <span className="whitespace-nowrap">
                 {t("update.newVersion")} {latestVersion}
               </span>
               <div className="flex gap-2">
                 <button
                   onClick={handleIgnore}
-                  className="hover:text-gray-900 transition-colors"
+                  className="text-xs hover:text-gray-900 transition-colors"
                 >
                   {t("update.ignore")}
                 </button>
                 <span className="text-gray-300">|</span>
                 <button
                   onClick={handleUpdate}
-                  className="text-blue-500 hover:text-blue-600 transition-colors"
+                  className="text-xs text-blue-500 hover:text-blue-600 transition-colors"
                 >
                   {t("update.update")}
                 </button>
               </div>
               <button
                 onClick={() => setIsUpdateVisible(false)}
-                className="text-gray-400 hover:text-gray-500"
+                className="text-gray-400 hover:text-gray-500 ml-1"
               >
-                <CloseOutlined className="text-xs" />
+                <CloseOutlined className="text-[10px]" />
               </button>
             </div>
           </div>

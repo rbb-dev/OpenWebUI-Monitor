@@ -275,6 +275,16 @@ const BlockConfirmModal = ({
   );
 };
 
+// 修改 LoadingState 组件,添加 t 参数
+const LoadingState = ({ t }: { t: TFunction }) => (
+  <div className="flex flex-col items-center justify-center py-12 px-4">
+    <div className="h-12 w-12 rounded-full border-4 border-primary/10 border-t-primary animate-spin mb-4" />
+    <h3 className="text-lg font-medium text-foreground/70">
+      {t("users.loading")}
+    </h3>
+  </div>
+);
+
 export default function UsersPage() {
   const { t } = useTranslation("common");
   const [users, setUsers] = useState<User[]>([]);
@@ -809,7 +819,9 @@ export default function UsersPage() {
 
       <div className="hidden sm:block">
         <div className="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden">
-          {users.filter((user) => !user.deleted).length > 0 ? (
+          {loading ? (
+            <LoadingState t={t} />
+          ) : users.filter((user) => !user.deleted).length > 0 ? (
             <Table
               columns={getColumns(false)}
               dataSource={users
@@ -820,7 +832,7 @@ export default function UsersPage() {
                   balance: Number(user.balance),
                 }))}
               rowKey="id"
-              loading={loading}
+              loading={false}
               className={TABLE_STYLES}
               pagination={{
                 total,
@@ -853,7 +865,9 @@ export default function UsersPage() {
 
       <div className="sm:hidden">
         <div className="grid gap-4">
-          {users.filter((user) => !user.deleted).length > 0 ? (
+          {loading ? (
+            <LoadingState t={t} />
+          ) : users.filter((user) => !user.deleted).length > 0 ? (
             users
               .filter((user) => !user.deleted)
               .map((user) => <UserCard key={user.id} record={user} />)
@@ -890,38 +904,51 @@ export default function UsersPage() {
           <div className="space-y-4">
             <div className="hidden sm:block">
               <div className="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden">
-                <Table
-                  columns={getColumns(true)}
-                  dataSource={blacklistUsers.map((user) => ({
-                    key: user.id,
-                    ...user,
-                    balance: Number(user.balance),
-                  }))}
-                  rowKey="id"
-                  className={TABLE_STYLES}
-                  pagination={{
-                    total: blacklistTotal,
-                    pageSize: 20,
-                    current: blacklistCurrentPage,
-                    onChange: (page) => {
-                      setBlacklistCurrentPage(page);
-                      setEditingKey("");
-                    },
-                    showTotal: (total) => (
-                      <span className="text-sm text-muted-foreground">
-                        {t("users.total")} {total} {t("users.totalRecords")}
-                      </span>
-                    ),
-                  }}
-                />
+                {loading ? (
+                  <LoadingState t={t} />
+                ) : blacklistUsers.length > 0 ? (
+                  <Table
+                    columns={getColumns(true)}
+                    dataSource={blacklistUsers.map((user) => ({
+                      key: user.id,
+                      ...user,
+                      balance: Number(user.balance),
+                    }))}
+                    rowKey="id"
+                    loading={false}
+                    className={TABLE_STYLES}
+                    pagination={{
+                      total: blacklistTotal,
+                      pageSize: 20,
+                      current: blacklistCurrentPage,
+                      onChange: (page) => {
+                        setBlacklistCurrentPage(page);
+                        setEditingKey("");
+                      },
+                      showTotal: (total) => (
+                        <span className="text-sm text-muted-foreground">
+                          {t("users.total")} {total} {t("users.totalRecords")}
+                        </span>
+                      ),
+                    }}
+                  />
+                ) : (
+                  <EmptyState searchText={searchText} />
+                )}
               </div>
             </div>
 
             <div className="sm:hidden">
               <div className="grid gap-4">
-                {blacklistUsers.map((user) => (
-                  <UserCard key={user.id} record={user} />
-                ))}
+                {loading ? (
+                  <LoadingState t={t} />
+                ) : blacklistUsers.length > 0 ? (
+                  blacklistUsers.map((user) => (
+                    <UserCard key={user.id} record={user} />
+                  ))
+                ) : (
+                  <EmptyState searchText={searchText} />
+                )}
               </div>
             </div>
           </div>

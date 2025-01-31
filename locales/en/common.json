@@ -179,7 +179,8 @@
       "title": "No users found",
       "default": "There are no users to display at the moment.",
       "withFilter": "No users found matching \"{{filter}}\"."
-    }
+    },
+    "loading": "Loading user data..."
   },
 
   "records": {
