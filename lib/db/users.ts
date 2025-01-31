@@ -19,7 +19,7 @@ export async function ensureUserTableExists() {
   if (tableExists.rows[0].exists) {
     await query(`
       ALTER TABLE users 
-        ALTER COLUMN balance TYPE DECIMAL(16,6);
+        ALTER COLUMN balance TYPE DECIMAL(16,4);
     `);
 
     const columnExists = await query(`
@@ -56,7 +56,7 @@ export async function ensureUserTableExists() {
         email TEXT NOT NULL,
         name TEXT NOT NULL,
         role TEXT NOT NULL,
-        balance DECIMAL(16, 6) NOT NULL,
+        balance DECIMAL(16,4) NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         deleted BOOLEAN DEFAULT FALSE
       );
@@ -94,20 +94,16 @@ export async function updateUserBalance(
 ): Promise<number> {
   await ensureUserTableExists();
 
-  console.log("Updating user balance:", { userId, cost });
-
-  const currentBalance = await query(
-    `SELECT balance FROM users WHERE id = $1`,
-    [userId]
-  );
-  console.log("Current balance:", currentBalance.rows[0]?.balance);
+  if (cost > 999999.9999) {
+    throw new Error("Balance exceeds maximum allowed value");
+  }
 
   const result = await query(
     `
     UPDATE users 
-      SET balance = (
-        CAST(balance AS DECIMAL(16,6)) - 
-        CAST($2 AS DECIMAL(16,6))
+      SET balance = LEAST(
+        CAST($2 AS DECIMAL(16,4)),
+        999999.9999
       )
       WHERE id = $1
       RETURNING balance`,
@@ -118,16 +114,7 @@ export async function updateUserBalance(
     throw new Error("User not found");
   }
 
-  const newBalance = Number(result.rows[0].balance);
-  console.log("Balance updated:", {
-    userId,
-    cost: cost.toFixed(6),
-    oldBalance: currentBalance.rows[0]?.balance,
-    newBalance: newBalance.toFixed(6),
-    diff: (Number(currentBalance.rows[0]?.balance) - newBalance).toFixed(6),
-  });
-
-  return newBalance;
+  return Number(result.rows[0].balance);
 }
 
 async function ensureDeletedColumnExists() {

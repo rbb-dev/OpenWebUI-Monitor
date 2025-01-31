@@ -15,7 +15,7 @@ OpenWebUI Monitor is designed to work alongside [OpenWebUI](https://github.com/o
 - `OPENWEBUI_DOMAIN`: The domain of your OpenWebUI instance, e.g., `https://chat.example.com`
 - `OPENWEBUI_API_KEY`: The API Key for OpenWebUI, which can be found in **User Settings -> Account -> API Keys**
   <img width="877" alt="image" src="https://github.com/user-attachments/assets/f52554ea-27b2-4654-9820-c302766541ee">
-- `API_KEY`: This is the key you’ll use later in the OpenWebUI function plugin configuration as the `Api Key`. Use a strong password generator like [1Password](https://1password.com/) to create this.
+- `API_KEY`: This is the key you'll use later in the OpenWebUI function plugin configuration as the `Api Key`. Use a strong password generator like [1Password](https://1password.com/) to create this. The length must be less than 56 characters.
 - `ACCESS_TOKEN`: A password required to access the OpenWebUI Monitor webpage.
 - `INIT_BALANCE` (optional): The initial balance for users, e.g., `1.14`.
 
@@ -27,7 +27,7 @@ OpenWebUI Monitor is designed to work alongside [OpenWebUI](https://github.com/o
 
 The deployment is now complete. Note the domain assigned by Vercel or add a custom domain in the settings. This domain will be used as the `Api Endpoint` in the OpenWebUI function plugin.
 
-> **Note:** Due to Vercel’s free plan limitations, database connections may be slow, and token calculations for each message could take up to 2 seconds. If you have your own server, it’s recommended to use the Docker Compose method for deployment.
+> **Note:** Due to Vercel's free plan limitations, database connections may be slow, and token calculations for each message could take up to 2 seconds. If you have your own server, it's recommended to use the Docker Compose method for deployment.
 
 ### Method 2: Deploy with Docker Compose
 

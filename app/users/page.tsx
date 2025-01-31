@@ -75,7 +75,7 @@ const TABLE_STYLES = `
 
 const formatBalance = (balance: number | string) => {
   const num = typeof balance === "number" ? balance : Number(balance);
-  return isFinite(num) ? num.toFixed(2) : "0.00";
+  return isFinite(num) ? num.toFixed(4) : "0.0000";
 };
 
 const UserDetailsModal = ({
@@ -528,23 +528,16 @@ export default function UsersPage() {
             </span>
             <div className="flex-1 max-w-[200px]">
               <EditableCell
-                value={Number(record.balance)}
+                value={record.balance}
                 isEditing={record.id === editingKey}
                 onEdit={() => setEditingKey(record.id)}
-                onSubmit={async (value) => {
-                  try {
-                    await handleUpdateBalance(record.id, value);
-                    setEditingKey("");
-                  } catch {
-                    // 错误已在 handleUpdateBalance 中处理
-                  }
-                }}
-                t={t}
+                onSubmit={(value) => handleUpdateBalance(record.id, value)}
                 onCancel={() => setEditingKey("")}
-                placeholder={t("users.enterBalance")}
+                t={t}
                 validateValue={(value) => ({
-                  isValid: isFinite(value) && value >= 0,
-                  errorMessage: t("users.message.invalidNumber"),
+                  isValid: isFinite(value),
+                  errorMessage: t("error.invalidNumber"),
+                  maxValue: 999999.9999,
                 })}
               />
             </div>
@@ -601,23 +594,16 @@ export default function UsersPage() {
             <div className="flex items-center gap-4">
               <div className="flex-1">
                 <EditableCell
-                  value={Number(balance)}
+                  value={balance}
                   isEditing={isEditing}
                   onEdit={() => setEditingKey(record.id)}
-                  onSubmit={async (value) => {
-                    try {
-                      await handleUpdateBalance(record.id, value);
-                      setEditingKey("");
-                    } catch {
-                      // 错误已在 handleUpdateBalance 中处理
-                    }
-                  }}
-                  t={t}
+                  onSubmit={(value) => handleUpdateBalance(record.id, value)}
                   onCancel={() => setEditingKey("")}
-                  placeholder={t("users.enterBalance")}
+                  t={t}
                   validateValue={(value) => ({
-                    isValid: isFinite(value) && value >= 0,
-                    errorMessage: t("users.message.invalidNumber"),
+                    isValid: isFinite(value),
+                    errorMessage: t("error.invalidNumber"),
+                    maxValue: 999999.9999,
                   })}
                 />
               </div>

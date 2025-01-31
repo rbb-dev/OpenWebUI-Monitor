@@ -15,7 +15,7 @@ OpenWebUI Monitor 是搭配 [OpenWebUI](https://github.com/open-webui/open-webui
 - `OPENWEBUI_DOMAIN`：你的 OpenWebUI 的域名，例如 `https://chat.example.com`
 - `OPENWEBUI_API_KEY`：OpenWebUI 的 API Key，在 `个人设置 -> 账号 -> API密钥` 中获取
   <img width="884" alt="image" src="https://github.com/user-attachments/assets/da03a58a-4bfb-4371-b7f7-c6aa915eacdb">
-- `API_KEY`：这是你稍后要填写在 OpenWebUI 函数插件中 `Api Key` 的，用于向 OpenWebUI Monitor 服务器发送请求的鉴权。建议使用 [1Password](https://1password.com/) 生成一个强密码。
+- `API_KEY`：这是你稍后要填写在 OpenWebUI 函数插件中 `Api Key` 的，用于向 OpenWebUI Monitor 服务器发送请求的鉴权。建议使用 [1Password](https://1password.com/) 生成一个少于 56 个字符的强密码。
 - `ACCESS_TOKEN`：访问 OpenWebUI Monitor 网页时要输入的访问密钥
 - `INIT_BALANCE`（可选）：用户初始余额，例如 `1.14`
 
@@ -72,14 +72,13 @@ sudo docker compose up -d
 
 若你选择隐式显示计费，则取而代之用 [这个函数](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/functions/openwebui_monitor_invisible.py) 的代码粘贴进去并保存，同样需要启用函数，并点击 `…` 打开详细配置，全局启用函数。但是要额外再安装一个 Action 函数插件
 
-* Action 函数
+- Action 函数
 
-同理，选择添加并复制[Action函数](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/functions/get_usage_button.py)的代码粘贴进去保存,启用函数，并点击 `…` 打开详细配置，全局启用函数。
+同理，选择添加并复制[Action 函数](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/functions/get_usage_button.py)的代码粘贴进去保存,启用函数，并点击 `…` 打开详细配置，全局启用函数。
 该函数会接管原先计费插件的统计信息显示选项配置
 
-* 使用
+- 使用
 
 ![CleanShot 2024-12-10 at 13 41 08](https://github.com/user-attachments/assets/e999d022-339e-41d3-9bf9-a6f8d9877fe8)
 
-
-手动点击底部的“计费信息”按钮来显示消息，但要注意的是该方式只能显示对话最新（最底部）的消息计费信息
+手动点击底部的"计费信息"按钮来显示消息，但要注意的是该方式只能显示对话最新（最底部）的消息计费信息

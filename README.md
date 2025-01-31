@@ -1,7 +1,8 @@
 <div align="center">
 
 # OpenWebUI Monitor
-**English** / [简体中文](./resources/tutorials/zh-cn/README_zh.md) 
+
+**English** / [简体中文](./resources/tutorials/zh-cn/README_zh.md)
 
 </div>
 
@@ -35,19 +36,18 @@ sudo docker compose up -d
 | ----------------- | --------------------------------------------------------------------- | -------------------------- |
 | OPENWEBUI_DOMAIN  | OpenWebUI domain                                                      | `https://chat.example.com` |
 | OPENWEBUI_API_KEY | OpenWebUI API Key, found in `Personal Settings -> Account -> API Key` | `sk-xxxxxxxxxxxxxxxx`      |
-| API_KEY           | For API request verification                                          | `your-api-key-here`        |
+| API_KEY           | For API request verification (must be less than 56 characters)        | `your-api-key-here`        |
 | ACCESS_TOKEN      | For page access verification                                          | `your-access-token-here`   |
 
 ### Optional
 
-| Variable Name              | Description                                           | Default Value |
-| -------------------------- | ----------------------------------------------------- | ------------- |
-| DEFAULT_MODEL_INPUT_PRICE  | Default model input price, in USD per million tokens  | `60`          |
-| DEFAULT_MODEL_OUTPUT_PRICE | Default model output price, in USD per million tokens | `60`          |
-| DEFAULT_MODEL_PER_MSG_PRICE | Default model price for each message, in USD         | `-1`          |
-| INIT_BALANCE               | Initial user balance                                  | `0`           |
+| Variable Name               | Description                                           | Default Value |
+| --------------------------- | ----------------------------------------------------- | ------------- |
+| DEFAULT_MODEL_INPUT_PRICE   | Default model input price, in USD per million tokens  | `60`          |
+| DEFAULT_MODEL_OUTPUT_PRICE  | Default model output price, in USD per million tokens | `60`          |
+| DEFAULT_MODEL_PER_MSG_PRICE | Default model price for each message, in USD          | `-1`          |
+| INIT_BALANCE                | Initial user balance                                  | `0`           |
 
 <h2>Gallery</h2>
 
 <img width="1040" alt="image" src="https://github.com/user-attachments/assets/b72a92a9-4d84-4a34-a273-0987a1783b47">
-

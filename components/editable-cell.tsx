@@ -13,13 +13,14 @@ interface EditableCellProps {
   onEdit: () => void;
   onSubmit: (value: number) => Promise<void>;
   onCancel: () => void;
-  t: (key: string) => string;
+  t: (key: string, options?: { max?: number }) => string;
   disabled?: boolean;
   tooltipText?: string;
   placeholder?: string;
   validateValue?: (value: number) => {
     isValid: boolean;
     errorMessage?: string;
+    maxValue?: number;
   };
 }
 
@@ -35,7 +36,7 @@ export function EditableCell({
   placeholder,
   validateValue = (value) => ({ isValid: true }),
 }: EditableCellProps) {
-  const numericValue = typeof value === "number" ? value : 0;
+  const numericValue = typeof value === "number" ? value : Number(value);
   const originalValue = numericValue >= 0 ? numericValue.toFixed(4) : "";
   const [inputValue, setInputValue] = useState(originalValue);
   const [isSaving, setIsSaving] = useState(false);
@@ -70,6 +71,11 @@ export function EditableCell({
 
       if (!validation.isValid) {
         toast.error(validation.errorMessage || t("error.invalidInput"));
+        return;
+      }
+
+      if (validation.maxValue !== undefined && numValue > validation.maxValue) {
+        toast.error(t("error.exceedsMaxValue", { max: validation.maxValue }));
         return;
       }
 
@@ -181,13 +187,13 @@ export function EditableCell({
               }
             `}
           >
-            {value < 0 ? (
+            {numericValue < 0 ? (
               <span className="text-muted-foreground/60">
                 {t("common.notSet")}
               </span>
             ) : (
               <>
-                {value.toFixed(2)}
+                {numericValue.toFixed(4)}
                 {tooltipText && (
                   <Tooltip title={tooltipText}>
                     <InfoCircleOutlined className="ml-1 text-muted-foreground/60" />

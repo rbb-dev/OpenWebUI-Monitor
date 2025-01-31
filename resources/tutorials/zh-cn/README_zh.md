@@ -36,7 +36,7 @@ sudo docker compose up -d
 | ----------------- | ------------------------------------------------------------- | -------------------------- |
 | OPENWEBUI_DOMAIN  | OpenWebUI 的域名                                              | `https://chat.example.com` |
 | OPENWEBUI_API_KEY | OpenWebUI 的 API Key，在 `个人设置 -> 账号 -> API密钥` 中获取 | `sk-xxxxxxxxxxxxxxxx`      |
-| API_KEY           | 用于 API 请求验证                                             | `your-api-key-here`        |
+| API_KEY           | 用于 API 请求验证 (必须少于 56 个字符)                        | `your-api-key-here`        |
 | ACCESS_TOKEN      | 用于页面访问验证                                              | `your-access-token-here`   |
 
 ### 可选

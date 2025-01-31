@@ -314,6 +314,8 @@
     "records": {
       "usageRecord": "使用记录",
       "exportRecord": "导出记录"
-    }
+    },
+    "exceedsMaxValue": "输入值不能超过 {{max}}",
+    "balanceExceedsLimit": "余额超出最大限制"
   }
 }

@@ -125,7 +125,10 @@ export async function POST(req: Request) {
     // 获取并更新用户余额
     const userResult = await query(
       `UPDATE users 
-       SET balance = balance - $1
+       SET balance = LEAST(
+         balance - CAST($1 AS DECIMAL(16,4)),
+         999999.9999
+       )
        WHERE id = $2
        RETURNING balance`,
       [totalCost, userId]
@@ -136,6 +139,10 @@ export async function POST(req: Request) {
     }
 
     const newBalance = Number(userResult.rows[0].balance);
+
+    if (newBalance > 999999.9999) {
+      throw new Error("Balance exceeds maximum allowed value");
+    }
 
     // 记录使用情况
     await query(
