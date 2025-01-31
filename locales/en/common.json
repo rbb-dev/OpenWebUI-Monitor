@@ -270,7 +270,21 @@
     "overview": {
       "totalModels": "Models Used",
       "totalUsers": "Active Users",
-      "totalCost": "Total Cost"
+      "totalCost": "Total Cost",
+      "totalCalls": "Total Calls",
+      "totalTokens": "Total Tokens"
+    },
+    "report": {
+      "daily": "Daily Report",
+      "weekly": "Weekly Report",
+      "monthly": "Monthly Report",
+      "thirtyDays": "30 Days Report",
+      "overall": "Overall Report",
+      "custom": "Custom Period Report",
+      "mostUsedModel": "Most Used Model",
+      "topUser": "Top User",
+      "usageCount": "{{count}} times",
+      "spentAmount": "${{amount}} spent"
     }
   },
   "error": {

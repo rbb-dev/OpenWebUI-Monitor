@@ -459,7 +459,7 @@ export default function ModelsPage() {
       dataIndex: "input_price",
       sorter: (a, b) => a.input_price - b.input_price,
       sortDirections: ["descend", "ascend", "descend"],
-      render: (_, record) => renderPriceCell("input_price", record),
+      render: (_, record) => renderPriceCell("input_price", record, true),
     },
     {
       title: t("models.table.outputPrice"),
@@ -468,7 +468,7 @@ export default function ModelsPage() {
       dataIndex: "output_price",
       sorter: (a, b) => a.output_price - b.output_price,
       sortDirections: ["descend", "ascend", "descend"],
-      render: (_, record) => renderPriceCell("output_price", record),
+      render: (_, record) => renderPriceCell("output_price", record, true),
     },
     {
       title: (
@@ -484,7 +484,7 @@ export default function ModelsPage() {
       dataIndex: "per_msg_price",
       sorter: (a, b) => a.per_msg_price - b.per_msg_price,
       sortDirections: ["descend", "ascend", "descend"],
-      render: (_, record) => renderPriceCell("per_msg_price", record),
+      render: (_, record) => renderPriceCell("per_msg_price", record, true),
     },
   ];
 
@@ -749,13 +749,8 @@ export default function ModelsPage() {
             >
               <span className="text-xs text-muted-foreground/80 block truncate">
                 {label}
-                {disabled && (
-                  <Tooltip title={t("models.table.priceOverriddenByPerMsg")}>
-                    <InfoCircleOutlined className="ml-1 text-muted-foreground/60" />
-                  </Tooltip>
-                )}
               </span>
-              {renderPriceCell(field, record)}
+              {renderPriceCell(field, record, false)}
             </div>
           ))}
         </div>
@@ -763,10 +758,11 @@ export default function ModelsPage() {
     );
   };
 
-  // 将 renderPriceCell 移回组件内部
+  // 将 renderPriceCell 修改为接收一个额外的 showTooltip 参数
   const renderPriceCell = (
     field: "input_price" | "output_price" | "per_msg_price",
-    record: Model
+    record: Model,
+    showTooltip: boolean = true // 默认显示 tooltip
   ) => {
     const isEditing =
       editingCell?.id === record.id && editingCell?.field === field;
@@ -790,7 +786,9 @@ export default function ModelsPage() {
         disabled={isDisabled}
         onCancel={() => setEditingCell(null)}
         tooltipText={
-          isDisabled ? t("models.table.priceOverriddenByPerMsg") : undefined
+          showTooltip && isDisabled
+            ? t("models.table.priceOverriddenByPerMsg")
+            : undefined
         }
         placeholder={t("models.table.enterPrice")}
         validateValue={(value) => ({

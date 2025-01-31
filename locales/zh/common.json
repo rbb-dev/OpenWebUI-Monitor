@@ -270,7 +270,21 @@
     "overview": {
       "totalModels": "使用模型数",
       "totalUsers": "活跃用户数",
-      "totalCost": "总消费金额"
+      "totalCost": "总消费金额",
+      "totalCalls": "总调用次数",
+      "totalTokens": "总 Token 数"
+    },
+    "report": {
+      "daily": "今日报告",
+      "weekly": "本周报告",
+      "monthly": "本月报告",
+      "thirtyDays": "近30天报告",
+      "overall": "全时段报告",
+      "custom": "自定义时段报告",
+      "mostUsedModel": "最常用模型",
+      "topUser": "最活跃用户",
+      "usageCount": "使用 {{count}} 次",
+      "spentAmount": "消费 ¥{{amount}}"
     }
   },
   "error": {

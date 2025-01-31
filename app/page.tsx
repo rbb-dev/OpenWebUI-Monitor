@@ -250,9 +250,9 @@ export default function HomePage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="fixed bottom-4 right-4"
+          className="fixed bottom-4 right-4 z-50"
         >
-          <div className="backdrop-blur-[15px] bg-white/20 border border-white/30 rounded-xl shadow-2xl p-4">
+          <div className="bg-white rounded-xl shadow-2xl p-4 border border-gray-200">
             <div className="flex items-center gap-3 text-gray-600">
               <span>
                 {t("update.newVersion")} {latestVersion}

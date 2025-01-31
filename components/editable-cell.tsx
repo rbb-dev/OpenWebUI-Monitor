@@ -36,7 +36,7 @@ export function EditableCell({
   validateValue = (value) => ({ isValid: true }),
 }: EditableCellProps) {
   const numericValue = typeof value === "number" ? value : 0;
-  const originalValue = numericValue >= 0 ? numericValue.toFixed(2) : "";
+  const originalValue = numericValue >= 0 ? numericValue.toFixed(4) : "";
   const [inputValue, setInputValue] = useState(originalValue);
   const [isSaving, setIsSaving] = useState(false);
 

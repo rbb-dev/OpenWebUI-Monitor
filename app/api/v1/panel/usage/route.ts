@@ -12,9 +12,10 @@ export async function GET(request: Request) {
 
     const params = startTime && endTime ? [startTime, endTime] : [];
 
-    const [modelResult, userResult, timeRangeResult] = await Promise.all([
-      pool.query(
-        `
+    const [modelResult, userResult, timeRangeResult, statsResult] =
+      await Promise.all([
+        pool.query(
+          `
         SELECT 
           model_name,
           COUNT(*) as total_count,
@@ -24,10 +25,10 @@ export async function GET(request: Request) {
         GROUP BY model_name
         ORDER BY total_cost DESC
       `,
-        params
-      ),
-      pool.query(
-        `
+          params
+        ),
+        pool.query(
+          `
         SELECT 
           nickname,
           COUNT(*) as total_count,
@@ -37,15 +38,25 @@ export async function GET(request: Request) {
         GROUP BY nickname
         ORDER BY total_cost DESC
       `,
-        params
-      ),
-      pool.query(`
+          params
+        ),
+        pool.query(`
         SELECT 
           MIN(use_time) as min_time,
           MAX(use_time) as max_time
         FROM user_usage_records
       `),
-    ]);
+        pool.query(
+          `
+        SELECT 
+          COALESCE(SUM(input_tokens + output_tokens), 0) as total_tokens,
+          COUNT(*) as total_calls
+        FROM user_usage_records
+        ${timeFilter}
+      `,
+          params
+        ),
+      ]);
 
     const formattedData = {
       models: modelResult.rows.map((row) => ({
@@ -61,6 +72,10 @@ export async function GET(request: Request) {
       timeRange: {
         minTime: timeRangeResult.rows[0].min_time,
         maxTime: timeRangeResult.rows[0].max_time,
+      },
+      stats: {
+        totalTokens: parseInt(statsResult.rows[0].total_tokens),
+        totalCalls: parseInt(statsResult.rows[0].total_calls),
       },
     };
 

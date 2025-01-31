@@ -45,36 +45,38 @@ const MobileCard = ({
   t: (key: string) => string;
 }) => {
   return (
-    <div className="p-4 bg-card text-card-foreground rounded-lg border shadow-sm">
-      <div className="flex justify-between items-start mb-3">
-        <div>
-          <div className="font-medium">{record.nickname}</div>
-          <div className="text-xs text-muted-foreground">
+    <div className="p-4 bg-white rounded-xl border border-gray-100/80 shadow-sm transition-all duration-200 hover:shadow-md hover:border-gray-200/80">
+      <div className="flex justify-between items-start mb-4">
+        <div className="space-y-1">
+          <div className="font-medium text-gray-900">{record.nickname}</div>
+          <div className="text-xs text-gray-500 flex items-center gap-1.5">
+            <div className="w-1 h-1 rounded-full bg-gray-300" />
             {dayjs(record.use_time).format("YYYY-MM-DD HH:mm:ss")}
           </div>
         </div>
         <div className="text-right">
-          <div className="font-medium text-blue-600">
-            {t("common.currency")}
-            {Number(record.cost).toFixed(4)}
+          <div className="font-medium text-primary">
+            ¥{Number(record.cost).toFixed(4)}
           </div>
-          <div className="text-xs text-muted-foreground">
-            {t("panel.usageDetails.table.balance")}: {t("common.currency")}
+          <div className="text-xs text-gray-500 mt-1">
+            {t("panel.usageDetails.table.balance")}: ¥
             {Number(record.balance_after).toFixed(2)}
           </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="flex-1">
-          <div className="text-xs text-muted-foreground mb-1">
+      <div className="flex items-center gap-4 bg-gray-50/70 rounded-lg p-3">
+        <div className="flex-1 min-w-0">
+          <div className="text-xs text-gray-500 mb-1.5">
             {t("panel.usageDetails.table.model")}
           </div>
-          <div className="text-sm truncate">{record.model_name}</div>
+          <div className="text-sm text-gray-700 font-medium truncate">
+            {record.model_name}
+          </div>
         </div>
-        <div>
-          <div className="text-xs text-muted-foreground mb-1">Token</div>
-          <div className="text-sm text-left">
+        <div className="shrink-0">
+          <div className="text-xs text-gray-500 mb-1.5">Tokens</div>
+          <div className="text-sm text-gray-700 font-medium tabular-nums">
             {(record.input_tokens + record.output_tokens).toLocaleString()}
           </div>
         </div>
@@ -237,7 +239,7 @@ export default function UsageRecordsTable({
       <div className="sm:hidden space-y-4">
         {loading ? (
           <div className="flex justify-center py-8">
-            <div className="w-6 h-6 border-2 border-primary/20 border-t-primary animate-spin rounded-full"></div>
+            <div className="w-6 h-6 border-2 border-primary/30 border-t-primary animate-spin rounded-full" />
           </div>
         ) : (
           <>
@@ -250,8 +252,13 @@ export default function UsageRecordsTable({
               dataSource={[]}
               loading={loading}
               onChange={onTableChange}
-              pagination={tableParams.pagination}
-              className="[&_.ant-pagination]:!mt-0 [&_.ant-table]:hidden"
+              pagination={{
+                ...tableParams.pagination,
+                size: "small",
+                className:
+                  "flex justify-center [&_.ant-pagination-options]:hidden",
+              }}
+              className="[&_.ant-pagination]:!mt-0 [&_.ant-table]:hidden [&_.ant-pagination-item]:!bg-white"
             />
           </>
         )}

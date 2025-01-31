@@ -8,6 +8,7 @@ import { MetricToggle } from "@/components/ui/metric-toggle";
 import { useTranslation } from "react-i18next";
 import { BarChartOutlined } from "@ant-design/icons";
 import { Card as ShadcnCard } from "@/components/ui/card";
+import { motion } from "framer-motion";
 
 interface UserUsage {
   nickname: string;
@@ -294,29 +295,46 @@ export default function UserRankingChart({
   };
 
   return (
-    <ShadcnCard className="p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div className="flex items-center gap-2.5 text-lg font-medium">
-          <BarChartOutlined className="w-5 h-5 text-primary/90" />
-          <h2 className="text-gray-800">{t("panel.userUsageChart.title")}</h2>
-        </div>
-        <MetricToggle value={metric} onChange={onMetricChange} />
-      </div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+      className="col-span-full bg-gradient-to-br from-card to-card/95 text-card-foreground rounded-xl border shadow-sm overflow-hidden"
+    >
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 pointer-events-none" />
 
-      {loading ? (
-        <div className="flex justify-center items-center h-[350px] sm:h-[450px]">
-          <Skeleton className="w-full h-full rounded-lg" />
+        <div className="relative p-6 space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center rounded-xl shrink-0">
+              <BarChartOutlined className="text-xl text-primary" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-2xl font-semibold bg-gradient-to-br from-foreground to-foreground/80 bg-clip-text text-transparent">
+                {t("panel.userUsageChart.title")}
+              </h3>
+            </div>
+            <div className="ml-auto">
+              <MetricToggle value={metric} onChange={onMetricChange} />
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="h-[350px] sm:h-[450px] flex items-center justify-center">
+              <Skeleton className="w-full h-full rounded-lg" />
+            </div>
+          ) : (
+            <div className="h-[350px] sm:h-[450px] transition-all duration-300">
+              <ReactECharts
+                option={getBarOption(users, metric, t)}
+                style={{ height: "100%", width: "100%" }}
+                onChartReady={onChartReady}
+                className="bar-chart"
+              />
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="h-[350px] sm:h-[450px] transition-all duration-300">
-          <ReactECharts
-            option={getBarOption(users, metric, t)}
-            style={{ height: "100%", width: "100%" }}
-            onChartReady={onChartReady}
-            className="bar-chart"
-          />
-        </div>
-      )}
-    </ShadcnCard>
+      </div>
+    </motion.div>
   );
 }

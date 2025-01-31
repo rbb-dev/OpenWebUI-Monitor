@@ -22,6 +22,7 @@ import {
   PieChartOutlined,
   TableOutlined,
 } from "@ant-design/icons";
+import { Crown, Trophy } from "lucide-react";
 
 interface ModelUsage {
   model_name: string;
@@ -41,6 +42,10 @@ interface UsageData {
   timeRange: {
     minTime: string;
     maxTime: string;
+  };
+  stats?: {
+    totalTokens: number;
+    totalCalls: number;
   };
 }
 
@@ -130,6 +135,7 @@ export default function PanelPage() {
         throw new Error("Failed to fetch data");
       }
       const data = await response.json();
+
       setUsageData(data);
 
       if (isFullRange) {
@@ -225,6 +231,39 @@ export default function PanelPage() {
     fetchUsageData(range);
   };
 
+  const getReportTitle = (type: TimeRangeType, t: (key: string) => string) => {
+    switch (type) {
+      case "today":
+        return t("panel.report.daily");
+      case "week":
+        return t("panel.report.weekly");
+      case "month":
+        return t("panel.report.monthly");
+      case "30days":
+        return t("panel.report.thirtyDays");
+      case "all":
+        return t("panel.report.overall");
+      case "custom":
+        return t("panel.report.custom");
+      default:
+        return "";
+    }
+  };
+
+  // 添加一个格式化数字的辅助函数
+  const formatNumber = (num: number): string => {
+    if (num >= 1_000_000_000) {
+      return (num / 1_000_000_000).toFixed(1) + "B";
+    }
+    if (num >= 1_000_000) {
+      return (num / 1_000_000).toFixed(1) + "M";
+    }
+    if (num >= 1_000) {
+      return (num / 1_000).toFixed(1) + "K";
+    }
+    return num.toLocaleString();
+  };
+
   return (
     <>
       <Head>
@@ -259,19 +298,167 @@ export default function PanelPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="py-6 bg-card text-card-foreground"
+            className="col-span-full bg-gradient-to-br from-card to-card/95 text-card-foreground rounded-xl border shadow-sm overflow-hidden"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/10 flex items-center justify-center">
-                <PieChartOutlined className="text-xl text-primary" />
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  {t("panel.modelUsage.title")}
-                </h3>
-                <p className="text-2xl font-semibold">
-                  {loading ? "-" : usageData.models.length}
-                </p>
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 pointer-events-none" />
+
+              <div className="relative p-6 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center rounded-xl shrink-0">
+                    <BarChartOutlined className="text-xl text-primary" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-2xl font-semibold bg-gradient-to-br from-foreground to-foreground/80 bg-clip-text text-transparent">
+                      {getReportTitle(timeRangeType, t)}
+                    </h3>
+                    {timeRangeType === "custom" &&
+                      availableTimeRange.minTime &&
+                      availableTimeRange.maxTime && (
+                        <p className="text-sm text-muted-foreground">
+                          {`${dayjs(availableTimeRange.minTime).format(
+                            "YYYY-MM-DD"
+                          )} ~ ${dayjs(availableTimeRange.maxTime).format(
+                            "YYYY-MM-DD"
+                          )}`}
+                        </p>
+                      )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+                  {/* 总消费金额 */}
+                  <div className="col-span-2 md:col-span-1 space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {t("panel.overview.totalCost")}
+                    </p>
+                    <p className="text-2xl font-bold text-rose-600">
+                      {loading
+                        ? "-"
+                        : `${t("common.currency")}${usageData.models
+                            .reduce((sum, model) => sum + model.total_cost, 0)
+                            .toFixed(2)}`}
+                    </p>
+                  </div>
+
+                  {/* 总调用次数 */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {t("panel.overview.totalCalls")}
+                    </p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {loading
+                        ? "-"
+                        : formatNumber(usageData.stats?.totalCalls || 0)}
+                    </p>
+                  </div>
+
+                  {/* 总 Token 数 */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {t("panel.overview.totalTokens")}
+                    </p>
+                    <p className="text-2xl font-bold text-emerald-600">
+                      {loading
+                        ? "-"
+                        : formatNumber(usageData.stats?.totalTokens || 0)}
+                    </p>
+                  </div>
+
+                  {/* 活跃用户数 */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {t("panel.overview.totalUsers")}
+                    </p>
+                    <p className="text-2xl font-bold text-amber-600">
+                      {loading ? "-" : usageData.users.length}
+                    </p>
+                  </div>
+
+                  {/* 使用模型数 */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {t("panel.overview.totalModels")}
+                    </p>
+                    <p className="text-2xl font-bold text-violet-600">
+                      {loading ? "-" : usageData.models.length}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Crown className="w-4 h-4 text-amber-500" />
+                      <h4 className="font-medium">
+                        {t("panel.report.mostUsedModel")}
+                      </h4>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-lg font-medium">
+                        {loading
+                          ? "-"
+                          : usageData.models.length > 0
+                          ? usageData.models.reduce((prev, current) =>
+                              current.total_count > prev.total_count
+                                ? current
+                                : prev
+                            ).model_name
+                          : "-"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {loading
+                          ? "-"
+                          : usageData.models.length > 0
+                          ? t("panel.report.usageCount", {
+                              count: usageData.models.reduce((prev, current) =>
+                                current.total_count > prev.total_count
+                                  ? current
+                                  : prev
+                              ).total_count,
+                            })
+                          : "-"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Trophy className="w-4 h-4 text-rose-500" />
+                      <h4 className="font-medium">
+                        {t("panel.report.topUser")}
+                      </h4>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-lg font-medium">
+                        {loading
+                          ? "-"
+                          : usageData.users.length > 0
+                          ? usageData.users.reduce((prev, current) =>
+                              current.total_cost > prev.total_cost
+                                ? current
+                                : prev
+                            ).nickname
+                          : "-"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {loading
+                          ? "-"
+                          : usageData.users.length > 0
+                          ? t("panel.report.spentAmount", {
+                              amount: usageData.users
+                                .reduce((prev, current) =>
+                                  current.total_cost > prev.total_cost
+                                    ? current
+                                    : prev
+                                )
+                                .total_cost.toFixed(2),
+                            })
+                          : "-"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </motion.div>
