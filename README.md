@@ -1,4 +1,6 @@
 <div align="center">
+  
+![](https://github.com/user-attachments/assets/fb90a4cc-2e54-495c-87ca-34c1a54bf2c8)
 
 # OpenWebUI Monitor
 
@@ -50,4 +52,5 @@ sudo docker compose up -d
 
 <h2>Gallery</h2>
 
-<img width="1040" alt="image" src="https://github.com/user-attachments/assets/b72a92a9-4d84-4a34-a273-0987a1783b47">
+![](https://github.com/user-attachments/assets/63f23bfd-f271-41e8-a71c-2016be1d501a)
+

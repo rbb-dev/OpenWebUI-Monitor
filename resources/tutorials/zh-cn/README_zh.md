@@ -1,5 +1,7 @@
 <div align="center">
 
+![output_2](https://github.com/user-attachments/assets/b1716788-93c5-49d5-abb1-b0ef3a29356d)
+
 # OpenWebUI Monitor
 
 [English](../../../README.md) / **简体中文**
@@ -50,4 +52,5 @@ sudo docker compose up -d
 
 <h2>Gallery</h2>
 
-<img width="993" alt="image" src="https://github.com/user-attachments/assets/0bc0043e-c949-4935-a5ef-d0d15e5501e0">
+![](https://github.com/user-attachments/assets/2777c1fc-a8c6-4397-9665-a6a559d4bab1)
+
