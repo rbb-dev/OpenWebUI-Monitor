@@ -162,7 +162,7 @@ export async function getUsers({
   sortOrder = null,
   search = null,
 }: GetUsersOptions = {}) {
-  await ensureDeletedColumnExists();
+  await ensureUserTableExists();
 
   const offset = (page - 1) * pageSize;
 
