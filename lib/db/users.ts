@@ -134,6 +134,7 @@ async function ensureDeletedColumnExists() {
 }
 
 export async function deleteUser(userId: string) {
+  await ensureUserTableExists();
   await ensureDeletedColumnExists();
 
   const updateResult = await query(
@@ -163,6 +164,7 @@ export async function getUsers({
   search = null,
 }: GetUsersOptions = {}) {
   await ensureUserTableExists();
+  await ensureDeletedColumnExists();
 
   const offset = (page - 1) * pageSize;
 
@@ -219,6 +221,9 @@ export async function getUsers({
 }
 
 export async function getAllUsers(includeDeleted: boolean = false) {
+  await ensureUserTableExists();
+  await ensureDeletedColumnExists();
+
   const whereClause = includeDeleted
     ? ""
     : "WHERE (deleted = FALSE OR deleted IS NULL)";
