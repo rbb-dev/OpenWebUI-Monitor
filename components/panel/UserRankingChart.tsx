@@ -39,48 +39,7 @@ const getBarOption = (
 
   return {
     tooltip: {
-      show: true,
-      trigger: "axis",
-      backgroundColor: "rgba(255, 255, 255, 0.98)",
-      borderColor: "rgba(0, 0, 0, 0.05)",
-      borderWidth: 1,
-      padding: [14, 18],
-      textStyle: {
-        color: "#333",
-        fontSize: 13,
-        lineHeight: 20,
-      },
-      axisPointer: {
-        type: "shadow",
-        shadowStyle: {
-          color: "rgba(0, 0, 0, 0.03)",
-        },
-      },
-      formatter: (params: any) => {
-        const data = params[0];
-        return `
-          <div class="flex flex-col gap-1.5">
-            <div class="font-medium text-gray-800">${data.name}</div>
-            <div class="flex items-center gap-2">
-              <span class="inline-block w-2 h-2 rounded-full" style="background-color: ${
-                data.color
-              }"></span>
-              <span class="text-sm">
-                ${metric === "cost" ? t("panel.byAmount") : t("panel.byCount")}
-              </span>
-              <span class="font-mono text-sm font-medium text-gray-900">
-                ${
-                  metric === "cost"
-                    ? `${t("common.currency")}${data.value.toFixed(2)}`
-                    : `${data.value} ${t("common.count")}`
-                }
-              </span>
-            </div>
-          </div>
-        `;
-      },
-      extraCssText:
-        "box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); border-radius: 8px;",
+      show: false,
     },
     grid: {
       top: isSmallScreen ? "8%" : "4%",

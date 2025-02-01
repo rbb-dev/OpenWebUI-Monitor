@@ -71,6 +71,17 @@ export default function PanelPage() {
   const { t } = useTranslation("common");
   const [loading, setLoading] = useState(true);
   const [tableLoading, setTableLoading] = useState(true);
+  const [dateRange, setDateRange] = useState<[Date, Date]>([
+    new Date(), // 将在加载数据后更新
+    new Date(),
+  ]);
+  const [availableTimeRange, setAvailableTimeRange] = useState<{
+    minTime: Date;
+    maxTime: Date;
+  }>({
+    minTime: new Date(),
+    maxTime: new Date(),
+  });
   const [usageData, setUsageData] = useState<UsageData>({
     models: [],
     users: [],
@@ -81,14 +92,6 @@ export default function PanelPage() {
   });
   const [pieMetric, setPieMetric] = useState<"cost" | "count">("cost");
   const [barMetric, setBarMetric] = useState<"cost" | "count">("cost");
-  const [timeRange, setTimeRange] = useState<[number, number]>([0, 100]);
-  const [availableTimeRange, setAvailableTimeRange] = useState<{
-    minTime: Date;
-    maxTime: Date;
-  }>({
-    minTime: new Date(),
-    maxTime: new Date(),
-  });
   const [records, setRecords] = useState<UsageRecord[]>([]);
   const [tableParams, setTableParams] = useState<TableParams>({
     pagination: {
@@ -103,76 +106,25 @@ export default function PanelPage() {
   });
   const [timeRangeType, setTimeRangeType] = useState<TimeRangeType>("all");
 
-  const fetchUsageData = async (newTimeRange?: [number, number]) => {
+  const fetchUsageData = async (range: [Date, Date]) => {
     setLoading(true);
     try {
-      const currentRange = newTimeRange || timeRange;
-      const isFullRange = currentRange[0] === 0 && currentRange[1] === 100;
+      const startTime = dayjs(range[0]).toISOString();
+      const endTime = dayjs(range[1]).toISOString();
 
-      const totalHours = dayjs(availableTimeRange.maxTime).diff(
-        availableTimeRange.minTime,
-        "hour"
-      );
-
-      let url = `/api/v1/panel/usage?t=${Date.now()}`;
-
-      if (timeRangeType === "custom") {
-        const startTime = dayjs(availableTimeRange.minTime)
-          .add((currentRange[0] * totalHours) / 100, "hour")
-          .startOf("day")
-          .toISOString();
-
-        const endTime = dayjs(availableTimeRange.minTime)
-          .add((currentRange[1] * totalHours) / 100, "hour")
-          .endOf("day")
-          .toISOString();
-
-        url += `&startTime=${startTime}&endTime=${endTime}`;
-        setAvailableTimeRange({
-          minTime: new Date(startTime),
-          maxTime: new Date(endTime),
-        });
-      } else if (!isFullRange) {
-        let startTime: string;
-        const endTime = dayjs().toISOString();
-
-        switch (timeRangeType) {
-          case "today":
-            startTime = dayjs().startOf("day").toISOString();
-            break;
-          case "week":
-            startTime = dayjs().startOf("week").toISOString();
-            break;
-          case "month":
-            startTime = dayjs().startOf("month").toISOString();
-            break;
-          case "30days":
-            startTime = dayjs().subtract(30, "day").toISOString();
-            break;
-          default:
-            startTime = dayjs(availableTimeRange.minTime).toISOString();
-        }
-
-        url += `&startTime=${startTime}&endTime=${endTime}`;
-        setAvailableTimeRange({
-          minTime: new Date(startTime),
-          maxTime: new Date(endTime),
-        });
-      }
-
+      const url = `/api/v1/panel/usage?startTime=${startTime}&endTime=${endTime}`;
       const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error("Failed to fetch data");
-      }
-      const data = await response.json();
 
+      if (!response.ok) throw new Error("Failed to fetch data");
+
+      const data = await response.json();
       setUsageData(data);
 
-      if (isFullRange) {
-        setAvailableTimeRange({
-          minTime: new Date(data.timeRange.minTime),
-          maxTime: new Date(data.timeRange.maxTime),
-        });
+      // 如果是全部时间范围,更新可用时间范围
+      if (timeRangeType === "all") {
+        const minTime = new Date(data.timeRange.minTime);
+        const maxTime = new Date(data.timeRange.maxTime);
+        setAvailableTimeRange({ minTime, maxTime });
       }
     } catch (error) {
       console.error(t("error.panel.fetchUsageDataFail"), error);
@@ -181,7 +133,7 @@ export default function PanelPage() {
     }
   };
 
-  const fetchRecords = async (params: TableParams) => {
+  const fetchRecords = async (params: TableParams, range: [Date, Date]) => {
     setTableLoading(true);
     try {
       const searchParams = new URLSearchParams();
@@ -191,17 +143,21 @@ export default function PanelPage() {
         params.pagination.pageSize?.toString() || "10"
       );
 
+      // 添加排序和过滤参数
       if (params.sortField) {
         searchParams.append("sortField", params.sortField);
         searchParams.append("sortOrder", params.sortOrder || "ascend");
       }
-
-      if (params.filters?.nickname && params.filters.nickname.length > 0) {
+      if (params.filters?.nickname?.length) {
         searchParams.append("users", params.filters.nickname.join(","));
       }
-      if (params.filters?.model_name && params.filters.model_name.length > 0) {
+      if (params.filters?.model_name?.length) {
         searchParams.append("models", params.filters.model_name.join(","));
       }
+
+      // 添加日期范围
+      searchParams.append("startDate", dayjs(range[0]).format("YYYY-MM-DD"));
+      searchParams.append("endDate", dayjs(range[1]).format("YYYY-MM-DD"));
 
       const response = await fetch(
         `/api/v1/panel/records?${searchParams.toString()}`
@@ -221,6 +177,81 @@ export default function PanelPage() {
     } finally {
       setTableLoading(false);
     }
+  };
+
+  useEffect(() => {
+    const loadInitialData = async () => {
+      // 获取全部时间范围的数据
+      const response = await fetch("/api/v1/panel/usage");
+      const data = await response.json();
+
+      const minTime = new Date(data.timeRange.minTime);
+      const maxTime = new Date(data.timeRange.maxTime);
+      setAvailableTimeRange({ minTime, maxTime });
+
+      // 设置为全部时间范围
+      const allTimeRange: [Date, Date] = [minTime, maxTime];
+      setDateRange(allTimeRange);
+      setTimeRangeType("all");
+
+      await fetchUsageData(allTimeRange);
+      await fetchRecords(tableParams, allTimeRange);
+    };
+
+    loadInitialData();
+  }, []);
+
+  const handleTimeRangeChange = async (
+    range: [Date, Date],
+    type: TimeRangeType
+  ) => {
+    setTimeRangeType(type);
+    setDateRange(range);
+    await fetchUsageData(range);
+    await fetchRecords(tableParams, range);
+  };
+
+  const getReportTitle = (type: TimeRangeType, t: (key: string) => string) => {
+    switch (type) {
+      case "today":
+        return t("panel.report.daily");
+      case "week":
+        return t("panel.report.weekly");
+      case "month":
+        return t("panel.report.monthly");
+      case "30days":
+        return t("panel.report.thirtyDays");
+      case "all":
+        return t("panel.report.overall");
+      case "custom":
+        return t("panel.report.custom");
+      default:
+        return "";
+    }
+  };
+
+  const renderDateRangeLabel = () => {
+    // 如果是同一天，只显示一个日期
+    if (dayjs(dateRange[0]).isSame(dateRange[1], "day")) {
+      return dayjs(dateRange[0]).format("YYYY-MM-DD");
+    }
+    // 否则显示日期范围
+    return `${dayjs(dateRange[0]).format("YYYY-MM-DD")} ~ ${dayjs(
+      dateRange[1]
+    ).format("YYYY-MM-DD")}`;
+  };
+
+  const formatNumber = (num: number): string => {
+    if (num >= 1_000_000_000) {
+      return (num / 1_000_000_000).toFixed(1) + "B";
+    }
+    if (num >= 1_000_000) {
+      return (num / 1_000_000).toFixed(1) + "M";
+    }
+    if (num >= 1_000) {
+      return (num / 1_000).toFixed(1) + "K";
+    }
+    return num.toLocaleString();
   };
 
   const handleTableChange = (
@@ -244,54 +275,7 @@ export default function PanelPage() {
         : (sorter.order as "ascend" | "descend" | undefined),
     };
     setTableParams(newParams);
-    fetchRecords(newParams);
-  };
-
-  useEffect(() => {
-    fetchUsageData();
-    fetchRecords(tableParams);
-  }, []);
-
-  const handleTimeRangeChange = (
-    range: [number, number],
-    type: TimeRangeType
-  ) => {
-    setTimeRange(range);
-    setTimeRangeType(type);
-    fetchUsageData(range);
-  };
-
-  const getReportTitle = (type: TimeRangeType, t: (key: string) => string) => {
-    switch (type) {
-      case "today":
-        return t("panel.report.daily");
-      case "week":
-        return t("panel.report.weekly");
-      case "month":
-        return t("panel.report.monthly");
-      case "30days":
-        return t("panel.report.thirtyDays");
-      case "all":
-        return t("panel.report.overall");
-      case "custom":
-        return t("panel.report.custom");
-      default:
-        return "";
-    }
-  };
-
-  // 添加一个格式化数字的辅助函数
-  const formatNumber = (num: number): string => {
-    if (num >= 1_000_000_000) {
-      return (num / 1_000_000_000).toFixed(1) + "B";
-    }
-    if (num >= 1_000_000) {
-      return (num / 1_000_000).toFixed(1) + "M";
-    }
-    if (num >= 1_000) {
-      return (num / 1_000).toFixed(1) + "K";
-    }
-    return num.toLocaleString();
+    fetchRecords(newParams, dateRange);
   };
 
   return (
@@ -317,7 +301,7 @@ export default function PanelPage() {
         </div>
 
         <TimeRangeSelector
-          timeRange={timeRange}
+          timeRange={dateRange}
           timeRangeType={timeRangeType}
           availableTimeRange={availableTimeRange}
           onTimeRangeChange={handleTimeRangeChange}
@@ -342,48 +326,24 @@ export default function PanelPage() {
                     <h3 className="text-2xl font-semibold bg-gradient-to-br from-foreground to-foreground/80 bg-clip-text text-transparent">
                       {getReportTitle(timeRangeType, t)}
                     </h3>
-                    {timeRangeType === "custom" &&
-                      availableTimeRange.minTime &&
-                      availableTimeRange.maxTime && (
-                        <p className="text-sm text-muted-foreground">
-                          {`${dayjs(availableTimeRange.minTime).format(
-                            "YYYY-MM-DD"
-                          )} ~ ${dayjs(availableTimeRange.maxTime).format(
-                            "YYYY-MM-DD"
-                          )}`}
-                        </p>
-                      )}
+                    <p className="text-sm text-muted-foreground">
+                      {renderDateRangeLabel()}
+                    </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-                  {/* 总消费金额 */}
                   <div className="col-span-2 md:col-span-1 space-y-2">
                     <p className="text-sm font-medium text-muted-foreground">
                       {t("panel.overview.totalCost")}
                     </p>
-                    <p className="text-2xl font-bold text-rose-600">
-                      {loading
-                        ? "-"
-                        : `${t("common.currency")}${usageData.models
-                            .reduce((sum, model) => sum + model.total_cost, 0)
-                            .toFixed(2)}`}
-                    </p>
-                  </div>
-
-                  {/* 总调用次数 */}
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground">
-                      {t("panel.overview.totalCalls")}
-                    </p>
-                    <p className="text-2xl font-bold text-blue-600">
+                    <p className="text-2xl font-bold text-primary">
                       {loading
                         ? "-"
                         : formatNumber(usageData.stats?.totalCalls || 0)}
                     </p>
                   </div>
 
-                  {/* 总 Token 数 */}
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-muted-foreground">
                       {t("panel.overview.totalTokens")}
@@ -395,7 +355,6 @@ export default function PanelPage() {
                     </p>
                   </div>
 
-                  {/* 活跃用户数 */}
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-muted-foreground">
                       {t("panel.overview.totalUsers")}
@@ -405,7 +364,6 @@ export default function PanelPage() {
                     </p>
                   </div>
 
-                  {/* 使用模型数 */}
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-muted-foreground">
                       {t("panel.overview.totalModels")}

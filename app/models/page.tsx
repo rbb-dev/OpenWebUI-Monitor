@@ -237,6 +237,16 @@ const TestProgressPanel = ({
   );
 };
 
+// 添加 LoadingState 组件
+const LoadingState = ({ t }: { t: (key: string) => string }) => (
+  <div className="flex flex-col items-center justify-center py-12 px-4">
+    <div className="h-12 w-12 rounded-full border-4 border-primary/10 border-t-primary animate-spin mb-4" />
+    <h3 className="text-lg font-medium text-foreground/70">
+      {t("models.loading")}
+    </h3>
+  </div>
+);
+
 export default function ModelsPage() {
   const { t } = useTranslation("common");
   const [models, setModels] = useState<Model[]>([]);
@@ -905,26 +915,28 @@ export default function ModelsPage() {
       {/* 桌面端表格视图 */}
       <div className="hidden sm:block">
         <div className="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden">
-          <Table
-            columns={columns}
-            dataSource={models}
-            rowKey="id"
-            loading={loading}
-            pagination={false}
-            size="middle"
-            className={tableClassName}
-            scroll={{ x: 500 }}
-            rowClassName={() => "group"}
-          />
+          {loading ? (
+            <LoadingState t={t} />
+          ) : (
+            <Table
+              columns={columns}
+              dataSource={models}
+              rowKey="id"
+              loading={false}
+              pagination={false}
+              size="middle"
+              className={tableClassName}
+              scroll={{ x: 500 }}
+              rowClassName={() => "group"}
+            />
+          )}
         </div>
       </div>
 
       {/* 移动端卡片视图 */}
       <div className="sm:hidden">
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="w-8 h-8 border-3 border-primary/20 border-t-primary animate-spin rounded-full"></div>
-          </div>
+          <LoadingState t={t} />
         ) : (
           <div className="grid gap-4">
             {models.map((model) => (

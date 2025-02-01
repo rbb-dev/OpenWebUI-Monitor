@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dayjs from "dayjs";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
@@ -33,57 +33,14 @@ export type TimeRangeType =
   | "custom";
 
 interface TimeRangeSelectorProps {
-  timeRange: [number, number];
+  timeRange: [Date, Date];
   timeRangeType: TimeRangeType;
   availableTimeRange: {
     minTime: Date;
     maxTime: Date;
   };
-  onTimeRangeChange: (range: [number, number], type: TimeRangeType) => void;
+  onTimeRangeChange: (range: [Date, Date], type: TimeRangeType) => void;
 }
-
-const calculateTimeRange = (
-  type: TimeRangeType,
-  availableTimeRange: { minTime: Date; maxTime: Date }
-): [number, number] => {
-  if (type === "all") return [0, 100];
-
-  const now = dayjs();
-  let startTime: dayjs.Dayjs;
-  let endTime = now;
-
-  switch (type) {
-    case "today":
-      startTime = now.startOf("day");
-      break;
-    case "week":
-      startTime = now.startOf("week");
-      break;
-    case "month":
-      startTime = now.startOf("month");
-      break;
-    case "30days":
-      startTime = now.subtract(30, "day");
-      break;
-    default:
-      return [0, 100];
-  }
-
-  const totalHours = dayjs(availableTimeRange.maxTime).diff(
-    availableTimeRange.minTime,
-    "hour"
-  );
-  const startPercentage = Math.max(
-    0,
-    (startTime.diff(availableTimeRange.minTime, "hour") / totalHours) * 100
-  );
-  const endPercentage = Math.min(
-    100,
-    (endTime.diff(availableTimeRange.minTime, "hour") / totalHours) * 100
-  );
-
-  return [startPercentage, endPercentage];
-};
 
 const checkTimeRangeType = (
   startTime: dayjs.Dayjs,
@@ -123,23 +80,13 @@ export default function TimeRangeSelector({
   const [startOpen, setStartOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
 
-  const totalHours = dayjs(availableTimeRange.maxTime).diff(
-    availableTimeRange.minTime,
-    "hour"
-  );
+  const [startDate, setStartDate] = useState<Date>(timeRange[0]);
+  const [endDate, setEndDate] = useState<Date>(timeRange[1]);
 
-  const [startDate, setStartDate] = useState<Date | undefined>(
-    dayjs(availableTimeRange.minTime)
-      .add((timeRange[0] * totalHours) / 100, "hour")
-      .startOf("day")
-      .toDate()
-  );
-  const [endDate, setEndDate] = useState<Date | undefined>(
-    dayjs(availableTimeRange.minTime)
-      .add((timeRange[1] * totalHours) / 100, "hour")
-      .endOf("day")
-      .toDate()
-  );
+  useEffect(() => {
+    setStartDate(timeRange[0]);
+    setEndDate(timeRange[1]);
+  }, [timeRange]);
 
   const timeOptions = [
     {
@@ -147,50 +94,87 @@ export default function TimeRangeSelector({
       type: "today" as TimeRangeType,
       label: t("panel.timeRange.timeOptions.day"),
       icon: Sun,
+      getRange: () =>
+        [dayjs().startOf("day").toDate(), dayjs().endOf("day").toDate()] as [
+          Date,
+          Date
+        ],
     },
     {
       id: "week",
       type: "week" as TimeRangeType,
       label: t("panel.timeRange.timeOptions.week"),
       icon: CalendarDays,
+      getRange: () =>
+        [dayjs().startOf("week").toDate(), dayjs().endOf("week").toDate()] as [
+          Date,
+          Date
+        ],
     },
     {
       id: "month",
       type: "month" as TimeRangeType,
       label: t("panel.timeRange.timeOptions.month"),
       icon: CalendarRange,
+      getRange: () =>
+        [
+          dayjs().startOf("month").toDate(),
+          dayjs().endOf("month").toDate(),
+        ] as [Date, Date],
     },
     {
       id: "30days",
       type: "30days" as TimeRangeType,
       label: t("panel.timeRange.timeOptions.30Days"),
       icon: CalendarClock,
+      getRange: () =>
+        [
+          dayjs().subtract(29, "days").startOf("day").toDate(),
+          dayjs().endOf("day").toDate(),
+        ] as [Date, Date],
     },
     {
       id: "all",
       type: "all" as TimeRangeType,
       label: t("panel.timeRange.timeOptions.all"),
       icon: CalendarCheck,
+      getRange: () =>
+        [availableTimeRange.minTime, availableTimeRange.maxTime] as [
+          Date,
+          Date
+        ],
     },
   ];
+
+  const handleTimeOptionClick = (type: TimeRangeType) => {
+    const option = timeOptions.find((opt) => opt.type === type);
+    if (!option) return;
+
+    const range = option.getRange();
+    setStartDate(range[0]);
+    setEndDate(range[1]);
+    setIsCustomOpen(false);
+    onTimeRangeChange(range, type);
+  };
+
+  const handleCustomButtonClick = () => {
+    const isOpening = !isCustomOpen;
+    setIsCustomOpen(isOpening);
+
+    if (isOpening) {
+      onTimeRangeChange([startDate, endDate], "custom");
+    }
+  };
 
   const handleDateChange = (start?: Date, end?: Date) => {
     if (!start || !end) return;
 
-    const startPercentage = Math.max(
-      0,
-      (dayjs(start).startOf("day").diff(availableTimeRange.minTime, "hour") /
-        totalHours) *
-        100
-    );
-    const endPercentage = Math.min(
-      100,
-      (dayjs(end).endOf("day").diff(availableTimeRange.minTime, "hour") /
-        totalHours) *
-        100
-    );
+    const newStart = dayjs(start).startOf("day").toDate();
+    const newEnd = dayjs(end).endOf("day").toDate();
 
-    onTimeRangeChange([startPercentage, endPercentage], "custom");
+    setStartDate(newStart);
+    setEndDate(newEnd);
+    onTimeRangeChange([newStart, newEnd], "custom");
   };
 
   const formatDate = (date?: Date) => {
@@ -218,11 +202,7 @@ export default function TimeRangeSelector({
               <Button
                 variant={timeRangeType === type ? "default" : "outline"}
                 className="w-full h-full min-h-[52px] flex flex-col gap-1.5 items-center justify-center"
-                onClick={() => {
-                  const newRange = calculateTimeRange(type, availableTimeRange);
-                  onTimeRangeChange(newRange, type);
-                  setIsCustomOpen(false);
-                }}
+                onClick={() => handleTimeOptionClick(type)}
               >
                 <Icon className="w-4 h-4" />
                 <span className="text-sm">{label}</span>
@@ -234,12 +214,7 @@ export default function TimeRangeSelector({
             <Button
               variant={timeRangeType === "custom" ? "default" : "outline"}
               className="w-full h-full min-h-[52px] flex flex-col gap-1.5 items-center justify-center"
-              onClick={() => {
-                setIsCustomOpen(!isCustomOpen);
-                if (!isCustomOpen) {
-                  onTimeRangeChange(timeRange, "custom");
-                }
-              }}
+              onClick={handleCustomButtonClick}
             >
               <CalendarIcon className="w-4 h-4" />
               <span className="text-sm">
@@ -278,13 +253,10 @@ export default function TimeRangeSelector({
                     <Calendar
                       mode="single"
                       selected={startDate}
+                      defaultMonth={startDate}
                       onSelect={(date) => {
                         if (date) {
-                          const newDate = dayjs(date).startOf("day").toDate();
-                          setStartDate(newDate);
-                          if (endDate) {
-                            handleDateChange(newDate, endDate);
-                          }
+                          handleDateChange(date, endDate);
                           setStartOpen(false);
                         }
                       }}
@@ -314,13 +286,10 @@ export default function TimeRangeSelector({
                     <Calendar
                       mode="single"
                       selected={endDate}
+                      defaultMonth={endDate}
                       onSelect={(date) => {
                         if (date) {
-                          const newDate = dayjs(date).endOf("day").toDate();
-                          setEndDate(newDate);
-                          if (startDate) {
-                            handleDateChange(startDate, newDate);
-                          }
+                          handleDateChange(startDate, date);
                           setEndOpen(false);
                         }
                       }}

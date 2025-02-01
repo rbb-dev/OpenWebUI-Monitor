@@ -123,7 +123,8 @@
     "testComplete": "Test Complete",
     "testingModels": "Testing Models",
     "testSuccess": "Success",
-    "testFailed": "Failed"
+    "testFailed": "Failed",
+    "loading": "Loading model data..."
   },
 
   "users": {
