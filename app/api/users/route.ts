@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db/client";
+import { ensureUserTableExists } from "@/lib/db/users";
 
 export async function GET(req: NextRequest) {
   try {
+    // 确保表结构正确
+    await ensureUserTableExists();
+
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = parseInt(searchParams.get("pageSize") || "20");
