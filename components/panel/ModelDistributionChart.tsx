@@ -223,7 +223,7 @@ const getPieOption = (
       {
         type: "text",
         left: "center",
-        top: "43%",
+        top: "40%",
         style: {
           text:
             metric === "cost"

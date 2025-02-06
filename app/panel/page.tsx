@@ -340,6 +340,19 @@ export default function PanelPage() {
                     <p className="text-2xl font-bold text-primary">
                       {loading
                         ? "-"
+                        : `${t("common.currency")}${usageData.models
+                            .reduce((sum, model) => sum + model.total_cost, 0)
+                            .toFixed(2)}`}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {t("panel.overview.totalCalls")}
+                    </p>
+                    <p className="text-2xl font-bold text-emerald-600">
+                      {loading
+                        ? "-"
                         : formatNumber(usageData.stats?.totalCalls || 0)}
                     </p>
                   </div>

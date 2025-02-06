@@ -73,6 +73,7 @@ export async function POST(req: Request) {
     }
 
     const data = await req.json();
+    console.log(data);
     const modelId = data.body.model;
     const userId = data.user.id;
     const userName = data.user.name || "Unknown User";
@@ -109,7 +110,11 @@ export async function POST(req: Request) {
 
     // 计算成本
     let totalCost: number;
-    if (modelPrice.per_msg_price >= 0) {
+    if (outputTokens === 0) {
+      // 如果输出token为0，则不收费
+      totalCost = 0;
+      console.log("No charge for zero output tokens");
+    } else if (modelPrice.per_msg_price >= 0) {
       // 如果设置了每条消息的固定价格，直接使用
       totalCost = Number(modelPrice.per_msg_price);
       console.log(
@@ -122,6 +127,12 @@ export async function POST(req: Request) {
       totalCost = inputCost + outputCost;
     }
 
+    // 获取 inlet 时预扣的费用
+    const inletCost = data.inlet_cost || 0;
+
+    // 实际需要扣除的费用 = 总费用 - 预扣费用
+    const actualCost = Math.max(0, totalCost - inletCost);
+
     // 获取并更新用户余额
     const userResult = await query(
       `UPDATE users 
@@ -131,7 +142,7 @@ export async function POST(req: Request) {
        )
        WHERE id = $2
        RETURNING balance`,
-      [totalCost, userId]
+      [actualCost, userId]
     );
 
     if (userResult.rows.length === 0) {
@@ -157,7 +168,7 @@ export async function POST(req: Request) {
         modelId,
         inputTokens,
         outputTokens,
-        totalCost,
+        actualCost,
         newBalance,
       ]
     );
