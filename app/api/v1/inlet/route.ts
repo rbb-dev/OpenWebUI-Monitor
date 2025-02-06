@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getOrCreateUser } from "@/lib/db/users";
 import { query } from "@/lib/db/client";
+import { getModelInletCost } from "@/lib/utils/inlet-cost";
 
 export async function POST(req: Request) {
   try {
@@ -18,19 +19,7 @@ export async function POST(req: Request) {
     }
 
     // 获取预扣费金额
-    const inletCostResponse = await fetch(
-      `${
-        process.env.VERCEL_URL || "http://localhost:3000"
-      }/api/v1/models/inlet-cost?model=${modelId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.API_KEY}`,
-        },
-      }
-    );
-
-    const inletCostData = await inletCostResponse.json();
-    const inletCost = inletCostData.success ? inletCostData.cost : 0;
+    const inletCost = getModelInletCost(modelId);
 
     // 预扣费
     if (inletCost > 0) {

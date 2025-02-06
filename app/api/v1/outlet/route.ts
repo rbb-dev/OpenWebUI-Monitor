@@ -131,7 +131,7 @@ export async function POST(req: Request) {
     const inletCost = data.inlet_cost || 0;
 
     // 实际需要扣除的费用 = 总费用 - 预扣费用
-    const actualCost = Math.max(0, totalCost - inletCost);
+    const actualCost = totalCost - inletCost;
 
     // 获取并更新用户余额
     const userResult = await query(
