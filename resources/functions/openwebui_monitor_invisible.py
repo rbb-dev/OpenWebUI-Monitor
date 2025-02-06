@@ -7,6 +7,7 @@ import json
 import os
 
 
+
 class Filter:
     class Valves(BaseModel):
         API_ENDPOINT: str = Field(
@@ -23,6 +24,16 @@ class Filter:
         self.valves = self.Valves()
         self.outage = False
         self.start_time = None
+
+    def _prepare_request_body(self, body: dict) -> dict:
+        """Convert body and nested objects to JSON-serializable format"""
+        body_copy = body.copy()
+        
+        if 'metadata' in body_copy and 'model' in body_copy['metadata']:
+            if hasattr(body_copy['metadata']['model'], 'model_dump'):
+                body_copy['metadata']['model'] = body_copy['metadata']['model'].model_dump()
+        
+        return body_copy
 
     def _prepare_user_dict(self, __user__: dict) -> dict:
         """将 __user__ 对象转换为可序列化的字典"""
@@ -46,9 +57,11 @@ class Filter:
             # 使用 _prepare_user_dict 处理 __user__ 对象
             user_dict = self._prepare_user_dict(__user__)
 
-            response = requests.post(
-                post_url, headers=headers, json={"user": user_dict, "body": body}
-            )
+            request_data = {
+                "user": user_dict,
+                "body": self._prepare_request_body(body)
+            }
+            response = requests.post(post_url, headers=headers, json=request_data)
 
             if response.status_code == 401:
                 return body
@@ -96,10 +109,10 @@ class Filter:
 
             request_data = {
                 "user": user_dict,
-                "body": body,
+                "body": self._prepare_request_body(body)
             }
-
             response = requests.post(post_url, headers=headers, json=request_data)
+
 
             if response.status_code == 401:
                 if __event_emitter__:
