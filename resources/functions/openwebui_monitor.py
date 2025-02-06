@@ -76,6 +76,15 @@ class Filter:
             user_dict["valves"] = user_dict["valves"].model_dump()
         
         return user_dict
+    def _prepare_body_dict(self, body: dict) -> dict:
+        """将 body 对象转换为可序列化的字典"""
+        body_dict = dict(body)
+        if "model" in body_dict["metadata"] and hasattr(
+            body_dict["metadata"]["model"], "model_dump"
+        ):
+            body_dict["metadata"]["model"] = body_dict["metadata"]["model"].model_dump()
+
+        return body_dict
 
     def inlet(
         self, body: dict, user: Optional[dict] = None, __user__: dict = {}
@@ -87,9 +96,9 @@ class Filter:
             headers = {"Authorization": f"Bearer {self.valves.API_KEY}"}
             
             user_dict = self._prepare_user_dict(__user__)
-            
+            body_dict = self._prepare_body_dict(body)
             response = requests.post(
-                post_url, headers=headers, json={"user": user_dict, "body": body}
+                post_url, headers=headers, json={"user": user_dict, "body": body_dict}
             )
 
             if response.status_code == 401:
