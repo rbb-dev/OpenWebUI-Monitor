@@ -34,7 +34,7 @@ async function getModelPrice(modelId: string): Promise<ModelPrice | null> {
     return result.rows[0];
   }
 
-  // 如果数据库中没有找到价格，使用默认价格
+  // If no price is found in the database, use the default price
   const defaultInputPrice = parseFloat(
     process.env.DEFAULT_MODEL_INPUT_PRICE || "60"
   );
@@ -42,7 +42,7 @@ async function getModelPrice(modelId: string): Promise<ModelPrice | null> {
     process.env.DEFAULT_MODEL_OUTPUT_PRICE || "60"
   );
 
-  // 验证默认价格是否为有效的非负数
+  // Verify that the default price is a valid non-negative number
   if (
     isNaN(defaultInputPrice) ||
     defaultInputPrice < 0 ||
@@ -57,7 +57,7 @@ async function getModelPrice(modelId: string): Promise<ModelPrice | null> {
     name: modelId,
     input_price: defaultInputPrice,
     output_price: defaultOutputPrice,
-    per_msg_price: -1, // 默认使用按 token 计费
+    per_msg_price: -1, // Default to token-based pricing
   };
 }
 
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
   let pgClient: DbClient | null = null;
 
   try {
-    // 获取专用的事务客户端
+    // Get a dedicated transaction client
     if (isVercel) {
       pgClient = client;
     } else {
@@ -74,21 +74,21 @@ export async function POST(req: Request) {
     }
 
     const data = await req.json();
-    console.log(data);
+    console.log("请求数据:", JSON.stringify(data, null, 2));
     const modelId = data.body.model;
     const userId = data.user.id;
     const userName = data.user.name || "Unknown User";
 
-    // 开启事务
+    // Start a transaction
     await query("BEGIN");
 
-    // 获取模型价格
+    // Get model price
     const modelPrice = await getModelPrice(modelId);
     if (!modelPrice) {
       throw new Error(`Fail to fetch price info of model ${modelId}`);
     }
 
-    // 计算 tokens
+    // Calculate tokens
     const lastMessage = data.body.messages[data.body.messages.length - 1];
 
     let inputTokens: number;
@@ -109,34 +109,32 @@ export async function POST(req: Request) {
       inputTokens = totalTokens - outputTokens;
     }
 
-    // 计算成本
+    // Calculate total cost
     let totalCost: number;
     if (outputTokens === 0) {
-      // 如果输出token为0，则不收费
+      // If output tokens are 0, no charge
       totalCost = 0;
       console.log("No charge for zero output tokens");
     } else if (modelPrice.per_msg_price >= 0) {
-      // 如果设置了每条消息的固定价格，直接使用
+      // If fixed pricing is set, use it directly
       totalCost = Number(modelPrice.per_msg_price);
       console.log(
         `Using fixed pricing: ${totalCost} (${modelPrice.per_msg_price} per message)`
       );
     } else {
-      // 否则按 token 数量计算价格
+      // Otherwise, calculate price by token quantity
       const inputCost = (inputTokens / 1_000_000) * modelPrice.input_price;
       const outputCost = (outputTokens / 1_000_000) * modelPrice.output_price;
       totalCost = inputCost + outputCost;
     }
 
-    // 获取 inlet 时预扣的费用
+    // Get the pre-deducted cost when getting inlet
     const inletCost = getModelInletCost(modelId);
-    console.log("outlet时获取inletCost:", inletCost);
 
-    // 实际需要扣除的费用 = 总费用 - 预扣费用
+    // The actual cost to be deducted = total cost - pre-deducted cost
     const actualCost = totalCost - inletCost;
-    console.log("outlet时实际需要扣除的费用:", actualCost);
 
-    // 获取并更新用户余额
+    // Get and update user balance
     const userResult = await query(
       `UPDATE users 
        SET balance = LEAST(
@@ -153,12 +151,12 @@ export async function POST(req: Request) {
     }
 
     const newBalance = Number(userResult.rows[0].balance);
-    console.log("outlet时获取newBalance:", newBalance);
+
     if (newBalance > 999999.9999) {
       throw new Error("Balance exceeds maximum allowed value");
     }
 
-    // 记录使用情况
+    // Record usage
     await query(
       `INSERT INTO user_usage_records (
         user_id, nickname, model_name, 
@@ -171,7 +169,7 @@ export async function POST(req: Request) {
         modelId,
         inputTokens,
         outputTokens,
-        actualCost,
+        totalCost,
         newBalance,
       ]
     );
@@ -210,7 +208,7 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   } finally {
-    // 只在非 Vercel 环境下释放连接
+    // Only release connection in non-Vercel environment
     if (!isVercel && pgClient && "release" in pgClient) {
       pgClient.release();
     }

@@ -60,7 +60,7 @@ const MobileCard = ({
           </div>
           <div className="text-xs text-gray-500 mt-1">
             {t("panel.usageDetails.table.balance")}: ¥
-            {Number(record.balance_after).toFixed(2)}
+            {Number(record.balance_after).toFixed(4)}
           </div>
         </div>
       </div>
