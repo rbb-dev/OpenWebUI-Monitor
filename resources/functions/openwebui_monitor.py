@@ -89,9 +89,10 @@ class Filter:
         return body_dict
     def _modify_outlet_body(self, body: dict) -> dict:
         body_modify = dict(body)
-        if body_modify["messages"][-1].get("info") is None:
-            if not self.inlet_temp is None:
-                body_modify["messages"][:-1] = self.inlet_temp["messages"]
+        last_message = body_modify["messages"][-1]
+    
+        if "info" not in last_message and self.inlet_temp is not None:
+            body_modify["messages"][:-1] = self.inlet_temp["messages"]
         return body_modify
         
     def inlet(
