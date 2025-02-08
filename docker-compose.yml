@@ -1,19 +1,17 @@
 services:
   app:
-    image: docker.io/variantconst/openwebui-monitor:latest
+    #image: docker.io/variantconst/openwebui-monitor:latest
+    build: .
     ports:
       - "7878:3000"
+    env_file:
+      - .env
     environment:
       - POSTGRES_HOST=${POSTGRES_HOST:-db}
       - POSTGRES_PORT=${POSTGRES_PORT:-5432}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-openwebui}
       - POSTGRES_DATABASE=${POSTGRES_DATABASE:-openwebui_monitor}
-      - OPENWEBUI_DOMAIN=${OPENWEBUI_DOMAIN}
-      - OPENWEBUI_API_KEY=${OPENWEBUI_API_KEY}
-      - API_KEY=${API_KEY}
-      - INIT_BALANCE=${INIT_BALANCE:-1}
-      - ACCESS_TOKEN=${ACCESS_TOKEN}
     depends_on:
       db:
         condition: service_healthy

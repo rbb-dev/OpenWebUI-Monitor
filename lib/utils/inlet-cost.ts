@@ -29,6 +29,9 @@ function parseInletCostConfig(config: string | undefined): ModelInletCost {
 }
 
 export function getModelInletCost(modelId: string): number {
+  if (!process.env.COST_ON_INLET) {
+    return 0;
+  }
   const costConfig = parseInletCostConfig(process.env.COST_ON_INLET);
   return costConfig[modelId] ?? costConfig["default"] ?? 0;
 }

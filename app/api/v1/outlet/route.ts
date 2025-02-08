@@ -3,6 +3,7 @@ import { encode } from "gpt-tokenizer/model/gpt-4";
 import { Pool, PoolClient } from "pg";
 import { createClient } from "@vercel/postgres";
 import { query, getClient } from "@/lib/db/client";
+import { getModelInletCost } from "@/lib/utils/inlet-cost";
 
 const isVercel = process.env.VERCEL === "1";
 
@@ -128,10 +129,12 @@ export async function POST(req: Request) {
     }
 
     // 获取 inlet 时预扣的费用
-    const inletCost = data.inlet_cost || 0;
+    const inletCost = getModelInletCost(modelId);
+    console.log("outlet时获取inletCost:", inletCost);
 
     // 实际需要扣除的费用 = 总费用 - 预扣费用
     const actualCost = totalCost - inletCost;
+    console.log("outlet时实际需要扣除的费用:", actualCost);
 
     // 获取并更新用户余额
     const userResult = await query(
@@ -150,7 +153,7 @@ export async function POST(req: Request) {
     }
 
     const newBalance = Number(userResult.rows[0].balance);
-
+    console.log("outlet时获取newBalance:", newBalance);
     if (newBalance > 999999.9999) {
       throw new Error("Balance exceeds maximum allowed value");
     }
