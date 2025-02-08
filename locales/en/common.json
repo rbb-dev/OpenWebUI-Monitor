@@ -17,7 +17,8 @@
     "prev": "Previous",
     "next": "Next",
     "page": "Page",
-    "notSet": "Not Set"
+    "notSet": "Not Set",
+    "enterValue": "Enter Value"
   },
 
   "auth": {
