@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Table, Input, message, Tooltip } from "antd";
+import { useState, useEffect } from "react";
+import { Table, message, Tooltip } from "antd";
 import {
   DownloadOutlined,
   ExperimentOutlined,
@@ -13,10 +13,8 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { TestProgress } from "../../components/models/TestProgress";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { cva } from "class-variance-authority";
 import { Progress } from "antd";
 import { toast, Toaster } from "sonner";
 import { EditableCell } from "@/components/editable-cell";
@@ -24,6 +22,8 @@ import { EditableCell } from "@/components/editable-cell";
 interface ModelResponse {
   id: string;
   name: string;
+  base_model_id: string;
+  system_prompt: string;
   imageUrl: string;
   input_price: number;
   output_price: number;
@@ -33,6 +33,8 @@ interface ModelResponse {
 interface Model {
   id: string;
   name: string;
+  base_model_id: string;
+  system_prompt: string;
   imageUrl: string;
   input_price: number;
   output_price: number;
@@ -40,7 +42,6 @@ interface Model {
   testStatus?: "success" | "error" | "testing";
 }
 
-// 添加测试状态指示器组件
 const TestStatusIndicator = ({ status }: { status: Model["testStatus"] }) => {
   if (!status) return null;
 
@@ -78,7 +79,6 @@ const TestStatusIndicator = ({ status }: { status: Model["testStatus"] }) => {
   );
 };
 
-// 添加测试进度组件
 const TestProgressPanel = ({
   isVisible,
   models,
@@ -97,7 +97,6 @@ const TestProgressPanel = ({
   const totalCount = models.length;
   const progress = Math.round(((successCount + errorCount) / totalCount) * 100);
 
-  // 当开始新的测试时自动展开
   useEffect(() => {
     if (testingCount > 0) {
       setIsExpanded(true);
@@ -237,7 +236,6 @@ const TestProgressPanel = ({
   );
 };
 
-// 添加 LoadingState 组件
 const LoadingState = ({ t }: { t: (key: string) => string }) => (
   <div className="flex flex-col items-center justify-center py-12 px-4">
     <div className="h-12 w-12 rounded-full border-4 border-primary/10 border-t-primary animate-spin mb-4" />
@@ -258,7 +256,6 @@ export default function ModelsPage() {
   } | null>(null);
   const [testing, setTesting] = useState(false);
   const [apiKey, setApiKey] = useState<string | null>(null);
-  const [showTestStatus, setShowTestStatus] = useState(false);
   const [isTestComplete, setIsTestComplete] = useState(false);
 
   useEffect(() => {
@@ -385,7 +382,7 @@ export default function ModelsPage() {
       toast.error(
         err instanceof Error ? err.message : t("error.model.priceUpdateFail")
       );
-      throw err; // 重新抛出错误以便调用者处理
+      throw err;
     }
   };
 

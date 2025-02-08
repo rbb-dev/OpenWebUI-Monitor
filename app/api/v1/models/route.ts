@@ -3,7 +3,11 @@ import { ensureTablesExist, getOrCreateModelPrice } from "@/lib/db";
 
 interface ModelInfo {
   id: string;
+  base_model_id: string;
   name: string;
+  params: {
+    system: string;
+  };
   meta: {
     profile_image_url: string;
   };
@@ -11,8 +15,10 @@ interface ModelInfo {
 
 interface ModelWithPrice {
   id: string;
+  base_model_id: string;
   name: string;
   imageUrl: string;
+  system_prompt: string;
   input_price: number;
   output_price: number;
   per_msg_price: number;
@@ -29,16 +35,15 @@ interface ModelResponse {
 
 export async function GET() {
   try {
-    // 确保数据库已初始化
+    // Ensure database is initialized
     await ensureTablesExist();
-    // console.log("Database initialized, fetching models...");
 
     const domain = process.env.OPENWEBUI_DOMAIN;
     if (!domain) {
       throw new Error("OPENWEBUI_DOMAIN environment variable is not set.");
     }
 
-    // 规范化 API URL
+    // Normalize API URL
     const apiUrl = domain.replace(/\/+$/, "") + "/api/models";
 
     const response = await fetch(apiUrl, {
@@ -54,7 +59,7 @@ export async function GET() {
       throw new Error(`Failed to fetch models: ${response.status}`);
     }
 
-    // 先获取响应文本以便调试
+    // Get response text for debugging
     const responseText = await response.text();
     // console.log("API response:", responseText);
 
@@ -66,22 +71,27 @@ export async function GET() {
       throw new Error("Invalid JSON response from API");
     }
 
+    console.log("data:", data);
+
     if (!data || !Array.isArray(data.data)) {
       console.error("Unexpected API response structure:", data);
       throw new Error("Unexpected API response structure");
     }
 
-    // 获取所有模型的价格信息
+    // Get price information for all models
     const modelsWithPrices = await Promise.all(
       data.data.map(async (item) => {
         const priceInfo = await getOrCreateModelPrice(
           String(item.id),
-          String(item.name)
+          String(item.name),
+          item.info.base_model_id
         );
         const model: ModelWithPrice = {
           id: priceInfo.id,
+          base_model_id: item.info.base_model_id,
           name: priceInfo.name,
           imageUrl: item.info?.meta?.profile_image_url || "/static/favicon.png",
+          system_prompt: item.info?.params?.system || "",
           input_price: priceInfo.input_price,
           output_price: priceInfo.output_price,
           per_msg_price: priceInfo.per_msg_price,
@@ -91,7 +101,7 @@ export async function GET() {
       })
     );
 
-    // 过滤掉无效的模型
+    // Filter out invalid models
     const validModels = modelsWithPrices.filter(
       (model): model is NonNullable<typeof model> => model !== null
     );
@@ -109,7 +119,7 @@ export async function GET() {
   }
 }
 
-// 添加 inlet 端点
+// Add inlet endpoint
 export async function POST(req: Request) {
   const data = await req.json();
 
@@ -118,7 +128,7 @@ export async function POST(req: Request) {
   });
 }
 
-// 添加 outlet 端点
+// Add outlet endpoint
 export async function PUT(req: Request) {
   const data = await req.json();
   // console.log("Outlet received:", JSON.stringify(data, null, 2));
