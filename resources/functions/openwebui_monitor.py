@@ -61,6 +61,7 @@ class Filter:
         self.outage = False
         self.start_time = None
         self.translations = TRANSLATIONS
+        self.inlet_temp = None
 
     def get_text(self, key: str, **kwargs) -> str:
         """获取指定语言的文本"""
@@ -86,7 +87,14 @@ class Filter:
             body_dict["metadata"]["model"] = body_dict["metadata"]["model"].model_dump()
 
         return body_dict
-
+    def _modify_outlet_body(self, body: dict) -> dict:
+        body_modify = dict(body)
+        last_message = body_modify["messages"][-1]
+    
+        if "info" not in last_message and self.inlet_temp is not None:
+            body_modify["messages"][:-1] = self.inlet_temp["messages"]
+        return body_modify
+        
     def inlet(
         self, body: dict, user: Optional[dict] = None, __user__: dict = {}
     ) -> dict:
@@ -98,6 +106,7 @@ class Filter:
             
             user_dict = self._prepare_user_dict(__user__)
             body_dict = self._prepare_body_dict(body)
+            self.inlet_temp = body_dict
             response = requests.post(
                 post_url, headers=headers, json={"user": user_dict, "body": body_dict}
             )
@@ -116,7 +125,6 @@ class Filter:
             self.outage = response_data.get("balance", 0) <= 0
             if self.outage:
                 raise Exception(self.get_text("insufficient_balance", balance=response_data['balance']))
-
             return body
 
         except requests.exceptions.RequestException as e:
@@ -144,10 +152,11 @@ class Filter:
             headers = {"Authorization": f"Bearer {self.valves.API_KEY}"}
             
             user_dict = self._prepare_user_dict(__user__)
+            body_modify = self._modify_outlet_body(body)
             
             request_data = {
                 "user": user_dict,
-                "body": body,
+                "body": body_modify,
             }
 
             response = requests.post(post_url, headers=headers, json=request_data)
