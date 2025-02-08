@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ensureTablesExist, getOrCreateModelPrice } from "@/lib/db";
+import { ensureTablesExist, getOrCreateModelPrices } from "@/lib/db";
 
 interface ModelInfo {
   id: string;
@@ -79,32 +79,25 @@ export async function GET() {
     }
 
     // Get price information for all models
-    const modelsWithPrices = await Promise.all(
-      data.data.map(async (item) => {
-        const priceInfo = await getOrCreateModelPrice(
-          String(item.id),
-          String(item.name),
-          item.info.base_model_id
-        );
-        const model: ModelWithPrice = {
-          id: priceInfo.id,
-          base_model_id: item.info.base_model_id,
-          name: priceInfo.name,
-          imageUrl: item.info?.meta?.profile_image_url || "/static/favicon.png",
-          system_prompt: item.info?.params?.system || "",
-          input_price: priceInfo.input_price,
-          output_price: priceInfo.output_price,
-          per_msg_price: priceInfo.per_msg_price,
-          updated_at: priceInfo.updated_at,
-        };
-        return model;
-      })
+    const modelsWithPrices = await getOrCreateModelPrices(
+      data.data.map((item) => ({
+        id: String(item.id),
+        name: String(item.name),
+        base_model_id: item.info?.base_model_id,
+      }))
     );
 
-    // Filter out invalid models
-    const validModels = modelsWithPrices.filter(
-      (model): model is NonNullable<typeof model> => model !== null
-    );
+    const validModels = data.data.map((item, index) => ({
+      id: modelsWithPrices[index].id,
+      base_model_id: item.info?.base_model_id || "",
+      name: modelsWithPrices[index].name,
+      imageUrl: item.info?.meta?.profile_image_url || "/static/favicon.png",
+      system_prompt: item.info?.params?.system || "",
+      input_price: modelsWithPrices[index].input_price,
+      output_price: modelsWithPrices[index].output_price,
+      per_msg_price: modelsWithPrices[index].per_msg_price,
+      updated_at: modelsWithPrices[index].updated_at,
+    }));
 
     return NextResponse.json(validModels);
   } catch (error) {

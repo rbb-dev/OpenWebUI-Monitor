@@ -138,73 +138,85 @@ export async function ensureTablesExist() {
 }
 
 // 获取模型价格，如果不存在则创建默认值
-export async function getOrCreateModelPrice(
-  id: string,
-  name: string,
-  base_model_id?: string
-): Promise<ModelPrice> {
+export async function getOrCreateModelPrices(
+  models: Array<{ id: string; name: string; base_model_id?: string }>
+): Promise<ModelPrice[]> {
   let client: PoolClient | null = null;
   try {
     client = await pool.connect();
 
-    // 首先尝试获取当前模型的价格
-    const currentModelResult = await client.query<ModelPriceRow>(
-      `SELECT * FROM model_prices WHERE id = $1`,
-      [id]
+    // 1. 首先获取所有已存在的模型价格
+    const modelIds = models.map((m) => m.id);
+    const baseModelIds = models.map((m) => m.base_model_id).filter((id) => id);
+
+    const existingModelsResult = await client.query<ModelPriceRow>(
+      `SELECT * FROM model_prices WHERE id = ANY($1::text[])`,
+      [modelIds]
     );
 
-    // 如果模型不存在，并且有 base_model_id，尝试获取基础模型的价格
-    let baseModelPrices = null;
-    if (currentModelResult.rows.length === 0 && base_model_id) {
-      const baseModelResult = await client.query<ModelPriceRow>(
-        `SELECT input_price, output_price, per_msg_price 
-         FROM model_prices 
-         WHERE id = $1`,
-        [base_model_id]
+    // 2. 获取所有基础模型的价格
+    const baseModelsResult = await client.query<ModelPriceRow>(
+      `SELECT * FROM model_prices WHERE id = ANY($1::text[])`,
+      [baseModelIds]
+    );
+
+    const existingModels = new Map(
+      existingModelsResult.rows.map((row) => [row.id, row])
+    );
+    const baseModels = new Map(
+      baseModelsResult.rows.map((row) => [row.id, row])
+    );
+
+    // 3. 批量插入或更新缺失的模型
+    const missingModels = models.filter((m) => !existingModels.has(m.id));
+    if (missingModels.length > 0) {
+      const values = missingModels.map((m) => {
+        const baseModel = m.base_model_id
+          ? baseModels.get(m.base_model_id)
+          : null;
+        return [
+          m.id,
+          m.name,
+          baseModel?.input_price ?? null,
+          baseModel?.output_price ?? null,
+          baseModel?.per_msg_price ?? null,
+        ];
+      });
+
+      const placeholders = values
+        .map(
+          (_, i) =>
+            `($${i * 5 + 1}, $${i * 5 + 2}, $${i * 5 + 3}, $${i * 5 + 4}, $${
+              i * 5 + 5
+            })`
+        )
+        .join(",");
+
+      const result = await client.query<ModelPriceRow>(
+        `INSERT INTO model_prices (id, name, input_price, output_price, per_msg_price)
+         VALUES ${placeholders}
+         ON CONFLICT (id) DO UPDATE 
+         SET name = EXCLUDED.name
+         RETURNING *`,
+        values.flat()
       );
-      if (baseModelResult.rows.length > 0) {
-        baseModelPrices = baseModelResult.rows[0];
-      }
+
+      result.rows.forEach((row) => existingModels.set(row.id, row));
     }
 
-    // 插入或更新模型价格
-    const result = await client.query<ModelPriceRow>(
-      `INSERT INTO model_prices (
-        id, 
-        name, 
-        input_price, 
-        output_price, 
-        per_msg_price
-      )
-      VALUES (
-        $1, 
-        $2,
-        $3,
-        $4,
-        $5
-      )
-      ON CONFLICT (id) DO UPDATE 
-      SET name = $2
-      RETURNING *`,
-      [
-        id,
-        name,
-        baseModelPrices?.input_price ?? null,
-        baseModelPrices?.output_price ?? null,
-        baseModelPrices?.per_msg_price ?? null,
-      ]
-    );
-
-    return {
-      id: result.rows[0].id,
-      name: result.rows[0].name,
-      input_price: Number(result.rows[0].input_price),
-      output_price: Number(result.rows[0].output_price),
-      per_msg_price: Number(result.rows[0].per_msg_price),
-      updated_at: result.rows[0].updated_at,
-    };
+    return models.map((m) => {
+      const row = existingModels.get(m.id)!;
+      return {
+        id: row.id,
+        name: row.name,
+        input_price: Number(row.input_price),
+        output_price: Number(row.output_price),
+        per_msg_price: Number(row.per_msg_price),
+        updated_at: row.updated_at,
+      };
+    });
   } catch (error) {
-    console.error("Error in getOrCreateModelPrice:", error);
+    console.error("Error in getOrCreateModelPrices:", error);
     throw error;
   } finally {
     if (client) {

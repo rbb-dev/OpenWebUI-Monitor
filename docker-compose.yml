@@ -1,6 +1,7 @@
 services:
   app:
-    image: docker.io/variantconst/openwebui-monitor:latest
+    # image: docker.io/variantconst/openwebui-monitor:latest
+    build: .
     ports:
       - "7878:3000"
     env_file:
