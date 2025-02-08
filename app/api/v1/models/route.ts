@@ -13,18 +13,6 @@ interface ModelInfo {
   };
 }
 
-interface ModelWithPrice {
-  id: string;
-  base_model_id: string;
-  name: string;
-  imageUrl: string;
-  system_prompt: string;
-  input_price: number;
-  output_price: number;
-  per_msg_price: number;
-  updated_at: Date;
-}
-
 interface ModelResponse {
   data: {
     id: string;

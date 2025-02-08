@@ -22,6 +22,7 @@ interface EditableCellProps {
     errorMessage?: string;
     maxValue?: number;
   };
+  isPerMsgPrice?: boolean;
 }
 
 export function EditableCell({
@@ -35,6 +36,7 @@ export function EditableCell({
   tooltipText,
   placeholder,
   validateValue = (value) => ({ isValid: true }),
+  isPerMsgPrice = false,
 }: EditableCellProps) {
   const numericValue = typeof value === "number" ? value : Number(value);
   const originalValue = numericValue >= 0 ? numericValue.toFixed(4) : "";
@@ -187,7 +189,7 @@ export function EditableCell({
               }
             `}
           >
-            {numericValue < 0 ? (
+            {isPerMsgPrice && numericValue < 0 ? (
               <span className="text-muted-foreground/60">
                 {t("common.notSet")}
               </span>

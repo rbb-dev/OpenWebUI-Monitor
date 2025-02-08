@@ -769,7 +769,7 @@ export default function ModelsPage() {
   const renderPriceCell = (
     field: "input_price" | "output_price" | "per_msg_price",
     record: Model,
-    showTooltip: boolean = true // 默认显示 tooltip
+    showTooltip: boolean = true
   ) => {
     const isEditing =
       editingCell?.id === record.id && editingCell?.field === field;
@@ -808,6 +808,7 @@ export default function ModelsPage() {
               ? t("models.table.invalidNumber")
               : t("models.table.nonePositiveNumber"),
         })}
+        isPerMsgPrice={field === "per_msg_price"}
       />
     );
   };
