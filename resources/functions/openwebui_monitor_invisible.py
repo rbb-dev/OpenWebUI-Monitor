@@ -24,6 +24,7 @@ class Filter:
         self.valves = self.Valves()
         self.outage = False
         self.start_time = None
+        self.inlet_temp = None
 
     def _prepare_request_body(self, body: dict) -> dict:
         """Convert body and nested objects to JSON-serializable format"""
@@ -45,6 +46,14 @@ class Filter:
 
         return user_dict
 
+    def _modify_outlet_body(self, body: dict) -> dict:
+        body_modify = dict(body)
+        last_message = body_modify["messages"][-1]
+    
+        if "info" not in last_message and self.inlet_temp is not None:
+            body_modify["messages"][:-1] = self.inlet_temp["messages"]
+        return body_modify
+
     def inlet(
         self, body: dict, user: Optional[dict] = None, __user__: dict = {}
     ) -> dict:
@@ -56,10 +65,11 @@ class Filter:
 
             # 使用 _prepare_user_dict 处理 __user__ 对象
             user_dict = self._prepare_user_dict(__user__)
-
+            body_dict = self._prepare_request_body(body)
+            self.inlet_temp = body_dict
             request_data = {
                 "user": user_dict,
-                "body": self._prepare_request_body(body)
+                "body": body_dict
             }
             response = requests.post(post_url, headers=headers, json=request_data)
 
@@ -106,10 +116,11 @@ class Filter:
 
             # 使用 _prepare_user_dict 处理 __user__ 对象
             user_dict = self._prepare_user_dict(__user__)
-
+            body_dict = self._prepare_request_body(body)
+            body_modify = self._modify_outlet_body(body_dict)
             request_data = {
                 "user": user_dict,
-                "body": self._prepare_request_body(body)
+                "body": body_modify
             }
             response = requests.post(post_url, headers=headers, json=request_data)
 
