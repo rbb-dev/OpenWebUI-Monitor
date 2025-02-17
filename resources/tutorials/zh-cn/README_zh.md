@@ -55,21 +55,25 @@ sudo docker compose up -d
 
 ## 函数变量配置
 
-| 变量名              | 说明                      | 默认值                      |
-| ------------------- | ------------------------- | --------------------------- |
-| Api Endpoint        | API 接口的基础 URL        | `http://192.168.1.109:7878` |
-| Api Key             | API 认证密钥              | -                           |
-| Priority            | 过滤操作的优先级          | `5`                         |
-| Show Cost           | 是否显示费用信息          | `启用`                      |
-| Show Balance        | 是否显示余额信息          | `启用`                      |
-| Show Spend Time     | 是否显示花费时间          | `启用`                      |
-| Show Tokens         | 是否显示 token 使用量     | `启用`                      |
-| Show Tokens Per Sec | 是否显示每秒 token 使用量 | `启用`                      |
-| Language            | 消息显示语言 (en/zh)      | `zh`                        |
+| 变量名       | 说明                                                                     |
+| ------------ | ------------------------------------------------------------------------ |
+| Api Endpoint | 填你部署的 OpenWebUI Monitor 后端域名或 OpenWebUI 容器内可访问的 ip 地址 |
+| Api Key      | 填后端部署的 `API_KEY` 环境变量                                          |
+| Language     | 消息显示语言 (en/zh)                                                     |
 
 ## 常见问题
 
-### 1. `OPENWEBUI_DOMAIN` 和 `
+### 1. `OPENWEBUI_DOMAIN` 环境变量怎么填写？
+
+填写原则是在 OpenWebUI Monitor 的容器内能访问到这个地址。
+
+- 推荐填写 OpenWebUI 的公网域名，例如 `https://chat.example.com`。
+- 假如你的 OpenWebUI Monitor 部署在同一台机器，则这个环境变量也可以填 `http://[Docker容器宿主机的本地ip]:[OpenWebUI后端服务端口]`。可以通过 `ifconfig | grep "inet "` 获取宿主机的本地 ip。
+- **不可以**填 `http://127.0.0.1:port` 或省略 `http://`。
+
+### 2. `Api Endpoint` 函数参数怎么填写？
+
+填你部署的 OpenWebUI Monitor 后端域名或 OpenWebUI 容器内可访问的 ip 地址。例如 `http://[宿主机的本地ip]:7878`，其中 `7878` 是 OpenWebUI Monitor 的默认端口。
 
 <h2>Gallery</h2>
 
