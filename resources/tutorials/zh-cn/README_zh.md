@@ -10,6 +10,8 @@
 
 专为 OpenWebUI 设计的用量监控和用户余额管理面板。只需要向 OpenWebUI 添加一个简单的[函数](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/functions/openwebui_monitor.py)，就能在一个面板统一查看用户使用情况和余额。
 
+> **注意**：如果你使用的是 OpenWebUI 0.5.8 及以上版本，请确保将[函数](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/functions/openwebui_monitor.py)更新到最新版本。
+
 ## 特性
 
 - 为 OpenWebUI 中的每个模型设置价格；
@@ -19,7 +21,7 @@
 
 ## 部署
 
-支持 Vercel 一键部署 [![Deploy on Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FVariantConst%2FOpenWebUI-Monitor&project-name=openwebui-monitor&repository-name=openwebui-monitor&env=OPENWEBUI_DOMAIN,OPENWEBUI_API_KEY,ACCESS_TOKEN,API_KEY) 和 Docker 部署。详见 [部署指南](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/tutorials/zh-cn/deployment_guide_zh.md)。
+支持 Vercel 一键部署 [![Deploy on Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FVariantConst%2FOpenWebUI-Monitor&project-name=openwebui-monitor&repository-name=openwebui-monitor&env=OPENWEBUI_DOMAIN,OPENWEBUI_API_KEY,ACCESS_TOKEN,API_KEY) 和 Docker 部署。**详见 [部署指南](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/tutorials/zh-cn/deployment_guide_zh.md)。详见 [部署指南](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/tutorials/zh-cn/deployment_guide_zh.md)。详见 [部署指南](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/tutorials/zh-cn/deployment_guide_zh.md)。**
 
 ## 更新
 
@@ -50,6 +52,24 @@ sudo docker compose up -d
 | DEFAULT_MODEL_PER_MSG_PRICE | 模型默认每条消息价格，设为负数将按 token 计费                                                                              | `-1`   |
 | INIT_BALANCE                | 用户初始余额                                                                                                               | `0`    |
 | COST_ON_INLET               | inlet 时的预扣费金额。可以是所有模型统一的固定数字（如 `0.1`），也可以是针对不同模型的配置（如 `gpt-4:0.32,gpt-3.5:0.01`） | `0`    |
+
+## 函数变量配置
+
+| 变量名              | 说明                      | 默认值                      |
+| ------------------- | ------------------------- | --------------------------- |
+| Api Endpoint        | API 接口的基础 URL        | `http://192.168.1.109:7878` |
+| Api Key             | API 认证密钥              | -                           |
+| Priority            | 过滤操作的优先级          | `5`                         |
+| Show Cost           | 是否显示费用信息          | `启用`                      |
+| Show Balance        | 是否显示余额信息          | `启用`                      |
+| Show Spend Time     | 是否显示花费时间          | `启用`                      |
+| Show Tokens         | 是否显示 token 使用量     | `启用`                      |
+| Show Tokens Per Sec | 是否显示每秒 token 使用量 | `启用`                      |
+| Language            | 消息显示语言 (en/zh)      | `zh`                        |
+
+## 常见问题
+
+### 1. `OPENWEBUI_DOMAIN` 和 `
 
 <h2>Gallery</h2>
 
