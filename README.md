@@ -75,6 +75,10 @@ The principle is that this address should be accessible from within the OpenWebU
 
 Fill in your deployed OpenWebUI Monitor backend domain or IP address accessible within the OpenWebUI container. For example `http://[host local ip]:7878`, where `7878` is the default port for OpenWebUI Monitor.
 
+### 3. Why can't I see users in the user management page?
+
+OpenWebUI Monitor will only start tracking a user’s information after the user makes their first chat request.
+
 <h2>Gallery</h2>
 
 ![](https://github.com/user-attachments/assets/63f23bfd-f271-41e8-a71c-2016be1d501a)

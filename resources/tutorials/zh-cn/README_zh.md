@@ -75,6 +75,10 @@ sudo docker compose up -d
 
 填你部署的 OpenWebUI Monitor 后端域名或 OpenWebUI 容器内可访问的 ip 地址。例如 `http://[宿主机的本地ip]:7878`，其中 `7878` 是 OpenWebUI Monitor 的默认端口。
 
+### 3. 为什么用户管理页面看不见用户？
+
+只有用户首次进行聊天请求后，OpenWebUI Monitor 才会开始追踪该用户的信息。
+
 <h2>Gallery</h2>
 
 ![](https://github.com/user-attachments/assets/2777c1fc-a8c6-4397-9665-a6a559d4bab1)
