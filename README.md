@@ -78,3 +78,7 @@ Fill in your deployed OpenWebUI Monitor backend domain or IP address accessible 
 <h2>Gallery</h2>
 
 ![](https://github.com/user-attachments/assets/63f23bfd-f271-41e8-a71c-2016be1d501a)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=VariantConst/OpenWebUI-Monitor&type=Date)](https://star-history.com/#VariantConst/OpenWebUI-Monitor&Date)

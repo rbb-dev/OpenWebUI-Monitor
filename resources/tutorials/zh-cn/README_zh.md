@@ -78,3 +78,7 @@ sudo docker compose up -d
 <h2>Gallery</h2>
 
 ![](https://github.com/user-attachments/assets/2777c1fc-a8c6-4397-9665-a6a559d4bab1)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=VariantConst/OpenWebUI-Monitor&type=Date)](https://star-history.com/#VariantConst/OpenWebUI-Monitor&Date)
