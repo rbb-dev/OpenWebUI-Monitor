@@ -1,6 +1,6 @@
 import { query } from "./client";
 import { ensureUserTableExists } from "./users";
-import { ModelPrice } from "../db";
+import { ModelPrice, updateModelPrice } from "./client";
 
 async function ensureModelPricesTableExists() {
   const defaultInputPrice = parseFloat(
@@ -81,37 +81,6 @@ export async function getOrCreateModelPrice(
   }
 }
 
-export async function updateModelPrice(
-  modelId: string,
-  input_price: number,
-  output_price: number,
-  per_msg_price: number
-): Promise<ModelPrice | null> {
-  const result = await query(
-    `UPDATE model_prices 
-    SET 
-      input_price = CAST($2 AS DECIMAL(10,6)),
-      output_price = CAST($3 AS DECIMAL(10,6)),
-      per_msg_price = CAST($4 AS DECIMAL(10,6)),
-      updated_at = CURRENT_TIMESTAMP
-    WHERE model_id = $1
-    RETURNING *;`,
-    [modelId, input_price, output_price, per_msg_price]
-  );
-
-  if (result.rows.length === 0) {
-    return null;
-  }
-
-  return {
-    id: result.rows[0].model_id,
-    name: result.rows[0].model_name,
-    input_price: Number(result.rows[0].input_price),
-    output_price: Number(result.rows[0].output_price),
-    per_msg_price: Number(result.rows[0].per_msg_price),
-    updated_at: result.rows[0].updated_at,
-  };
-}
 export {
   getUsers,
   getOrCreateUser,
