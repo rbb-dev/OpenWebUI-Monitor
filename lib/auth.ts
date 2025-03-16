@@ -2,11 +2,6 @@ import { NextResponse } from "next/server";
 
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
 
-/**
- * 验证API请求中的token
- * @param req 请求对象
- * @returns 如果验证失败，返回401响应；如果验证成功，返回null
- */
 export function verifyApiToken(req: Request) {
   if (!ACCESS_TOKEN) {
     console.error("ACCESS_TOKEN is not set");

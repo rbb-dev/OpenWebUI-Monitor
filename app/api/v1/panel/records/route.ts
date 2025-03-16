@@ -16,6 +16,8 @@ export async function GET(req: Request) {
     const sortOrder = searchParams.get("sortOrder");
     const users = searchParams.get("users")?.split(",") || [];
     const models = searchParams.get("models")?.split(",") || [];
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
 
     const conditions = [];
     const params = [];
@@ -31,6 +33,15 @@ export async function GET(req: Request) {
       conditions.push(`model_name = ANY($${paramIndex})`);
       params.push(models);
       paramIndex++;
+    }
+
+    if (startDate && endDate) {
+      conditions.push(
+        `use_time >= $${paramIndex} AND use_time <= $${paramIndex + 1}`
+      );
+      params.push(startDate);
+      params.push(endDate);
+      paramIndex += 2;
     }
 
     const whereClause =

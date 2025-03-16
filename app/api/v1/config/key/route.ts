@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { verifyApiToken } from "@/lib/auth";
 
 export async function GET(req: Request) {
-  // 验证API token
   const authError = verifyApiToken(req);
   if (authError) {
     return authError;

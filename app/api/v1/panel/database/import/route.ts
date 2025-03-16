@@ -16,7 +16,6 @@ export async function POST(req: Request) {
     }
 
     try {
-      // 开始事务
       await query("BEGIN");
 
       await query("TRUNCATE TABLE user_usage_records CASCADE");
@@ -64,7 +63,6 @@ export async function POST(req: Request) {
         }
       }
 
-      // 提交事务
       await query("COMMIT");
 
       return NextResponse.json({
@@ -72,7 +70,6 @@ export async function POST(req: Request) {
         message: "Data import successful",
       });
     } catch (error) {
-      // 回滚事务
       await query("ROLLBACK");
       throw error;
     }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Head from "next/head";
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs";
 import type { TablePaginationConfig } from "antd/es/table";
 import type { SorterResult } from "antd/es/table/interface";
 import type { FilterValue } from "antd/es/table/interface";
@@ -109,8 +109,12 @@ export default function PanelPage() {
   const fetchUsageData = async (range: [Date, Date]) => {
     setLoading(true);
     try {
-      const startTime = dayjs(range[0]).startOf("day").toISOString();
-      const endTime = dayjs(range[1]).endOf("day").toISOString();
+      const startTime = dayjs(range[0])
+        .startOf("day")
+        .format("YYYY-MM-DDTHH:mm:ssZ");
+      const endTime = dayjs(range[1])
+        .endOf("day")
+        .format("YYYY-MM-DDTHH:mm:ssZ");
 
       const url = `/api/v1/panel/usage?startTime=${startTime}&endTime=${endTime}`;
       const token = localStorage.getItem("access_token");
@@ -160,11 +164,11 @@ export default function PanelPage() {
 
       searchParams.append(
         "startDate",
-        dayjs(range[0]).startOf("day").format("YYYY-MM-DD")
+        dayjs(range[0]).startOf("day").format("YYYY-MM-DDTHH:mm:ssZ")
       );
       searchParams.append(
         "endDate",
-        dayjs(range[1]).endOf("day").format("YYYY-MM-DD")
+        dayjs(range[1]).endOf("day").format("YYYY-MM-DDTHH:mm:ssZ")
       );
 
       const token = localStorage.getItem("access_token");

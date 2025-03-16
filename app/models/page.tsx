@@ -886,7 +886,6 @@ export default function ModelsPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24 space-y-8">
-      {/* 添加 Toaster 组件 */}
       <Toaster
         richColors
         position="top-center"
@@ -895,7 +894,6 @@ export default function ModelsPage() {
         duration={1500}
       />
 
-      {/* 页面标题部分 */}
       <div className="space-y-4">
         <h1 className="text-3xl font-bold tracking-tight">
           {t("models.title")}
@@ -903,7 +901,6 @@ export default function ModelsPage() {
         <p className="text-muted-foreground">{t("models.description")}</p>
       </div>
 
-      {/* 操作按钮组 */}
       <div className="flex flex-wrap gap-4">
         <Button
           variant="default"
@@ -1016,7 +1013,6 @@ export default function ModelsPage() {
         />
       </div>
 
-      {/* 替换原有的TestProgress组件 */}
       <TestProgressPanel
         isVisible={testing || isTestComplete}
         models={models}
@@ -1024,7 +1020,6 @@ export default function ModelsPage() {
         t={t}
       />
 
-      {/* 桌面端表格视图 */}
       <div className="hidden sm:block">
         <div className="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden">
           {loading ? (
@@ -1045,7 +1040,6 @@ export default function ModelsPage() {
         </div>
       </div>
 
-      {/* 移动端卡片视图 */}
       <div className="sm:hidden">
         {loading ? (
           <LoadingState t={t} />

@@ -10,7 +10,6 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // 初始化数据库
     const initDb = async () => {
       try {
         await fetch("/api/init");

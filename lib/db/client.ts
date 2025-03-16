@@ -142,7 +142,6 @@ export { getClient };
 
 export async function ensureTablesExist() {
   try {
-    // 检查users表是否存在
     const usersTableExists = await query(`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
@@ -163,7 +162,6 @@ export async function ensureTablesExist() {
         );
       `);
     } else {
-      // 检查deleted列是否存在
       try {
         await query(`
           DO $$ 
@@ -181,7 +179,6 @@ export async function ensureTablesExist() {
       }
     }
 
-    // 检查model_prices表是否存在
     const modelPricesTableExists = await query(`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
@@ -212,7 +209,6 @@ export async function ensureTablesExist() {
         );
       `);
     } else {
-      // 检查per_msg_price列是否存在
       try {
         await query(`
           DO $$ 
@@ -229,7 +225,6 @@ export async function ensureTablesExist() {
         console.error("Error adding per_msg_price column:", error);
       }
 
-      // 检查base_model_id列是否存在
       try {
         await query(`
           DO $$ 
@@ -247,7 +242,6 @@ export async function ensureTablesExist() {
       }
     }
 
-    // 检查user_usage_records表是否存在
     const userUsageRecordsTableExists = await query(`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
@@ -449,7 +443,6 @@ export async function updateUserBalance(userId: string, balance: number) {
   }
 }
 
-// 导出pool以便那些直接使用pool的文件可以继续工作
 export const pool = {
   connect: async () => {
     if (isVercel) {

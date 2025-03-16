@@ -13,6 +13,8 @@ export async function GET(request: Request) {
     const startTime = searchParams.get("startTime");
     const endTime = searchParams.get("endTime");
 
+    console.log("Query params:", [startTime, endTime]);
+
     const timeFilter =
       startTime && endTime ? `WHERE use_time >= $1 AND use_time <= $2` : "";
 
@@ -88,6 +90,9 @@ export async function GET(request: Request) {
     return NextResponse.json(formattedData);
   } catch (error) {
     console.error("Fail to fetch usage records:", error);
+    if (error instanceof Error) {
+      console.error("[DB Query Error]", error);
+    }
     return NextResponse.json(
       { error: "Fail to fetch usage records" },
       { status: 500 }

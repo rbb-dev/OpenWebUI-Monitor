@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { initDatabase } from "@/lib/db/client";
 
-// 初始化数据库
 let initialized = false;
 
 export async function GET() {

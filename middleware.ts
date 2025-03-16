@@ -63,10 +63,8 @@ export async function middleware(request: NextRequest) {
 
     return response;
   } else if (pathname.startsWith("/api/config/key")) {
-    // 确保旧的路径不被中间件拦截
     return NextResponse.next();
   } else if (pathname.startsWith("/api/init")) {
-    // 数据库初始化API不需要认证
     return NextResponse.next();
   }
 
