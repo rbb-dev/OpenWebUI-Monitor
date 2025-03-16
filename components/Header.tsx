@@ -40,15 +40,12 @@ export default function Header() {
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [isSettingsExpanded, setIsSettingsExpanded] = useState(false);
 
-  // 将函数声明移到前面
   const handleLanguageChange = async (newLang: string) => {
     await i18n.changeLanguage(newLang);
     localStorage.setItem("language", newLang);
   };
 
-  // 如果是token页面，只显示语言切换按钮
   const isTokenPage = pathname === "/token";
 
   if (isTokenPage) {
@@ -89,15 +86,13 @@ export default function Header() {
       return;
     }
 
-    // 验证token的有效性
-    fetch("/api/config", {
+    fetch("/api/v1/config", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
       .then((res) => {
         if (!res.ok) {
-          // 如果token无效，清除token并重定向
           localStorage.removeItem("access_token");
           router.push("/token");
           return;
@@ -111,7 +106,6 @@ export default function Header() {
       })
       .catch(() => {
         setApiKey(t("common.error"));
-        // 发生错误时也清除token并重定向
         localStorage.removeItem("access_token");
         router.push("/token");
       });
@@ -292,11 +286,10 @@ export default function Header() {
   ];
 
   const menuItems = [
-    // 在小屏幕上将导航项添加到菜单中，但需要特殊处理
     ...(!isTokenPage
       ? navigationItems.map((item) => ({
           ...item,
-          onClick: () => router.push(item.path), // 为导航项添加 onClick 处理
+          onClick: () => router.push(item.path),
         }))
       : []),
     {
@@ -325,7 +318,6 @@ export default function Header() {
     },
   ];
 
-  // 在navigationItems数组后添加
   const actionItems = [
     {
       icon: <Globe className="w-5 h-5" />,

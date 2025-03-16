@@ -34,7 +34,7 @@ export default function TokenPage() {
     setLoading(true);
     try {
       localStorage.setItem("access_token", token);
-      const res = await fetch("/api/config", {
+      const res = await fetch("/api/v1/config", {
         headers: {
           Authorization: `Bearer ${token}`,
         },

@@ -31,7 +31,6 @@ export default function HomePage() {
         const currentVer = APP_VERSION.replace(/^v/, "");
         const newVer = latestVer.replace(/^v/, "");
 
-        // 检查是否有更新且用户未禁用该版本的提示
         const ignoredVersion = localStorage.getItem("ignoredVersion");
         if (currentVer !== newVer && ignoredVersion !== latestVer) {
           setLatestVersion(latestVer);

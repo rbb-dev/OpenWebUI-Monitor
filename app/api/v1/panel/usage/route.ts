@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
-import { pool } from "@/lib/db";
+import { query } from "@/lib/db/client";
+import { verifyApiToken } from "@/lib/auth";
 
 export async function GET(request: Request) {
+  const authError = verifyApiToken(request);
+  if (authError) {
+    return authError;
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const startTime = searchParams.get("startTime");
@@ -14,7 +20,7 @@ export async function GET(request: Request) {
 
     const [modelResult, userResult, timeRangeResult, statsResult] =
       await Promise.all([
-        pool.query(
+        query(
           `
         SELECT 
           model_name,
@@ -27,7 +33,7 @@ export async function GET(request: Request) {
       `,
           params
         ),
-        pool.query(
+        query(
           `
         SELECT 
           nickname,
@@ -40,13 +46,13 @@ export async function GET(request: Request) {
       `,
           params
         ),
-        pool.query(`
+        query(`
         SELECT 
           MIN(use_time) as min_time,
           MAX(use_time) as max_time
         FROM user_usage_records
       `),
-        pool.query(
+        query(
           `
         SELECT 
           COALESCE(SUM(input_tokens + output_tokens), 0) as total_tokens,

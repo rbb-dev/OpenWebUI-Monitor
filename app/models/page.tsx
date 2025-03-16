@@ -263,7 +263,12 @@ export default function ModelsPage() {
   useEffect(() => {
     const fetchModels = async () => {
       try {
-        const response = await fetch("/api/v1/models");
+        const token = localStorage.getItem("access_token");
+        const response = await fetch("/api/v1/models", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!response.ok) {
           throw new Error(t("error.model.failToFetchModels"));
         }
@@ -291,7 +296,12 @@ export default function ModelsPage() {
   useEffect(() => {
     const fetchApiKey = async () => {
       try {
-        const response = await fetch("/api/config/key");
+        const token = localStorage.getItem("access_token");
+        const response = await fetch("/api/v1/config/key", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!response.ok) {
           throw new Error(
             `${t("error.model.failToFetchApiKey")}: ${response.status}`
@@ -342,9 +352,13 @@ export default function ModelsPage() {
       const per_msg_price =
         field === "per_msg_price" ? validValue : model.per_msg_price;
 
+      const token = localStorage.getItem("access_token");
       const response = await fetch("/api/v1/models/price", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           updates: [
             {
@@ -416,10 +430,12 @@ export default function ModelsPage() {
     try {
       setSyncing(true);
 
+      const token = localStorage.getItem("access_token");
       const response = await fetch("/api/v1/models/sync-all-prices", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -429,7 +445,6 @@ export default function ModelsPage() {
         throw new Error(data.error || t("models.syncFail"));
       }
 
-      // 更新模型数据
       if (data.syncedModels && data.syncedModels.length > 0) {
         setModels((prev) =>
           prev.map((model) => {
@@ -655,11 +670,12 @@ export default function ModelsPage() {
     const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     try {
+      const token = localStorage.getItem("access_token");
       const response = await fetch("/api/v1/models/test", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           modelId: model.id,
@@ -725,7 +741,6 @@ export default function ModelsPage() {
     }
   };
 
-  // 修改表格样式
   const tableClassName = `
     [&_.ant-table]:!border-b-0 
     [&_.ant-table-container]:!rounded-xl 
@@ -746,7 +761,6 @@ export default function ModelsPage() {
     [&_.ant-table-cell:last-child]:!pr-6
   `;
 
-  // 修改移动端卡片组件
   const MobileCard = ({ record }: { record: Model }) => {
     const isPerMsgEnabled = record.per_msg_price >= 0;
 
@@ -821,7 +835,6 @@ export default function ModelsPage() {
     );
   };
 
-  // 将 renderPriceCell 修改为接收一个额外的 showTooltip 参数
   const renderPriceCell = (
     field: "input_price" | "output_price" | "per_msg_price",
     record: Model,
@@ -841,9 +854,7 @@ export default function ModelsPage() {
           try {
             await handlePriceUpdate(record.id, field, value);
             setEditingCell(null);
-          } catch {
-            // 错误已经在 handlePriceUpdate 中处理
-          }
+          } catch {}
         }}
         t={t}
         disabled={isDisabled}

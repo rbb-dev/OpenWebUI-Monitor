@@ -2,7 +2,6 @@ import { query } from "./client";
 import { ensureUserTableExists } from "./users";
 import { ModelPrice } from "../db";
 
-// 创建模型价格表
 async function ensureModelPricesTableExists() {
   const defaultInputPrice = parseFloat(
     process.env.DEFAULT_MODEL_INPUT_PRICE || "60"
@@ -26,7 +25,6 @@ async function ensureModelPricesTableExists() {
     [defaultInputPrice, defaultOutputPrice, defaultPerMsgPrice]
   );
 
-  // 为现有记录添加 per_msg_price 字段（如果不存在）
   await query(
     `DO $$ 
     BEGIN 
