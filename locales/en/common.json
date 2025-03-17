@@ -151,6 +151,12 @@
     "role": "Role",
     "userDetails": "User Details",
     "nickname": "Nickname",
+    "sortedBy": "Sorted by",
+    "ascending": "Ascending",
+    "descending": "Descending",
+    "clearSort": "Clear Sort",
+    "balanceSortAsc": "Balance (Ascending)",
+    "balanceSortDesc": "Balance (Descending)",
     "message": {
       "updateBalance": {
         "success": "Balance updated successfully",

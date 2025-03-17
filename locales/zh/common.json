@@ -151,6 +151,12 @@
     "role": "角色",
     "userDetails": "用户详细信息",
     "nickname": "昵称",
+    "sortedBy": "排序方式",
+    "ascending": "升序",
+    "descending": "降序",
+    "clearSort": "清除排序",
+    "balanceSortAsc": "余额（升序）",
+    "balanceSortDesc": "余额（降序）",
     "message": {
       "updateBalance": {
         "success": "余额更新成功",

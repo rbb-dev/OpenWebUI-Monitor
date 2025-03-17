@@ -297,21 +297,74 @@ export default function UsersPage() {
   const [sortInfo, setSortInfo] = useState<{
     field: string | null;
     order: "ascend" | "descend" | null;
-  }>({
-    field: null,
-    order: null,
+  }>(() => {
+    if (typeof window !== "undefined") {
+      const savedSortInfo = localStorage.getItem("usersSortInfo");
+      if (savedSortInfo) {
+        try {
+          return JSON.parse(savedSortInfo);
+        } catch (e) {
+          console.error("Failed to parse saved sort info", e);
+        }
+      }
+    }
+    return {
+      field: null,
+      order: null,
+    };
   });
   const [searchText, setSearchText] = useState("");
   const [showBlacklist, setShowBlacklist] = useState(false);
   const [blacklistCurrentPage, setBlacklistCurrentPage] = useState(1);
   const [blacklistTotal, setBlacklistTotal] = useState(0);
 
+  useEffect(() => {
+    if (sortInfo.field || sortInfo.order) {
+      localStorage.setItem("usersSortInfo", JSON.stringify(sortInfo));
+    } else {
+      localStorage.removeItem("usersSortInfo");
+    }
+  }, [sortInfo]);
+
+  const clearSortInfo = () => {
+    setSortInfo({
+      field: null,
+      order: null,
+    });
+
+    // 从 localStorage 中移除排序状态
+    localStorage.removeItem("usersSortInfo");
+
+    // 重新获取数据
+    fetchUsers(currentPage, false);
+    if (showBlacklist) {
+      fetchUsers(blacklistCurrentPage, true);
+    }
+  };
+
   const fetchUsers = async (page: number, isBlacklist: boolean = false) => {
     setLoading(true);
     try {
+      let currentSortInfo = { ...sortInfo };
+      const savedSortInfo = localStorage.getItem("usersSortInfo");
+      if (savedSortInfo) {
+        try {
+          const parsedSortInfo = JSON.parse(savedSortInfo);
+          currentSortInfo = parsedSortInfo;
+          if (
+            parsedSortInfo.field !== sortInfo.field ||
+            parsedSortInfo.order !== sortInfo.order
+          ) {
+            setSortInfo(parsedSortInfo);
+          }
+        } catch (e) {
+          console.error("Failed to parse saved sort info", e);
+        }
+      }
+
       let url = `/api/v1/users?page=${page}&deleted=${isBlacklist}`;
-      if (sortInfo.field && sortInfo.order) {
-        url += `&sortField=${sortInfo.field}&sortOrder=${sortInfo.order}`;
+      if (currentSortInfo.field && currentSortInfo.order) {
+        url += `&sortField=${currentSortInfo.field}&sortOrder=${currentSortInfo.order}`;
       }
       if (searchText) {
         url += `&search=${encodeURIComponent(searchText)}`;
@@ -360,13 +413,13 @@ export default function UsersPage() {
   useEffect(() => {
     fetchUsers(currentPage, false);
     fetchBlacklistTotal();
-  }, [currentPage, sortInfo, searchText]);
+  }, [currentPage, searchText, sortInfo]);
 
   useEffect(() => {
     if (showBlacklist) {
       fetchUsers(blacklistCurrentPage, true);
     }
-  }, [blacklistCurrentPage, showBlacklist, sortInfo, searchText]);
+  }, [blacklistCurrentPage, showBlacklist, searchText, sortInfo]);
 
   const handleUpdateBalance = async (userId: string, newBalance: number) => {
     try {
@@ -399,10 +452,16 @@ export default function UsersPage() {
         )
       );
 
+      if (blacklistUsers.some((user) => user.id === userId)) {
+        setBlacklistUsers(
+          blacklistUsers.map((user) =>
+            user.id === userId ? { ...user, balance: newBalance } : user
+          )
+        );
+      }
+
       toast.success(t("users.message.updateBalance.success"));
       setEditingKey("");
-
-      fetchUsers(currentPage, false);
     } catch (err) {
       console.error("Failed to update balance:", err);
       toast.error(
@@ -620,6 +679,7 @@ export default function UsersPage() {
           compare: (a, b) => a.balance - b.balance,
           multiple: 1,
         },
+        sortOrder: sortInfo.field === "balance" ? sortInfo.order : null,
         render: (balance: number, record) => {
           const isEditing = record.id === editingKey;
 
@@ -839,6 +899,45 @@ export default function UsersPage() {
 
       <SearchBar />
 
+      {sortInfo.field && sortInfo.order && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            {t("users.sortedBy")}:{" "}
+            {sortInfo.field === "balance"
+              ? t(
+                  sortInfo.order === "ascend"
+                    ? "users.balanceSortAsc"
+                    : "users.balanceSortDesc"
+                )
+              : `${t(`users.${sortInfo.field}`)} (${
+                  sortInfo.order === "ascend"
+                    ? t("users.ascending")
+                    : t("users.descending")
+                })`}
+          </div>
+          <button
+            onClick={clearSortInfo}
+            className="text-xs bg-muted/60 text-muted-foreground hover:bg-muted/80 
+              transition-colors px-3 py-1.5 rounded-full font-medium flex items-center gap-1"
+          >
+            <svg
+              className="w-3 h-3"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+            {t("users.clearSort")}
+          </button>
+        </div>
+      )}
+
       <div className="hidden sm:block">
         <div className="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden">
           {loading ? (
@@ -873,11 +972,32 @@ export default function UsersPage() {
               scroll={{ x: 500 }}
               onChange={(pagination, filters, sorter) => {
                 if (Array.isArray(sorter)) return;
-                setSortInfo({
-                  field: sorter.columnKey as string,
-                  order: sorter.order || null,
-                });
+
+                const newField = sorter.columnKey as string;
+                const newOrder =
+                  (sorter.order as "ascend" | "descend" | null) || null;
+
+                if (
+                  newField !== sortInfo.field ||
+                  newOrder !== sortInfo.order
+                ) {
+                  setSortInfo({
+                    field: newField,
+                    order: newOrder,
+                  });
+
+                  localStorage.setItem(
+                    "usersSortInfo",
+                    JSON.stringify({
+                      field: newField,
+                      order: newOrder,
+                    })
+                  );
+
+                  fetchUsers(currentPage, false);
+                }
               }}
+              sortDirections={["ascend", "descend", "ascend"]}
             />
           ) : (
             <EmptyState searchText={searchText} />
@@ -953,6 +1073,34 @@ export default function UsersPage() {
                         </span>
                       ),
                     }}
+                    onChange={(pagination, filters, sorter) => {
+                      if (Array.isArray(sorter)) return;
+
+                      const newField = sorter.columnKey as string;
+                      const newOrder =
+                        (sorter.order as "ascend" | "descend" | null) || null;
+
+                      if (
+                        newField !== sortInfo.field ||
+                        newOrder !== sortInfo.order
+                      ) {
+                        setSortInfo({
+                          field: newField,
+                          order: newOrder,
+                        });
+
+                        localStorage.setItem(
+                          "usersSortInfo",
+                          JSON.stringify({
+                            field: newField,
+                            order: newOrder,
+                          })
+                        );
+
+                        fetchUsers(blacklistCurrentPage, true);
+                      }
+                    }}
+                    sortDirections={["ascend", "descend", "ascend"]}
                   />
                 ) : (
                   <EmptyState searchText={searchText} />
