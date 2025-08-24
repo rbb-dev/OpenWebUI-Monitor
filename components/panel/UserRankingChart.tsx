@@ -114,7 +114,7 @@ const getBarOption = (
           if (metric === "cost") {
             return `$${value.toFixed(1)}`;
           }
-          return `$${value}`;
+          return `${value}`;
         },
       },
     },
