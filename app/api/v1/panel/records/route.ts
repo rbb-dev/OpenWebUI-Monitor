@@ -64,12 +64,14 @@ export async function GET(req: Request) {
         user_id,
         nickname,
         use_time,
-        model_name,
+        COALESCE(mp.name, user_usage_records.model_name) AS model_name,
         input_tokens,
         output_tokens,
         cost,
         balance_after
-      FROM user_usage_records 
+      FROM user_usage_records
+      LEFT JOIN model_prices AS mp
+        ON mp.id = user_usage_records.model_name
       ${whereClause}
       ${orderClause}
       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}

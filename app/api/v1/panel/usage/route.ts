@@ -25,12 +25,14 @@ export async function GET(request: Request) {
         query(
           `
         SELECT 
-          model_name,
+          COALESCE(mp.name, uur.model_name) AS model_name,
           COUNT(*) as total_count,
-          COALESCE(SUM(cost), 0) as total_cost
-        FROM user_usage_records
+          COALESCE(SUM(uur.cost), 0) AS total_cost
+        FROM user_usage_records AS uur
+        LEFT JOIN model_prices AS mp
+          ON mp.id = uur.model_name
         ${timeFilter}
-        GROUP BY model_name
+        GROUP BY uur.model_name, mp.name
         ORDER BY total_cost DESC
       `,
           params
