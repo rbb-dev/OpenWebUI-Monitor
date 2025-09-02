@@ -104,7 +104,7 @@ export default function PanelPage() {
       model_name: null,
     },
   });
-  const [timeRangeType, setTimeRangeType] = useState<TimeRangeType>("all");
+  const [timeRangeType, setTimeRangeType] = useState<TimeRangeType>("today");
 
   const fetchUsageData = async (range: [Date, Date]) => {
     setLoading(true);
@@ -207,16 +207,24 @@ export default function PanelPage() {
       });
       const data = await response.json();
 
+      const todayStart = dayjs().startOf("day").toDate();
+      const todayEnd = dayjs().endOf("day").toDate();
+      const todayTimeRange: [Date, Date] = [todayStart, todayEnd];
+      
       const minTime = dayjs(data.timeRange.minTime).startOf("day").toDate();
       const maxTime = dayjs(data.timeRange.maxTime).endOf("day").toDate();
       setAvailableTimeRange({ minTime, maxTime });
 
       const allTimeRange: [Date, Date] = [minTime, maxTime];
-      setDateRange(allTimeRange);
-      setTimeRangeType("all");
+      // setDateRange(allTimeRange);
+      setDateRange(todayTimeRange);
+      //setTimeRangeType("all");
+      setTimeRangeType("today");
 
-      await fetchUsageData(allTimeRange);
-      await fetchRecords(tableParams, allTimeRange);
+      //await fetchUsageData(allTimeRange);
+      await fetchUsageData(todayTimeRange);
+      //await fetchRecords(tableParams, allTimeRange);
+      await fetchRecords(tableParams, todayTimeRange);
     };
 
     loadInitialData();
