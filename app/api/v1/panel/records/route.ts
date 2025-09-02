@@ -30,7 +30,7 @@ export async function GET(req: Request) {
     }
 
     if (models.length > 0) {
-      conditions.push(`model_name = ANY($${paramIndex})`);
+      conditions.push(`COALESCE(mp.name, user_usage_records.model_name) = ANY($${paramIndex})`);
       params.push(models);
       paramIndex++;
     }
@@ -53,7 +53,7 @@ export async function GET(req: Request) {
 
     const countQuery = `
       SELECT COUNT(*) 
-      FROM user_usage_records 
+      FROM user_usage_records LEFT JOIN model_prices AS mp ON mp.id = user_usage_records.model_name 
       ${whereClause}
     `;
     const countResult = await query(countQuery, params);
