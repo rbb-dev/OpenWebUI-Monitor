@@ -2,7 +2,7 @@
 title: Usage Monitor
 author: VariantConst & OVINC CN
 git_url: https://github.com/VariantConst/OpenWebUI-Monitor.git
-version: 0.3.6
+version: 0.3.7
 requirements: httpx
 license: MIT
 """
