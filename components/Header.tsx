@@ -18,6 +18,11 @@ import {
 } from "lucide-react";
 import DatabaseBackup from "./DatabaseBackup";
 import { APP_VERSION } from "@/lib/version";
+import {
+  fetchLatestVersionTag,
+  getUpdateUrls,
+  isUpdateCheckDisabled,
+} from "@/lib/update";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Dialog,
@@ -133,16 +138,18 @@ export default function Header() {
       return;
     }
 
+    if (isUpdateCheckDisabled()) {
+      toast.error(t("header.messages.updateDisabled"));
+      return;
+    }
+
     setIsCheckingUpdate(true);
     try {
-      const response = await fetch(
-        "https://api.github.com/repos/variantconst/openwebui-monitor/releases/latest"
-      );
-      const data = await response.json();
-      const latestVersion = data.tag_name;
+      const { tag: latestVersion, source, urls } = await fetchLatestVersionTag();
 
       if (!latestVersion) {
-        throw new Error(t("header.messages.getVersionFailed"));
+        toast.error(t("header.messages.updateNoReleases"));
+        return;
       }
 
       const currentVer = APP_VERSION.replace(/^v/, "");
@@ -151,6 +158,9 @@ export default function Header() {
       if (currentVer === latestVer) {
         toast.success(`${t("header.messages.latestVersion")} v${APP_VERSION}`);
       } else {
+        const updateUrls = getUpdateUrls(urls.repo);
+        const updatePage =
+          source === "tag" ? updateUrls.pageTags : updateUrls.pageReleasesLatest;
         return new Promise((resolve) => {
           const dialog = document.createElement("div");
           document.body.appendChild(dialog);
@@ -166,7 +176,7 @@ export default function Header() {
 
             const handleUpdate = () => {
               window.open(
-                "https://github.com/VariantConst/OpenWebUI-Monitor/releases/latest",
+                updatePage,
                 "_blank"
               );
               handleClose();

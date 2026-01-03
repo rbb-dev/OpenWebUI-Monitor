@@ -5,6 +5,11 @@ import Link from "next/link";
 import { FiDatabase, FiUsers, FiBarChart2, FiGithub } from "react-icons/fi";
 import { CloseOutlined } from "@ant-design/icons";
 import { APP_VERSION } from "@/lib/version";
+import {
+  fetchLatestVersionTag,
+  getUpdateUrls,
+  isUpdateCheckDisabled,
+} from "@/lib/update";
 import { message } from "antd";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
@@ -15,15 +20,17 @@ export default function HomePage() {
   const { t } = useTranslation("common");
   const [isUpdateVisible, setIsUpdateVisible] = useState(false);
   const [latestVersion, setLatestVersion] = useState("");
+  const [latestSource, setLatestSource] = useState<"release" | "tag" | null>(
+    null
+  );
+  const [updateRepo, setUpdateRepo] = useState<string>("");
 
   useEffect(() => {
     const checkUpdate = async () => {
       try {
-        const response = await fetch(
-          "https://api.github.com/repos/variantconst/openwebui-monitor/releases/latest"
-        );
-        const data = await response.json();
-        const latestVer = data.tag_name;
+        if (isUpdateCheckDisabled()) return;
+
+        const { tag: latestVer, source, urls } = await fetchLatestVersionTag();
         if (!latestVer) {
           return;
         }
@@ -34,6 +41,8 @@ export default function HomePage() {
         const ignoredVersion = localStorage.getItem("ignoredVersion");
         if (currentVer !== newVer && ignoredVersion !== latestVer) {
           setLatestVersion(latestVer);
+          setLatestSource(source);
+          setUpdateRepo(urls.repo);
           setIsUpdateVisible(true);
         }
       } catch (error) {
@@ -45,10 +54,10 @@ export default function HomePage() {
   }, [t]);
 
   const handleUpdate = () => {
-    window.open(
-      "https://github.com/VariantConst/OpenWebUI-Monitor/releases/latest",
-      "_blank"
-    );
+    const urls = updateRepo ? getUpdateUrls(updateRepo) : getUpdateUrls();
+    const target =
+      latestSource === "tag" ? urls.pageTags : urls.pageReleasesLatest;
+    window.open(target, "_blank");
     setIsUpdateVisible(false);
   };
 

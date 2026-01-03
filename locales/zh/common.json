@@ -48,6 +48,8 @@
       "apiKeyNotSet": "API 密钥未设置或加载失败",
       "apiKeyCopied": "API 密钥已复制到剪贴板",
       "updateCheckFailed": "检查更新失败",
+      "updateNoReleases": "未找到可用于检查更新的 Release/Tag",
+      "updateDisabled": "已禁用检查更新",
       "latestVersion": "当前已是最新版本",
       "getVersionFailed": "获取版本号失败"
     },

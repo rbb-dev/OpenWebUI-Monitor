@@ -48,6 +48,8 @@
       "apiKeyNotSet": "API key not set or failed to load",
       "apiKeyCopied": "API key copied to clipboard",
       "updateCheckFailed": "Failed to check for updates",
+      "updateNoReleases": "No releases/tags found for update check",
+      "updateDisabled": "Update check is disabled",
       "latestVersion": "Current version is up to date",
       "getVersionFailed": "Failed to get version number"
     },
