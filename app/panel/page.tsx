@@ -93,6 +93,8 @@ export default function PanelPage() {
   const [pieMetric, setPieMetric] = useState<"cost" | "count">("cost");
   const [barMetric, setBarMetric] = useState<"cost" | "count">("cost");
   const [records, setRecords] = useState<UsageRecord[]>([]);
+  const [recordUsers, setRecordUsers] = useState<string[]>([]);
+  const [recordModels, setRecordModels] = useState<string[]>([]);
   const [tableParams, setTableParams] = useState<TableParams>({
     pagination: {
       current: 1,
@@ -183,6 +185,8 @@ export default function PanelPage() {
       const data = await response.json();
 
       setRecords(data.records);
+      setRecordUsers((data.users || []) as string[]);
+      setRecordModels((data.models || []) as string[]);
       setTableParams({
         ...params,
         pagination: {
@@ -539,8 +543,8 @@ export default function PanelPage() {
               loading={tableLoading}
               records={records}
               tableParams={tableParams}
-              models={usageData.models}
-              users={usageData.users}
+              models={recordModels}
+              users={recordUsers}
               onTableChange={handleTableChange}
             />
           </div>

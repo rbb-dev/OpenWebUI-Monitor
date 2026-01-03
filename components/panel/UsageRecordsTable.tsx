@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Table, TablePaginationConfig, Select } from "antd";
 import type { FilterValue } from "antd/es/table/interface";
 import type { SorterResult } from "antd/es/table/interface";
@@ -20,7 +19,7 @@ interface UsageRecord {
 interface TableParams {
   pagination: TablePaginationConfig;
   sortField?: string;
-  sortOrder?: string;
+  sortOrder?: "ascend" | "descend";
   filters?: Record<string, FilterValue | null>;
 }
 
@@ -28,8 +27,8 @@ interface Props {
   loading: boolean;
   records: UsageRecord[];
   tableParams: TableParams;
-  models: { model_name: string }[];
-  users: { nickname: string }[];
+  models: string[];
+  users: string[];
   onTableChange: (
     pagination: TablePaginationConfig,
     filters: Record<string, FilterValue | null>,
@@ -95,17 +94,24 @@ export default function UsageRecordsTable({
 }: Props) {
   const { t } = useTranslation("common");
 
-  const [filters, setFilters] = useState<Record<string, FilterValue | null>>(
-    tableParams.filters || {}
-  );
+  const filters = tableParams.filters || {};
 
   const handleFilterChange = (field: string, value: string[] | null) => {
     const newFilters = {
       ...filters,
-      [field]: value,
+      [field]: value && value.length > 0 ? value : null,
     };
-    setFilters(newFilters);
-    onTableChange(tableParams.pagination, newFilters, {});
+    const newPagination = { ...tableParams.pagination, current: 1 };
+
+    const currentSorter = tableParams.sortField
+      ? ({
+          field: tableParams.sortField,
+          columnKey: tableParams.sortField,
+          order: tableParams.sortOrder,
+        } as SorterResult<UsageRecord>)
+      : ({} as SorterResult<UsageRecord>);
+
+    onTableChange(newPagination, newFilters, currentSorter);
   };
 
   const columns = [
@@ -114,10 +120,7 @@ export default function UsageRecordsTable({
       dataIndex: "nickname",
       key: "nickname",
       width: 120,
-      filters: users.map((user) => ({
-        text: user.nickname,
-        value: user.nickname,
-      })),
+      filters: users.map((user) => ({ text: user, value: user })),
       filterMode: "menu" as const,
       filtered: filters.nickname ? filters.nickname.length > 0 : false,
       filteredValue: filters.nickname || null,
@@ -135,10 +138,7 @@ export default function UsageRecordsTable({
       dataIndex: "model_name",
       key: "model_name",
       width: 150,
-      filters: models.map((model) => ({
-        text: model.model_name,
-        value: model.model_name,
-      })),
+      filters: models.map((model) => ({ text: model, value: model })),
       filterMode: "menu" as const,
       filtered: filters.model_name ? filters.model_name.length > 0 : false,
       filteredValue: filters.model_name || null,
@@ -179,24 +179,18 @@ export default function UsageRecordsTable({
           mode="multiple"
           placeholder={t("panel.usageDetails.table.user")}
           className="w-full"
-          value={filters.nickname as string[]}
+          value={(filters.nickname as string[]) || []}
           onChange={(value) => handleFilterChange("nickname", value)}
-          options={users.map((user) => ({
-            label: user.nickname,
-            value: user.nickname,
-          }))}
+          options={users.map((user) => ({ label: user, value: user }))}
           maxTagCount="responsive"
         />
         <Select
           mode="multiple"
           placeholder={t("panel.usageDetails.table.model")}
           className="w-full"
-          value={filters.model_name as string[]}
+          value={(filters.model_name as string[]) || []}
           onChange={(value) => handleFilterChange("model_name", value)}
-          options={models.map((model) => ({
-            label: model.model_name,
-            value: model.model_name,
-          }))}
+          options={models.map((model) => ({ label: model, value: model }))}
           maxTagCount="responsive"
         />
       </div>
