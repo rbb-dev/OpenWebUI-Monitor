@@ -38,7 +38,7 @@ export function UsageMetricToggle({
   return (
     <div
       className={cn(
-        "flex gap-1 w-full sm:w-[360px] p-1.5 bg-white rounded-lg border border-gray-100",
+        "flex gap-1 w-full sm:w-[420px] p-1.5 bg-white rounded-lg border border-gray-100",
         "shadow-[0_2px_12px_-2px_rgba(0,0,0,0.04)]",
         className
       )}
@@ -65,7 +65,7 @@ export function UsageMetricToggle({
           )}
           <span className="relative z-10 flex items-center gap-1.5">
             <span className="text-[14px]">{opt.icon}</span>
-            {opt.label}
+            <span className="whitespace-nowrap">{opt.label}</span>
           </span>
         </motion.button>
       ))}

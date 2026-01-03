@@ -102,7 +102,7 @@ export default function PanelPage() {
   const [hourlyBuckets, setHourlyBuckets] = useState<HourlyBucket[]>([]);
   const [hourlyMetric, setHourlyMetric] = useState<
     "cost" | "tokens" | "calls"
-  >("tokens");
+  >("cost");
   const [hourlyMode, setHourlyMode] = useState<"avg" | "total">("avg");
   const [tableParams, setTableParams] = useState<TableParams>({
     pagination: {
