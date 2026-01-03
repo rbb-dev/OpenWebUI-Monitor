@@ -98,7 +98,7 @@ export async function GET(req: Request) {
     const offset = (page - 1) * pageSize;
     const dataQuery = `
       SELECT 
-        id,
+        user_usage_records.id AS id,
         user_id,
         nickname,
         use_time,
