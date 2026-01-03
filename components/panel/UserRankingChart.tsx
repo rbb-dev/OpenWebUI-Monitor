@@ -39,7 +39,20 @@ const getBarOption = (
 
   return {
     tooltip: {
-      show: false,
+      show: true,
+      trigger: "axis",
+      axisPointer: { type: "shadow" },
+      formatter: (params: any) => {
+        const p = Array.isArray(params) ? params[0] : params;
+        const idx = Number(p.dataIndex);
+        const item = columnData[idx];
+        const currency = t("common.currency");
+        const value =
+          metric === "cost"
+            ? `${currency}${Number(item.value).toFixed(4)}`
+            : Number(item.value).toLocaleString();
+        return `${item.nickname}<br/>${value}`;
+      },
     },
     grid: {
       top: isSmallScreen ? "8%" : "4%",
@@ -181,17 +194,7 @@ const getBarOption = (
           borderRadius: [8, 8, 0, 0],
         },
         label: {
-          show: !isSmallScreen,
-          position: "top",
-          formatter: (params: any) => {
-            return metric === "cost"
-              ? `${params.value.toFixed(2)}`
-              : `${params.value}`;
-          },
-          fontSize: 11,
-          color: "#666",
-          distance: 2,
-          fontFamily: "monospace",
+          show: false,
         },
       },
     ],
