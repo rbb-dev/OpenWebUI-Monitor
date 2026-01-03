@@ -296,7 +296,9 @@ export default function PanelPage() {
     const newParams: TableParams = {
       pagination,
       filters: processedFilters,
-      sortField: Array.isArray(sorter) ? undefined : sorter.field?.toString(),
+      sortField: Array.isArray(sorter)
+        ? undefined
+        : (sorter.field ?? sorter.columnKey)?.toString(),
       sortOrder: Array.isArray(sorter)
         ? undefined
         : (sorter.order as "ascend" | "descend" | undefined),

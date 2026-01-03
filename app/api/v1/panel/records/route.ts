@@ -47,8 +47,21 @@ export async function GET(req: Request) {
     const whereClause =
       conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
-    const orderClause = sortField
-      ? `ORDER BY ${sortField} ${sortOrder === "descend" ? "DESC" : "ASC"}`
+    const sortFieldMap: Record<string, string> = {
+      use_time: "use_time",
+      nickname: "nickname",
+      model_name: "model_name",
+      input_tokens: "input_tokens",
+      output_tokens: "output_tokens",
+      tokens: "(input_tokens + output_tokens)",
+      cost: "cost",
+      balance_after: "balance_after",
+    };
+
+    const orderBy = sortField ? sortFieldMap[sortField] : undefined;
+    const orderDir = sortOrder === "descend" ? "DESC" : "ASC";
+    const orderClause = orderBy
+      ? `ORDER BY ${orderBy} ${orderDir}`
       : "ORDER BY use_time DESC";
 
     const countQuery = `
@@ -61,6 +74,7 @@ export async function GET(req: Request) {
     const offset = (page - 1) * pageSize;
     const dataQuery = `
       SELECT 
+        id,
         user_id,
         nickname,
         use_time,

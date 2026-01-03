@@ -145,6 +145,7 @@ export default function UsageRecordsTable({
     },
     {
       title: t("panel.usageDetails.table.tokens"),
+      dataIndex: "tokens",
       key: "tokens",
       width: 120,
       sorter: true,
