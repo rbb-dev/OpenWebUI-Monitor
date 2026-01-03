@@ -131,6 +131,10 @@ export default function UsageRecordsTable({
       key: "use_time",
       width: 180,
       sorter: true,
+      sortOrder:
+        tableParams.sortField === "use_time"
+          ? tableParams.sortOrder ?? null
+          : null,
       render: (time: string) => dayjs(time).format("YYYY-MM-DD HH:mm:ss"),
     },
     {
@@ -149,6 +153,10 @@ export default function UsageRecordsTable({
       key: "tokens",
       width: 120,
       sorter: true,
+      sortOrder:
+        tableParams.sortField === "tokens"
+          ? tableParams.sortOrder ?? null
+          : null,
       render: (_: unknown, record: UsageRecord) =>
         (record.input_tokens + record.output_tokens).toLocaleString(),
     },
@@ -158,6 +166,8 @@ export default function UsageRecordsTable({
       key: "cost",
       width: 100,
       sorter: true,
+      sortOrder:
+        tableParams.sortField === "cost" ? tableParams.sortOrder ?? null : null,
       render: (_: unknown, record: UsageRecord) =>
         `${t("common.currency")}${Number(record.cost).toFixed(4)}`,
     },
@@ -167,6 +177,10 @@ export default function UsageRecordsTable({
       key: "balance_after",
       width: 100,
       sorter: true,
+      sortOrder:
+        tableParams.sortField === "balance_after"
+          ? tableParams.sortOrder ?? null
+          : null,
       render: (_: unknown, record: UsageRecord) =>
         `${t("common.currency")}${Number(record.balance_after).toFixed(2)}`,
     },

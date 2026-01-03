@@ -162,9 +162,9 @@ export default function PanelPage() {
         params.pagination.pageSize?.toString() || "10"
       );
 
-      if (params.sortField) {
+      if (params.sortField && params.sortOrder) {
         searchParams.append("sortField", params.sortField);
-        searchParams.append("sortOrder", params.sortOrder || "ascend");
+        searchParams.append("sortOrder", params.sortOrder);
       }
       if (params.filters?.nickname?.length) {
         searchParams.append("users", params.filters.nickname.join(","));
@@ -348,15 +348,20 @@ export default function PanelPage() {
       ])
     );
 
+    const sortObj = Array.isArray(sorter) ? undefined : sorter;
+    const nextSortOrder =
+      sortObj?.order === "ascend" || sortObj?.order === "descend"
+        ? (sortObj.order as "ascend" | "descend")
+        : undefined;
+    const nextSortField = nextSortOrder
+      ? (sortObj?.field ?? sortObj?.columnKey)?.toString()
+      : undefined;
+
     const newParams: TableParams = {
       pagination,
       filters: processedFilters,
-      sortField: Array.isArray(sorter)
-        ? undefined
-        : (sorter.field ?? sorter.columnKey)?.toString(),
-      sortOrder: Array.isArray(sorter)
-        ? undefined
-        : (sorter.order as "ascend" | "descend" | undefined),
+      sortField: nextSortField,
+      sortOrder: nextSortOrder,
     };
     setTableParams(newParams);
     fetchRecords(newParams, dateRange);
