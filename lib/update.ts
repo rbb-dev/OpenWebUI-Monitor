@@ -22,7 +22,13 @@ export function getUpdateUrls(repo = getUpdateRepo()) {
   };
 }
 
-export async function fetchLatestVersionTag(repo = getUpdateRepo()) {
+export async function fetchLatestVersionTag(
+  repo = getUpdateRepo()
+): Promise<{
+  tag: string | null;
+  source: "release" | "tag" | null;
+  urls: ReturnType<typeof getUpdateUrls>;
+}> {
   const urls = getUpdateUrls(repo);
 
   const releaseRes = await fetch(urls.apiLatestRelease);
@@ -39,6 +45,5 @@ export async function fetchLatestVersionTag(repo = getUpdateRepo()) {
     if (tag) return { tag, source: "tag" as const, urls };
   }
 
-  return { tag: null as const, source: null as const, urls };
+  return { tag: null, source: null, urls };
 }
-
