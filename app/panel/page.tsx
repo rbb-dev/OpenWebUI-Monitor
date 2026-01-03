@@ -13,6 +13,9 @@ import TimeRangeSelector, {
 import ModelDistributionChart from "@/components/panel/ModelDistributionChart";
 import UserRankingChart from "@/components/panel/UserRankingChart";
 import UsageRecordsTable from "@/components/panel/UsageRecordsTable";
+import HourlyDistributionChart, {
+  HourlyBucket,
+} from "@/components/panel/HourlyDistributionChart";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { toast, Toaster } from "sonner";
@@ -71,6 +74,7 @@ export default function PanelPage() {
   const { t } = useTranslation("common");
   const [loading, setLoading] = useState(true);
   const [tableLoading, setTableLoading] = useState(true);
+  const [distributionLoading, setDistributionLoading] = useState(true);
   const [dateRange, setDateRange] = useState<[Date, Date]>([
     new Date(),
     new Date(),
@@ -95,6 +99,11 @@ export default function PanelPage() {
   const [records, setRecords] = useState<UsageRecord[]>([]);
   const [recordUsers, setRecordUsers] = useState<string[]>([]);
   const [recordModels, setRecordModels] = useState<string[]>([]);
+  const [hourlyBuckets, setHourlyBuckets] = useState<HourlyBucket[]>([]);
+  const [hourlyMetric, setHourlyMetric] = useState<
+    "cost" | "tokens" | "calls"
+  >("tokens");
+  const [hourlyMode, setHourlyMode] = useState<"avg" | "total">("avg");
   const [tableParams, setTableParams] = useState<TableParams>({
     pagination: {
       current: 1,
@@ -201,6 +210,44 @@ export default function PanelPage() {
     }
   };
 
+  const fetchHourlyDistribution = async (range: [Date, Date]) => {
+    setDistributionLoading(true);
+    try {
+      const startTime = dayjs(range[0])
+        .startOf("day")
+        .format("YYYY-MM-DDTHH:mm:ssZ");
+      const endTime = dayjs(range[1])
+        .endOf("day")
+        .format("YYYY-MM-DDTHH:mm:ssZ");
+
+      const tzOffsetMinutes = dayjs().utcOffset();
+
+      const searchParams = new URLSearchParams();
+      searchParams.append("startTime", startTime);
+      searchParams.append("endTime", endTime);
+      searchParams.append("tzOffsetMinutes", tzOffsetMinutes.toString());
+
+      const token = localStorage.getItem("access_token");
+      const response = await fetch(
+        `/api/v1/panel/usage/distribution?${searchParams.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch distribution");
+      const data = await response.json();
+      setHourlyBuckets((data.buckets || []) as HourlyBucket[]);
+    } catch (error) {
+      toast.error(t("error.panel.fetchUsageDataFail"));
+      setHourlyBuckets([]);
+    } finally {
+      setDistributionLoading(false);
+    }
+  };
+
   useEffect(() => {
     const loadInitialData = async () => {
       const token = localStorage.getItem("access_token");
@@ -229,6 +276,7 @@ export default function PanelPage() {
       await fetchUsageData(todayTimeRange);
       //await fetchRecords(tableParams, allTimeRange);
       await fetchRecords(tableParams, todayTimeRange);
+      await fetchHourlyDistribution(todayTimeRange);
     };
 
     loadInitialData();
@@ -242,12 +290,15 @@ export default function PanelPage() {
     setDateRange(range);
     await fetchUsageData(range);
     await fetchRecords(tableParams, range);
+    await fetchHourlyDistribution(range);
   };
 
   const getReportTitle = (type: TimeRangeType, t: (key: string) => string) => {
     switch (type) {
       case "today":
         return t("panel.report.daily");
+      case "yesterday":
+        return t("panel.report.yesterday");
       case "week":
         return t("panel.report.weekly");
       case "month":
@@ -523,6 +574,23 @@ export default function PanelPage() {
             users={usageData.users}
             metric={barMetric}
             onMetricChange={setBarMetric}
+          />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="py-6 bg-card text-card-foreground"
+        >
+          <HourlyDistributionChart
+            loading={distributionLoading}
+            buckets={hourlyBuckets}
+            timeRange={dateRange}
+            metric={hourlyMetric}
+            onMetricChange={setHourlyMetric}
+            mode={hourlyMode}
+            onModeChange={setHourlyMode}
           />
         </motion.div>
 

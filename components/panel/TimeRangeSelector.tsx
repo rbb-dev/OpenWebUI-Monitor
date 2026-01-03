@@ -9,6 +9,7 @@ import {
   Calendar as CalendarIcon,
   Clock,
   Sun,
+  Moon,
   CalendarDays,
   CalendarRange,
   CalendarClock,
@@ -26,6 +27,7 @@ import { zhCN } from "date-fns/locale";
 
 export type TimeRangeType =
   | "today"
+  | "yesterday"
   | "week"
   | "month"
   | "30days"
@@ -99,6 +101,17 @@ export default function TimeRangeSelector({
           Date,
           Date
         ],
+    },
+    {
+      id: "yesterday",
+      type: "yesterday" as TimeRangeType,
+      label: t("panel.timeRange.timeOptions.yesterday"),
+      icon: Moon,
+      getRange: () =>
+        [
+          dayjs().subtract(1, "day").startOf("day").toDate(),
+          dayjs().subtract(1, "day").endOf("day").toDate(),
+        ] as [Date, Date],
     },
     {
       id: "week",
@@ -192,7 +205,7 @@ export default function TimeRangeSelector({
       </div>
 
       <div className="space-y-4">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-3">
           {timeOptions.map(({ id, type, label, icon: Icon }) => (
             <motion.div
               key={id}

@@ -244,10 +244,13 @@
     "title": "使用统计",
     "byAmount": "按金额",
     "byCount": "按次数",
+    "byTokens": "按 Tokens",
+    "byCalls": "按调用次数",
     "timeRange": {
       "title": "时间范围",
       "timeOptions": {
         "day": "今天",
+        "yesterday": "昨天",
         "week": "本周",
         "month": "本月",
         "30Days": "近30天",
@@ -281,6 +284,13 @@
         "balance": "余额"
       }
     },
+    "hourlyDistribution": {
+      "title": "小时分布",
+      "subtitle": "按小时汇总所选时间范围内的使用情况",
+      "avgPerDay": "日均",
+      "total": "总计",
+      "days": "天数"
+    },
     "description": "查看模型使用情况、用户消费数据和详细使用记录。",
     "overview": {
       "totalModels": "使用模型数",
@@ -291,6 +301,7 @@
     },
     "report": {
       "daily": "今日报告",
+      "yesterday": "昨日报告",
       "weekly": "本周报告",
       "monthly": "本月报告",
       "thirtyDays": "近30天报告",

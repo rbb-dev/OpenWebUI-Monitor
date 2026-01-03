@@ -244,10 +244,13 @@
     "title": "Usage Statistics",
     "byAmount": "By Amount",
     "byCount": "By Count",
+    "byTokens": "By Tokens",
+    "byCalls": "By Calls",
     "timeRange": {
       "title": "Time Range",
       "timeOptions": {
         "day": "Today",
+        "yesterday": "Yesterday",
         "week": "Week",
         "month": "Month",
         "30Days": "30 Days",
@@ -281,6 +284,13 @@
         "balance": "Balance"
       }
     },
+    "hourlyDistribution": {
+      "title": "Hourly Distribution",
+      "subtitle": "Grouped by hour of day across the selected range",
+      "avgPerDay": "Avg/day",
+      "total": "Total",
+      "days": "Days"
+    },
     "description": "View model usage, user consumption data and detailed usage records.",
     "overview": {
       "totalModels": "Models Used",
@@ -291,6 +301,7 @@
     },
     "report": {
       "daily": "Daily Report",
+      "yesterday": "Yesterday Report",
       "weekly": "Weekly Report",
       "monthly": "Monthly Report",
       "thirtyDays": "30 Days Report",
