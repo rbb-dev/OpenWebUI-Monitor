@@ -14,7 +14,7 @@ import ModelDistributionChart from "@/components/panel/ModelDistributionChart";
 import UserRankingChart from "@/components/panel/UserRankingChart";
 import UsageRecordsTable from "@/components/panel/UsageRecordsTable";
 import HourlyDistributionChart, {
-  HourlyBucket,
+  DistributionBucket,
 } from "@/components/panel/HourlyDistributionChart";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
@@ -99,7 +99,12 @@ export default function PanelPage() {
   const [records, setRecords] = useState<UsageRecord[]>([]);
   const [recordUsers, setRecordUsers] = useState<string[]>([]);
   const [recordModels, setRecordModels] = useState<string[]>([]);
-  const [hourlyBuckets, setHourlyBuckets] = useState<HourlyBucket[]>([]);
+  const [distributionBuckets, setDistributionBuckets] = useState<
+    DistributionBucket[]
+  >([]);
+  const [distributionView, setDistributionView] = useState<"hour" | "weekday">(
+    "hour"
+  );
   const [hourlyMetric, setHourlyMetric] = useState<
     "cost" | "tokens" | "calls"
   >("cost");
@@ -213,6 +218,11 @@ export default function PanelPage() {
   const fetchHourlyDistribution = async (range: [Date, Date]) => {
     setDistributionLoading(true);
     try {
+      const daysInRange =
+        dayjs(range[1]).startOf("day").diff(dayjs(range[0]).startOf("day"), "day") +
+        1;
+      const view: "hour" | "weekday" = daysInRange > 2 ? "weekday" : "hour";
+
       const startTime = dayjs(range[0])
         .startOf("day")
         .format("YYYY-MM-DDTHH:mm:ssZ");
@@ -226,6 +236,7 @@ export default function PanelPage() {
       searchParams.append("startTime", startTime);
       searchParams.append("endTime", endTime);
       searchParams.append("tzOffsetMinutes", tzOffsetMinutes.toString());
+      searchParams.append("bucket", view === "weekday" ? "isodow" : "hour");
 
       const token = localStorage.getItem("access_token");
       const response = await fetch(
@@ -239,10 +250,11 @@ export default function PanelPage() {
 
       if (!response.ok) throw new Error("Failed to fetch distribution");
       const data = await response.json();
-      setHourlyBuckets((data.buckets || []) as HourlyBucket[]);
+      setDistributionView(view);
+      setDistributionBuckets((data.buckets || []) as DistributionBucket[]);
     } catch (error) {
       toast.error(t("error.panel.fetchUsageDataFail"));
-      setHourlyBuckets([]);
+      setDistributionBuckets([]);
     } finally {
       setDistributionLoading(false);
     }
@@ -590,8 +602,9 @@ export default function PanelPage() {
         >
           <HourlyDistributionChart
             loading={distributionLoading}
-            buckets={hourlyBuckets}
+            buckets={distributionBuckets}
             timeRange={dateRange}
+            view={distributionView}
             metric={hourlyMetric}
             onMetricChange={setHourlyMetric}
             mode={hourlyMode}

@@ -293,6 +293,21 @@
       "total": "总计",
       "days": "天数"
     },
+    "distribution": {
+      "dailyTitle": "按星期分布",
+      "dailySubtitle": "按星期汇总所选时间范围内的使用情况",
+      "avgPerWeekday": "每周几均值",
+      "occurrences": "出现次数"
+    },
+    "weekdays": {
+      "mon": "周一",
+      "tue": "周二",
+      "wed": "周三",
+      "thu": "周四",
+      "fri": "周五",
+      "sat": "周六",
+      "sun": "周日"
+    },
     "description": "查看模型使用情况、用户消费数据和详细使用记录。",
     "overview": {
       "totalModels": "使用模型数",

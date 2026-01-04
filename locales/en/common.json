@@ -293,6 +293,21 @@
       "total": "Total",
       "days": "Days"
     },
+    "distribution": {
+      "dailyTitle": "Daily Distribution",
+      "dailySubtitle": "Grouped by day of week across the selected range",
+      "avgPerWeekday": "Avg/weekday",
+      "occurrences": "Occurrences"
+    },
+    "weekdays": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
     "description": "View model usage, user consumption data and detailed usage records.",
     "overview": {
       "totalModels": "Models Used",

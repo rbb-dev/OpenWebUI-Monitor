@@ -10,18 +10,25 @@ interface AggregationToggleProps {
   value: AggregationMode;
   onChange: (value: AggregationMode) => void;
   className?: string;
+  avgLabel?: string;
+  totalLabel?: string;
 }
 
 export function AggregationToggle({
   value,
   onChange,
   className,
+  avgLabel,
+  totalLabel,
 }: AggregationToggleProps) {
   const { t } = useTranslation("common");
 
   const options: Array<{ key: AggregationMode; label: string }> = [
-    { key: "avg", label: t("panel.hourlyDistribution.avgPerDay") },
-    { key: "total", label: t("panel.hourlyDistribution.total") },
+    { key: "avg", label: avgLabel ?? t("panel.hourlyDistribution.avgPerDay") },
+    {
+      key: "total",
+      label: totalLabel ?? t("panel.hourlyDistribution.total"),
+    },
   ];
 
   return (
@@ -58,4 +65,3 @@ export function AggregationToggle({
     </div>
   );
 }
-

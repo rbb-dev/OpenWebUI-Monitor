@@ -17,8 +17,8 @@ import {
   AggregationToggle,
 } from "@/components/ui/aggregation-toggle";
 
-export interface HourlyBucket {
-  hour: number; // 0-23
+export interface DistributionBucket {
+  bucket: number; // hour: 0-23, isodow: 1-7 (Mon-Sun)
   cost: number;
   tokens: number;
   calls: number;
@@ -26,8 +26,9 @@ export interface HourlyBucket {
 
 interface HourlyDistributionChartProps {
   loading: boolean;
-  buckets: HourlyBucket[];
+  buckets: DistributionBucket[];
   timeRange: [Date, Date];
+  view: "hour" | "weekday";
   metric: UsageMetric;
   onMetricChange: (metric: UsageMetric) => void;
   mode: AggregationMode;
@@ -50,10 +51,25 @@ const getDaysInRange = (range: [Date, Date]) => {
 
 const pad2 = (n: number) => n.toString().padStart(2, "0");
 
+const getIsoWeekdayCounts = (range: [Date, Date]) => {
+  const counts: Record<number, number> = {};
+  let cur = dayjs(range[0]).startOf("day");
+  const end = dayjs(range[1]).startOf("day");
+
+  while (cur.isBefore(end) || cur.isSame(end, "day")) {
+    const d = ((cur.day() + 6) % 7) + 1; // 1..7 (Mon..Sun)
+    counts[d] = (counts[d] || 0) + 1;
+    cur = cur.add(1, "day");
+  }
+
+  return counts;
+};
+
 export default function HourlyDistributionChart({
   loading,
   buckets,
   timeRange,
+  view,
   metric,
   onMetricChange,
   mode,
@@ -63,31 +79,47 @@ export default function HourlyDistributionChart({
   const chartRef = useRef<ECharts>();
 
   const days = useMemo(() => getDaysInRange(timeRange), [timeRange]);
-  const hours = useMemo(() => Array.from({ length: 24 }, (_, h) => h), []);
+  const keys = useMemo(
+    () => (view === "weekday" ? [1, 2, 3, 4, 5, 6, 7] : Array.from({ length: 24 }, (_, h) => h)),
+    [view]
+  );
+  const weekdayCounts = useMemo(
+    () => (view === "weekday" ? getIsoWeekdayCounts(timeRange) : {}),
+    [view, timeRange]
+  );
 
-  const hourToBucket = useMemo(() => {
-    const map = new Map<number, HourlyBucket>();
-    for (const b of buckets) map.set(b.hour, b);
+  const keyToBucket = useMemo(() => {
+    const map = new Map<number, DistributionBucket>();
+    for (const b of buckets) map.set(b.bucket, b);
     return map;
   }, [buckets]);
 
   const totals = useMemo(() => {
-    const raw = hours.map((h) => {
-      const b = hourToBucket.get(h);
+    const raw = keys.map((k) => {
+      const b = keyToBucket.get(k);
       return {
-        hour: h,
+        bucket: k,
         cost: b?.cost ?? 0,
         tokens: b?.tokens ?? 0,
         calls: b?.calls ?? 0,
       };
     });
     return raw;
-  }, [hours, hourToBucket]);
+  }, [keys, keyToBucket]);
 
   const values = useMemo(() => {
-    const denom = mode === "avg" && days > 1 ? days : 1;
+    if (mode !== "avg") return totals.map((b) => b[metric]);
+
+    if (view === "weekday") {
+      return totals.map((b) => {
+        const denom = weekdayCounts[b.bucket] || 1;
+        return b[metric] / denom;
+      });
+    }
+
+    const denom = days > 1 ? days : 1;
     return totals.map((b) => b[metric] / denom);
-  }, [totals, metric, mode, days]);
+  }, [totals, metric, mode, days, view, weekdayCounts]);
 
   const option = useMemo(() => {
     const currency = t("common.currency");
@@ -104,11 +136,16 @@ export default function HourlyDistributionChart({
         axisPointer: { type: "shadow" },
         formatter: (params: any) => {
           const p = Array.isArray(params) ? params[0] : params;
-          const hour = Number(p.axisValue);
-          const b = totals[hour];
-          const display = values[hour];
+          const idx = Number(p.dataIndex);
+          const b = totals[idx];
+          const display = values[idx];
+          const bucket = b.bucket;
 
-          const hourLabel = `${pad2(hour)}:00–${pad2(hour)}:59`;
+          const label =
+            view === "weekday"
+              ? t(`panel.weekdays.${["mon", "tue", "wed", "thu", "fri", "sat", "sun"][bucket - 1]}`)
+              : `${pad2(bucket)}:00–${pad2(bucket)}:59`;
+
           const displayText =
             metric === "cost"
               ? `${currency}${Number(display).toFixed(4)}`
@@ -116,17 +153,27 @@ export default function HourlyDistributionChart({
               ? display.toLocaleString()
               : display.toFixed(2);
 
-          const lines = [`${hourLabel}`, `${yLabel}: ${displayText}`];
+          const lines = [`${label}`, `${yLabel}: ${displayText}`];
 
-          if (mode === "avg" && days > 1) {
+          if (mode === "avg" && (view === "weekday" || days > 1)) {
             const totalText =
               metric === "cost"
                 ? `${currency}${Number(b.cost).toFixed(4)}`
                 : b[metric].toLocaleString();
             lines.push(`${t("panel.hourlyDistribution.total")}: ${totalText}`);
-            lines.push(
-              `${t("panel.hourlyDistribution.days")}: ${days.toLocaleString()}`
-            );
+
+            if (view === "weekday") {
+              lines.push(
+                `${t("panel.hourlyDistribution.days")}: ${days.toLocaleString()}`
+              );
+              lines.push(
+                `${t("panel.distribution.occurrences")}: ${(weekdayCounts[bucket] || 0).toLocaleString()}`
+              );
+            } else {
+              lines.push(
+                `${t("panel.hourlyDistribution.days")}: ${days.toLocaleString()}`
+              );
+            }
           }
 
           return lines.join("<br/>");
@@ -141,13 +188,25 @@ export default function HourlyDistributionChart({
       },
       xAxis: {
         type: "category",
-        data: hours.map((h) => h.toString()),
+        data:
+          view === "weekday"
+            ? [
+                t("panel.weekdays.mon"),
+                t("panel.weekdays.tue"),
+                t("panel.weekdays.wed"),
+                t("panel.weekdays.thu"),
+                t("panel.weekdays.fri"),
+                t("panel.weekdays.sat"),
+                t("panel.weekdays.sun"),
+              ]
+            : keys.map((h) => h.toString()),
         axisTick: { show: false },
         axisLine: { show: true, lineStyle: { color: "#eee", width: 2 } },
         axisLabel: {
           color: "#666",
           fontSize: 11,
-          formatter: (val: string) => pad2(Number(val)),
+          formatter: (val: string) =>
+            view === "weekday" ? val : pad2(Number(val)),
         },
       },
       yAxis: {
@@ -194,7 +253,7 @@ export default function HourlyDistributionChart({
       animationDuration: 600,
       animationEasing: "cubicOut" as const,
     };
-  }, [t, metric, totals, values, mode, days, hours]);
+  }, [t, metric, totals, values, mode, days, keys, view, weekdayCounts]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -227,18 +286,31 @@ export default function HourlyDistributionChart({
                 </div>
                 <div className="space-y-1">
                   <h3 className="text-2xl font-semibold bg-gradient-to-br from-foreground to-foreground/80 bg-clip-text text-transparent">
-                    {t("panel.hourlyDistribution.title")}
+                    {view === "weekday"
+                      ? t("panel.distribution.dailyTitle")
+                      : t("panel.hourlyDistribution.title")}
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    {t("panel.hourlyDistribution.subtitle")}
+                    {view === "weekday"
+                      ? t("panel.distribution.dailySubtitle")
+                      : t("panel.hourlyDistribution.subtitle")}
                   </p>
                 </div>
               </div>
 
               <div className="sm:ml-auto flex flex-col sm:flex-row gap-2">
                 <UsageMetricToggle value={metric} onChange={onMetricChange} />
-                {days > 1 && (
-                  <AggregationToggle value={mode} onChange={onModeChange} />
+                {(view === "weekday" || days > 1) && (
+                  <AggregationToggle
+                    value={mode}
+                    onChange={onModeChange}
+                    avgLabel={
+                      view === "weekday"
+                        ? t("panel.distribution.avgPerWeekday")
+                        : t("panel.hourlyDistribution.avgPerDay")
+                    }
+                    totalLabel={t("panel.hourlyDistribution.total")}
+                  />
                 )}
               </div>
             </div>
