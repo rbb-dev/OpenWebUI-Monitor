@@ -4,6 +4,7 @@ import { Table, Button } from "antd";
 import { useTranslation } from "react-i18next";
 import { DownloadOutlined } from "@ant-design/icons";
 import dayjs from "@/lib/dayjs";
+import { formatNumber } from "@/lib/utils";
 
 interface UserSummary {
   nickname: string;
@@ -60,7 +61,7 @@ const MobileCard = ({
             {t("panel.userSummary.columns.tokens")}
           </div>
           <div className="text-sm text-gray-700 font-medium tabular-nums">
-            {record.total_tokens.toLocaleString()}
+            {formatNumber(record.total_tokens)}
           </div>
         </div>
       </div>
@@ -146,7 +147,7 @@ export default function UserSummaryTable({
       width: 130,
       sorter: (a: UserSummary, b: UserSummary) =>
         a.total_tokens - b.total_tokens,
-      render: (tokens: number) => tokens.toLocaleString(),
+      render: (tokens: number) => formatNumber(tokens),
     },
     {
       title: t("panel.userSummary.columns.cost"),

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import dayjs from "@/lib/dayjs";
+import { formatNumber } from "@/lib/utils";
 import type { TablePaginationConfig } from "antd/es/table";
 import type { SorterResult } from "antd/es/table/interface";
 import type { FilterValue } from "antd/es/table/interface";
@@ -420,19 +421,6 @@ export default function PanelPage() {
     return `${dayjs(dateRange[0]).format("YYYY-MM-DD")} ~ ${dayjs(
       dateRange[1]
     ).format("YYYY-MM-DD")}`;
-  };
-
-  const formatNumber = (num: number): string => {
-    if (num >= 1_000_000_000) {
-      return (num / 1_000_000_000).toFixed(1) + "B";
-    }
-    if (num >= 1_000_000) {
-      return (num / 1_000_000).toFixed(1) + "M";
-    }
-    if (num >= 1_000) {
-      return (num / 1_000).toFixed(1) + "K";
-    }
-    return num.toLocaleString();
   };
 
   const handleTableChange = (

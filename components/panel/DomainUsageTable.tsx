@@ -2,6 +2,7 @@
 
 import { Table } from "antd";
 import { useTranslation } from "react-i18next";
+import { formatNumber } from "@/lib/utils";
 
 interface DomainUsage {
   domain: string;
@@ -58,7 +59,7 @@ const MobileCard = ({
             {t("panel.domainUsage.columns.tokens")}
           </div>
           <div className="text-sm text-gray-700 font-medium tabular-nums">
-            {record.total_tokens.toLocaleString()}
+            {formatNumber(record.total_tokens)}
           </div>
         </div>
       </div>
@@ -109,7 +110,7 @@ export default function DomainUsageTable({
       width: 130,
       sorter: (a: DomainUsage, b: DomainUsage) =>
         a.total_tokens - b.total_tokens,
-      render: (tokens: number) => tokens.toLocaleString(),
+      render: (tokens: number) => formatNumber(tokens),
     },
     {
       title: t("panel.domainUsage.columns.users"),
