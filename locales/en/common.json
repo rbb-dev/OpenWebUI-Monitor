@@ -286,6 +286,17 @@
         "users": "Users"
       }
     },
+    "userSummary": {
+      "title": "User Summary",
+      "empty": "No data for the selected period",
+      "exportCsv": "Export CSV",
+      "columns": {
+        "user": "User",
+        "calls": "Calls",
+        "tokens": "Tokens",
+        "cost": "Cost"
+      }
+    },
     "usageDetails": {
       "title": "Usage Details",
       "table": {

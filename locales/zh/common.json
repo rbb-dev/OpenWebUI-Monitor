@@ -286,6 +286,17 @@
         "users": "用户数"
       }
     },
+    "userSummary": {
+      "title": "用户汇总",
+      "empty": "所选时段暂无数据",
+      "exportCsv": "导出 CSV",
+      "columns": {
+        "user": "用户",
+        "calls": "调用次数",
+        "tokens": "Tokens",
+        "cost": "费用"
+      }
+    },
     "usageDetails": {
       "title": "使用详情",
       "table": {
