@@ -50,7 +50,7 @@ const MobileCard = ({
         <div className="text-right shrink-0">
           <div className="font-medium text-primary">
             {t("common.currency")}
-            {Number(record.total_cost).toFixed(4)}
+            {Number(record.total_cost).toFixed(2)}
           </div>
         </div>
       </div>
@@ -157,7 +157,7 @@ export default function UserSummaryTable({
       sorter: (a: UserSummary, b: UserSummary) => a.total_cost - b.total_cost,
       defaultSortOrder: "descend" as const,
       render: (cost: number) =>
-        `${t("common.currency")}${Number(cost).toFixed(4)}`,
+        `${t("common.currency")}${Number(cost).toFixed(2)}`,
     },
   ];
 
