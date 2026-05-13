@@ -275,6 +275,17 @@
         "byCount": "使用次数"
       }
     },
+    "domainUsage": {
+      "title": "域名使用",
+      "empty": "所选时段暂无数据",
+      "columns": {
+        "domain": "域名",
+        "cost": "费用",
+        "calls": "调用次数",
+        "tokens": "Tokens",
+        "users": "用户数"
+      }
+    },
     "usageDetails": {
       "title": "使用详情",
       "table": {

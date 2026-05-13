@@ -12,6 +12,7 @@ import TimeRangeSelector, {
 } from "@/components/panel/TimeRangeSelector";
 import ModelDistributionChart from "@/components/panel/ModelDistributionChart";
 import UserRankingChart from "@/components/panel/UserRankingChart";
+import DomainUsageTable from "@/components/panel/DomainUsageTable";
 import UsageRecordsTable from "@/components/panel/UsageRecordsTable";
 import HourlyDistributionChart, {
   DistributionBucket,
@@ -22,6 +23,7 @@ import { toast, Toaster } from "sonner";
 import { Card } from "@/components/ui/card";
 import {
   BarChartOutlined,
+  GlobalOutlined,
   PieChartOutlined,
   TableOutlined,
 } from "@ant-design/icons";
@@ -37,6 +39,14 @@ interface UserUsage {
   nickname: string;
   total_cost: number;
   total_count: number;
+}
+
+interface DomainUsage {
+  domain: string;
+  total_cost: number;
+  total_calls: number;
+  total_tokens: number;
+  user_count: number;
 }
 
 interface UsageData {
@@ -96,6 +106,8 @@ export default function PanelPage() {
   });
   const [pieMetric, setPieMetric] = useState<"cost" | "count">("cost");
   const [barMetric, setBarMetric] = useState<"cost" | "count">("cost");
+  const [domainUsage, setDomainUsage] = useState<DomainUsage[]>([]);
+  const [domainLoading, setDomainLoading] = useState(true);
   const [records, setRecords] = useState<UsageRecord[]>([]);
   const [recordUsers, setRecordUsers] = useState<string[]>([]);
   const [recordModels, setRecordModels] = useState<string[]>([]);
@@ -260,6 +272,36 @@ export default function PanelPage() {
     }
   };
 
+  const fetchDomainUsage = async (range: [Date, Date]) => {
+    setDomainLoading(true);
+    try {
+      const startTime = dayjs(range[0])
+        .startOf("day")
+        .format("YYYY-MM-DDTHH:mm:ssZ");
+      const endTime = dayjs(range[1])
+        .endOf("day")
+        .format("YYYY-MM-DDTHH:mm:ssZ");
+
+      const url = `/api/v1/panel/domain-usage?startTime=${startTime}&endTime=${endTime}`;
+      const token = localStorage.getItem("access_token");
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch domain usage");
+
+      const data = await response.json();
+      setDomainUsage((data.domains || []) as DomainUsage[]);
+    } catch (error) {
+      console.error(t("error.panel.fetchUsageDataFail"), error);
+      setDomainUsage([]);
+    } finally {
+      setDomainLoading(false);
+    }
+  };
+
   useEffect(() => {
     const loadInitialData = async () => {
       const token = localStorage.getItem("access_token");
@@ -289,6 +331,7 @@ export default function PanelPage() {
       //await fetchRecords(tableParams, allTimeRange);
       await fetchRecords(tableParams, todayTimeRange);
       await fetchHourlyDistribution(todayTimeRange);
+      await fetchDomainUsage(todayTimeRange);
     };
 
     loadInitialData();
@@ -303,6 +346,7 @@ export default function PanelPage() {
     await fetchUsageData(range);
     await fetchRecords(tableParams, range);
     await fetchHourlyDistribution(range);
+    await fetchDomainUsage(range);
   };
 
   const getReportTitle = (type: TimeRangeType, t: (key: string) => string) => {
@@ -592,6 +636,26 @@ export default function PanelPage() {
             metric={barMetric}
             onMetricChange={setBarMetric}
           />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.32 }}
+          className="py-6 bg-card text-card-foreground"
+        >
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
+                <GlobalOutlined className="text-primary" />
+                {t("panel.domainUsage.title")}
+              </h2>
+            </div>
+            <DomainUsageTable
+              loading={domainLoading}
+              domains={domainUsage}
+            />
+          </div>
         </motion.div>
 
         <motion.div

@@ -275,6 +275,17 @@
         "byCount": "Usage Count"
       }
     },
+    "domainUsage": {
+      "title": "Domain Usage",
+      "empty": "No data for the selected period",
+      "columns": {
+        "domain": "Domain",
+        "cost": "Cost",
+        "calls": "Calls",
+        "tokens": "Tokens",
+        "users": "Users"
+      }
+    },
     "usageDetails": {
       "title": "Usage Details",
       "table": {
